@@ -11,6 +11,13 @@ export default defineConfig({
     },
   },
   build: {
-    manifest: true, // For integration with Nginx
+    manifest: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+        },
+      },
+    },
   },
 });

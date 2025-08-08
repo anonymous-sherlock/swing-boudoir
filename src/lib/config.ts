@@ -44,7 +44,7 @@ export const getAuthUrl = (endpoint: string): string => {
   return `${API_CONFIG.AUTH_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 };
 
-// Helper function to get callback URL
+// Helper function to get relative path
 export const getCallbackUrl = (path: string): string => {
-  return `${API_CONFIG.CURRENT_ORIGIN}${path.startsWith('/') ? path : `/${path}`}`;
+  return path.startsWith('/') ? path : `/${path}`;
 }; 
