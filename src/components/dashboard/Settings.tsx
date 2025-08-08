@@ -76,7 +76,7 @@ export function Settings() {
 
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`https://api.swingboudoirmag.com/api/v1/users/${user.id}/profile`, {
+        const response = await fetch(`/api/v1/users/${user.id}/profile`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'

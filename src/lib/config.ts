@@ -9,16 +9,16 @@
 const isDevelopment = import.meta.env.DEV;
 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-// API Base URLs
+// API Base URLs - Using relative paths for universal compatibility
 export const API_CONFIG = {
-  // Better Auth API - always use live server (CORS configured for localhost:8080)
-  AUTH_BASE_URL: 'https://api.swingboudoirmag.com/api/v1/auth',
+  // Better Auth API - use relative path (will be proxied in development)
+  AUTH_BASE_URL: '/api/v1/auth',
   
   // Main API - use relative URLs (works in both localhost and production)
   API_BASE_URL: '/api/v1',
   
-  // Upload service - always use live server (CORS configured for localhost:8080)
-  UPLOAD_URL: 'https://api.swingboudoirmag.com/api/v1/uploadthing',
+  // Upload service - use relative path (will be proxied in development)
+  UPLOAD_URL: '/api/v1/uploadthing',
   
   // Current origin for callback URLs
   CURRENT_ORIGIN: window.location.origin,

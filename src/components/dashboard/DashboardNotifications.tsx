@@ -40,7 +40,7 @@ export function DashboardNotifications() {
       setError(null);
 
       const token = localStorage.getItem('token');
-      const response = await fetch(`https://api.swingboudoirmag.com/api/v1/notifications?userId=${user?.id}`, {
+      const response = await fetch(`/api/v1/notifications?userId=${user?.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -62,7 +62,7 @@ export function DashboardNotifications() {
   const markAsRead = async (notificationId: string) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`https://api.swingboudoirmag.com/api/v1/notifications/${notificationId}/read`, {
+      const response = await fetch(`/api/v1/notifications/${notificationId}/read`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -87,7 +87,7 @@ export function DashboardNotifications() {
   const markAllAsRead = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('https://api.swingboudoirmag.com/api/v1/notifications/mark-all-read', {
+      const response = await fetch('/api/v1/notifications/mark-all-read', {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

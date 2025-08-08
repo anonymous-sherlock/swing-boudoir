@@ -84,7 +84,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Utility to check if user has a profile
 const checkUserProfile = async (userId: string, token: string): Promise<boolean> => {
   try {
-    const response = await fetch(`https://api.swingboudoirmag.com/api/v1/users/${userId}/profile`, {
+    const response = await fetch(`/api/v1/users/${userId}/profile`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (response.status === 200) return true;
@@ -150,7 +150,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const token = localStorage.getItem('token');
       if (!token) return true;
 
-      const response = await fetch(`https://api.swingboudoirmag.com/api/v1/users/${userId}/profile`, {
+      const response = await fetch(`/api/v1/users/${userId}/profile`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

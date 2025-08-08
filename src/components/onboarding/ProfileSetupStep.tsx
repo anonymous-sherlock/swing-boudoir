@@ -84,7 +84,7 @@ export function ProfileSetupStep() {
       formData.append('file', file);
 
       const token = localStorage.getItem('token');
-      const response = await fetch('https://api.swingboudoirmag.com/api/v1/upload', {
+      const response = await fetch('/api/v1/upload', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

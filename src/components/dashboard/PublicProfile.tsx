@@ -105,7 +105,7 @@ export function PublicProfile() {
       const token = localStorage.getItem('token');
       
       // Fetch user profile
-      const profileResponse = await fetch(`https://api.swingboudoirmag.com/api/v1/users/${user?.id}/profile`, {
+      const profileResponse = await fetch(`/api/v1/users/${user?.id}/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -118,7 +118,7 @@ export function PublicProfile() {
       }
 
       // Fetch user stats
-      const statsResponse = await fetch(`https://api.swingboudoirmag.com/api/v1/users/${user?.id}/stats`, {
+      const statsResponse = await fetch(`/api/v1/users/${user?.id}/stats`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -131,7 +131,7 @@ export function PublicProfile() {
       }
 
       // Fetch competition registrations
-      const competitionsResponse = await fetch(`https://api.swingboudoirmag.com/api/v1/users/${user?.id}/competitions`, {
+      const competitionsResponse = await fetch(`/api/v1/users/${user?.id}/competitions`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

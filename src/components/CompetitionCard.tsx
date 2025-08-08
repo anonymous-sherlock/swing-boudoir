@@ -66,7 +66,7 @@ export const CompetitionCard: React.FC<CompetitionCardProps> = ({ competition })
     setIsRegistering(true);
     try {
       // Register for competition using API
-      const response = await fetch('https://api.swingboudoirmag.com/api/v1/contests/join', {
+      const response = await fetch('/api/v1/contests/join', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -85,7 +85,7 @@ export const CompetitionCard: React.FC<CompetitionCardProps> = ({ competition })
         setIsRegistered(true);
         
         // Create notification
-        const notificationResponse = await fetch('https://api.swingboudoirmag.com/api/v1/notifications', {
+        const notificationResponse = await fetch('/api/v1/notifications', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,

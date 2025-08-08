@@ -146,7 +146,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (!user || !isAuthenticated) return false;
 
     try {
-      const response = await fetch(`https://api.swingboudoirmag.com/api/v1/users/${user.id}/profile`, {
+      const response = await fetch(`/api/v1/users/${user.id}/profile`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -254,7 +254,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       };
 
       const token = localStorage.getItem('token');
-      const response = await fetch('https://api.swingboudoirmag.com/api/v1/profile', {
+      const response = await fetch('/api/v1/profile', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -277,7 +277,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         name: onboardingData.basicInfo?.name || user.name
       };
 
-      const userUpdateResponse = await fetch(`https://api.swingboudoirmag.com/api/v1/users/${user.id}`, {
+      const userUpdateResponse = await fetch(`/api/v1/users/${user.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

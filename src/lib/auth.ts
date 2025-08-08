@@ -14,7 +14,7 @@
 import { jwtDecode } from 'jwt-decode';
 
 // API Configuration
-export const API_BASE_URL = 'http://localhost:3002';
+export const API_BASE_URL = '/api/v1';
 
 // JWT Token Interface
 export interface JWTPayload {
@@ -272,7 +272,7 @@ const refreshToken = async (): Promise<void> => {
     const currentToken = getAuthToken();
     if (!currentToken) return;
     
-    const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${currentToken}`,

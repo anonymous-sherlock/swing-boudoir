@@ -46,7 +46,7 @@ export function Votes() {
       const token = localStorage.getItem('token');
       
       // Fetch vote statistics
-      const statsResponse = await fetch(`https://api.swingboudoirmag.com/api/v1/votes/stats?profileId=${user?.id}`, {
+      const statsResponse = await fetch(`/api/v1/votes/stats?profileId=${user?.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -59,7 +59,7 @@ export function Votes() {
       }
 
       // Fetch top voters
-      const topVotersResponse = await fetch(`https://api.swingboudoirmag.com/api/v1/votes/top-voters?profileId=${user?.id}&limit=10`, {
+      const topVotersResponse = await fetch(`/api/v1/votes/top-voters?profileId=${user?.id}&limit=10`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -72,7 +72,7 @@ export function Votes() {
       }
 
       // Fetch recent votes
-      const recentVotesResponse = await fetch(`https://api.swingboudoirmag.com/api/v1/votes/recent?profileId=${user?.id}&limit=20`, {
+      const recentVotesResponse = await fetch(`/api/v1/votes/recent?profileId=${user?.id}&limit=20`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -85,7 +85,7 @@ export function Votes() {
       }
 
       // Fetch premium votes
-      const premiumVotesResponse = await fetch(`https://api.swingboudoirmag.com/api/v1/votes/premium?profileId=${user?.id}&limit=50`, {
+      const premiumVotesResponse = await fetch(`/api/v1/votes/premium?profileId=${user?.id}&limit=50`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

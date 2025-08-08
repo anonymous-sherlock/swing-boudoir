@@ -13,7 +13,7 @@ export const FirstCompetitionStep: React.FC = () => {
     setIsRegistering(true);
     try {
       // Register for competition using API
-      const response = await fetch('https://api.swingboudoirmag.com/api/v1/contests/join', {
+      const response = await fetch('/api/v1/contests/join', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
