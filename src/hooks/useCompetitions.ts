@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react';
+import hotGirlSummer from '../assets/hot-girl-summer.jpg';
+import workoutWarrior from '../assets/workout-warrior.jpg';
+import bigGameCompetition from '../assets/big-game-competition.jpg';
 
 export interface Competition {
   id: string;
@@ -47,7 +50,7 @@ export const useCompetitions = () => {
               endDate: '2024-08-15',
               participants: 156,
               status: 'active',
-              coverImage: '/src/assets/hot-girl-summer.jpg',
+              coverImage: hotGirlSummer,
               category: 'Beauty'
             },
             {
@@ -58,7 +61,7 @@ export const useCompetitions = () => {
               endDate: '2024-09-01',
               participants: 89,
               status: 'active',
-              coverImage: '/src/assets/workout-warrior.jpg',
+              coverImage: workoutWarrior,
               category: 'Fitness'
             },
             {
@@ -69,7 +72,7 @@ export const useCompetitions = () => {
               endDate: '2024-10-15',
               participants: 234,
               status: 'active',
-              coverImage: '/src/assets/big-game-competition.jpg',
+              coverImage: bigGameCompetition,
               category: 'Premium'
             }
           ];
