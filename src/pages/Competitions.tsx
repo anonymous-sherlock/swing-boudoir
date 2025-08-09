@@ -200,7 +200,7 @@ const Competitions = () => {
                   : 'grid-cols-1 max-w-4xl mx-auto'
               }`}>
                 {filteredCompetitions.map((competition) => (
-                  <CompetitionCard key={competition.id} {...competition} />
+                  <CompetitionCard key={competition.id} competition={competition} />
                 ))}
               </div>
             )}

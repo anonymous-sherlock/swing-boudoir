@@ -36,13 +36,12 @@ const Onboarding: React.FC = () => {
     console.log('Onboarding page - isLoading:', isLoading);
     
     // TEMPORARILY COMMENTED OUT FOR TESTING - Remove this comment block when done testing
-    /*
+    
     if (!isAuthenticated) {
       console.log('Onboarding page - Not authenticated, redirecting to auth');
       navigate('/auth');
       return;
     }
-    */
 
     // Redirect to dashboard if onboarding is complete
     if (isOnboardingComplete) {
