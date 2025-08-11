@@ -85,15 +85,6 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({ children }) 
                     />
                   ))}
                 </div>
-
-                <Button
-                  onClick={nextStep}
-                  disabled={currentStep === totalSteps - 1}
-                  className="flex items-center space-x-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-6 py-3 text-white"
-                >
-                  Next
-                  <ChevronRight className="h-5 w-5" />
-                </Button>
               </div>
             </div>
           </div>

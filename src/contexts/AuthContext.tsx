@@ -14,6 +14,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAuthUrl, getCallbackUrl } from '../lib/config';
+import { authApi } from '@/lib/api';
 
 interface User {
   id: string;
@@ -21,7 +22,7 @@ interface User {
   email: string;
   image?: string;
   emailVerified: boolean;
-  username?: string;
+  username: string;
   displayUsername?: string;
   role: 'USER' | 'ADMIN' | 'MODERATOR';
   isActive: boolean;
@@ -171,7 +172,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Register user
   const handleRegister = async (email: string, password: string, name: string, username: string) => {
-      setIsLoading(true);
+    setIsLoading(true);
     setError(null);
     try {
       const requestBody = {
@@ -180,7 +181,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         name,
         username,
         image: null,
-        callbackURL: getCallbackUrl('/dashboard')
+        callbackURL: getCallbackUrl('/onboarding')
       };
       
       console.log('Register request:', {
@@ -188,57 +189,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: { ...requestBody, password: '[HIDDEN]' }
       });
 
-      const response = await fetch(getAuthUrl('/sign-up/email'), {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          name,
-          username,
-          image: null,
-          callbackURL: '/verify-email'
-        })
+      const response = await authApi.register({
+        name,
+        email,
+        password,
+        username
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Register error response:', errorText);
-        
-        let errorMessage = 'Registration failed';
-        try {
-          const errorData = JSON.parse(errorText);
-          errorMessage = errorData.message || errorData.error || 'Registration failed';
-        } catch {
-          errorMessage = `Registration failed (${response.status}): ${errorText}`;
-        }
-        
-        throw new Error(errorMessage);
+      if (!response.success) {
+        console.error('Register error response:', response.error);
+        // Don't store any data on error - throw immediately
+        throw new Error(response.error || 'Registration failed');
       }
       
-      const data = await response.json();
-      console.log('Register success data:', data);
+      console.log('Register success data:', response.data);
       
-      const user = data.user;
-      const token = data.token || data.session?.token;
+      const user = response.data?.user;
+      // const token = response.data?.token || response.data?.session?.token;
       
-      if (!user || !token) {
+      if (!user) {
         throw new Error('Invalid response from server');
       }
+
       
-      setUser(user);
-      localStorage.setItem('token', token);
-      
-      // Check if user has profile
-      const hasProfile = await checkUserNeedsOnboarding(user.id);
-      if (hasProfile) {
-        navigate('/dashboard');
-      } else {
-        navigate('/onboarding');
-      }
+      // For new registrations, always go to onboarding
+      navigate('/auth?login');
     } catch (error: unknown) {
       console.error('Register error:', error);
       if (error instanceof Error) {
@@ -246,6 +221,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         setError('Registration failed');
       }
+      // Ensure no data is stored on error
+      setUser(null);
+      throw error; // Re-throw to be handled by component
     } finally {
       setIsLoading(false);
     }
@@ -259,7 +237,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const requestBody = {
         email,
         password,
-        callbackURL: getCallbackUrl('/dashboard')
+        callbackURL: getCallbackUrl('/onboarding')
       };
       
       console.log('Login request:', {
@@ -267,52 +245,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: { ...requestBody, password: '[HIDDEN]' }
       });
 
-      const response = await fetch(getAuthUrl('/sign-in/email'), {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify(requestBody)
+      const response = await authApi.login({
+        email,
+        password
       });
       
-      console.log('Login response status:', response.status);
+      console.log('Login response:', response);
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Login error response:', errorText);
-        
-        let errorMessage = 'Login failed';
-        try {
-          const errorData = JSON.parse(errorText);
-          errorMessage = errorData.message || errorData.error || 'Login failed';
-        } catch {
-          errorMessage = `Login failed (${response.status}): ${errorText}`;
-        }
-        
-        throw new Error(errorMessage);
+      if (!response.success) {
+        console.error('Login error response:', response.error);
+        throw new Error(response.error || 'Login failed');
       }
       
-      const data = await response.json();
-      console.log('Login success data:', data);
+      console.log('Login success data:', response.data);
       
-      const user = data.user;
-      const token = data.token || data.session?.token;
+      const user = response.data?.user;
+      const token = response.data?.token || response.data?.session?.token;
       
       if (!user || !token) {
         throw new Error('Invalid response from server');
       }
       
       setUser(user);
+      setIsAuthenticated(true);
       localStorage.setItem('token', token);
       
-      // Check if user has profile
-      const hasProfile = await checkUserNeedsOnboarding(user.id);
-      if (hasProfile) {
-        navigate('/dashboard');
-      } else {
-        navigate('/onboarding');
-      }
+      // For login, always go to dashboard (existing users should have completed onboarding)
+      navigate('/onboarding');
     } catch (error: unknown) {
       console.error('Login error:', error);
       if (error instanceof Error) {
@@ -320,6 +279,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         setError('Login failed');
       }
+      throw error; // Re-throw to be handled by component
     } finally {
       setIsLoading(false);
     }

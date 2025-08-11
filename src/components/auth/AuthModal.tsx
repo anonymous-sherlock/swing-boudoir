@@ -25,7 +25,7 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => {
-  const { handleLoginWithEmail, handleRegister } = useAuth();
+  const { handleLoginWithEmail, handleRegister, error } = useAuth();
   const { toast } = useToast();
   
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
@@ -60,14 +60,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
       await handleLoginWithEmail(loginEmail, loginPassword);
       toast({
         title: "Login Successful!",
-        description: "Welcome back!"
+        description: "Redirecting to your dashboard..."
       });
       onSuccess?.();
       onClose();
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Please check your credentials and try again.";
       toast({
         title: "Login Failed",
-        description: error instanceof Error ? error.message : "Please check your credentials and try again.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -105,21 +106,43 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
       return;
     }
 
+    // Validate username length
+    if (registerUsername.length < 3) {
+      toast({
+        title: "Username Too Short",
+        description: "Username must be at least 3 characters long.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       await handleRegister(registerEmail, registerPassword, registerName, registerUsername);
       toast({
         title: "Registration Successful!",
-        description: "Welcome to Swing Boudoir!"
+        description: "Welcome to Swing Boudoir! Setting up your profile..."
       });
       onSuccess?.();
       onClose();
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Please try again with different information.";
+      
+      // Show specific error messages for common validation issues
+      let title = "Registration Failed";
+      if (errorMessage.toLowerCase().includes('email')) {
+        title = "Email Already Taken";
+      } else if (errorMessage.toLowerCase().includes('username')) {
+        title = "Username Already Taken";
+      }
+      
       toast({
-        title: "Registration Failed",
-        description: error instanceof Error ? error.message : "Please try again with different information.",
+        title,
+        description: errorMessage,
         variant: "destructive"
       });
+      
+      // Don't clear the form on error - let user fix the issue
     } finally {
       setIsLoading(false);
     }

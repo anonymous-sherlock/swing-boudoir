@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import { api, apiRequest } from '@/lib/api';
 
 export interface OnboardingData {
   basicInfo: {
@@ -146,15 +147,21 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (!user || !isAuthenticated) return false;
 
     try {
-      const response = await fetch(`/api/v1/users/${user.id}/profile`, {
+      const response = await apiRequest<any>(`/api/v1/users/${user.id}/profile`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
         }
-      });
+      })
+      // const response = await fetch(`https://api.swingboudoir.com/api/v1/users/${user.id}/profile`, {
+      //   headers: {
+      //     'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      //     'Content-Type': 'application/json'
+      //   }
+      // });
 
-      if (response.ok) {
-        const profile = await response.json();
+      if (response.success) {
+        const profile = response.data;
         return !!profile; // Return true if profile exists
       }
       return false;
@@ -253,41 +260,24 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         coverImageId: onboardingData.basicInfo?.votingImage || null
       };
 
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/v1/profile', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(profileData)
-      });
+      const profileResponse = await api.post('/profile', profileData);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Profile creation failed:', errorData);
-        throw new Error(`Failed to create profile: ${response.status}`);
+      if (!profileResponse.success) {
+        console.error('Profile creation failed:', profileResponse.error);
+        throw new Error(profileResponse.error || 'Failed to create profile');
       }
 
-      const createdProfile = await response.json();
-      console.log('Profile created successfully:', createdProfile);
+      console.log('Profile created successfully:', profileResponse.data);
 
       // Update user data with profile information
       const userUpdateData = {
         name: onboardingData.basicInfo?.name || user.name
       };
 
-      const userUpdateResponse = await fetch(`/api/v1/users/${user.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(userUpdateData)
-      });
+      const userUpdateResponse = await api.patch(`/users/${user.id}`, userUpdateData);
 
-      if (!userUpdateResponse.ok) {
-        console.error('User update failed:', await userUpdateResponse.json());
+      if (!userUpdateResponse.success) {
+        console.error('User update failed:', userUpdateResponse.error);
       }
 
       // Mark onboarding as complete

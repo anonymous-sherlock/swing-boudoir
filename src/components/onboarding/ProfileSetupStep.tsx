@@ -83,41 +83,41 @@ export function ProfileSetupStep() {
       const formData = new FormData();
       formData.append('file', file);
 
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/v1/upload', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
-      });
+      // const token = localStorage.getItem('token');
+      // const response = await fetch('/api/v1/uploadthing', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Authorization': `Bearer ${token}`
+      //   },
+      //   body: formData
+      // });
 
       clearInterval(progressInterval);
       setUploadProgress(100);
 
-      if (!response.ok) {
-        throw new Error('Upload failed');
-      }
+      // if (!response.ok) {
+      //   throw new Error('Upload failed');
+      // }
 
-      const data = await response.json();
-      const imageUrl = data.url || data.imageUrl;
+      // const data = await response.json();
+      // const imageUrl = data.url || data.imageUrl;
 
       // Update onboarding data based on type
-      if (type === 'profile') {
-        updateOnboardingData({
-          basicInfo: {
-            ...onboardingData.basicInfo,
-            profileImage: imageUrl
-          }
-        });
-      } else if (type === 'voting') {
-        updateOnboardingData({
-          basicInfo: {
-            ...onboardingData.basicInfo,
-            votingImage: imageUrl
-          }
-        });
-      }
+      // if (type === 'profile') {
+      //   updateOnboardingData({
+      //     basicInfo: {
+      //       ...onboardingData.basicInfo,
+      //       profileImage: imageUrl
+      //     }
+      //   });
+      // } else if (type === 'voting') {
+      //   updateOnboardingData({
+      //     basicInfo: {
+      //       ...onboardingData.basicInfo,
+      //       votingImage: imageUrl
+      //     }
+      //   });
+      // }
 
       toast({
         title: "Upload successful",

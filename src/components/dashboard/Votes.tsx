@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Heart, Users, DollarSign, MessageSquare, AlertCircle } from "lucide-react";
+import { apiRequest } from '@/lib/api';
 
 interface Vote {
   id: string;
@@ -46,28 +47,28 @@ export function Votes() {
       const token = localStorage.getItem('token');
       
       // Fetch vote statistics
-      const statsResponse = await fetch(`/api/v1/votes/stats?profileId=${user?.id}`, {
+      const statsResponse = await apiRequest(`/api/v1/votes/stats?profileId=${user?.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
 
-      if (statsResponse.ok) {
+      if (statsResponse.success) {
         const statsData = await statsResponse.json();
-        setVoteStats(statsData);
+        setVoteStats(statsData as VoteStats);
       }
 
       // Fetch top voters
-      const topVotersResponse = await fetch(`/api/v1/votes/top-voters?profileId=${user?.id}&limit=10`, {
+      const topVotersResponse = await apiRequest(`/api/v1/votes/top-voters?profileId=${user?.id}&limit=10`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
 
-      if (topVotersResponse.ok) {
-        const topVotersData = await topVotersResponse.json();
+      if (topVotersResponse.success) {
+        const topVotersData = await topVotersResponse.json() as { votes?: Vote[] };
         setTopVoters(topVotersData.votes || []);
       }
 

@@ -12,7 +12,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -40,10 +40,21 @@ const Auth: React.FC = () => {
 
   const [registerData, setRegisterData] = useState({
     name: '',
+    username: '',
     email: '',
     password: '',
     confirmPassword: ''
   });
+
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+   if(searchParams.has('login')){
+    setActiveTab('login');
+   }else if(searchParams.has('register')){
+    setActiveTab('register');
+   }
+  },[searchParams])
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -65,15 +76,24 @@ const Auth: React.FC = () => {
     }
     try {
       await handleLoginWithEmail(loginData.email, loginData.password);
+      toast({
+        title: "Login Successful!",
+        description: "Welcome back! Redirecting to your dashboard..."
+      });
     } catch (error) {
-      console.error('Email login error:', error);
+      const errorMessage = error instanceof Error ? error.message : "Please check your credentials and try again.";
+      toast({
+        title: "Login Failed",
+        description: errorMessage,
+        variant: "destructive"
+      });
     }
   };
 
   // Handle registration with real API endpoint
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!registerData.name || !registerData.email || !registerData.password || !registerData.confirmPassword) {
+    if (!registerData.name || !registerData.username || !registerData.email || !registerData.password || !registerData.confirmPassword) {
       toast({
         title: "Validation Error",
         description: "Please fill in all fields",
@@ -83,23 +103,56 @@ const Auth: React.FC = () => {
     }
     if (registerData.password !== registerData.confirmPassword) {
       toast({
-        title: "Validation Error",
-        description: "Passwords do not match",
+        title: "Passwords Don't Match",
+        description: "Please make sure your passwords match",
         variant: "destructive",
       });
       return;
     }
-    // Generate a username from the name (or you can add a username field to the form)
-    const username = registerData.name.replace(/\s+/g, '').toLowerCase();
+    if (registerData.password.length < 6) {
+      toast({
+        title: "Password Too Short",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (registerData.username.length < 3) {
+      toast({
+        title: "Username Too Short",
+        description: "Username must be at least 3 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       await handleRegister(
         registerData.email,
         registerData.password,
         registerData.name,
-        username
+        registerData.username
       );
+      toast({
+        title: "Registration Successful!",
+        description: "Welcome to Swing Boudoir! Setting up your profile..."
+      });
     } catch (error) {
-      console.error('Registration error:', error);
+      const errorMessage = error instanceof Error ? error.message : "Please try again with different information.";
+      
+      // Show specific error messages for common validation issues
+      let title = "Registration Failed";
+      if (errorMessage.toLowerCase().includes('email')) {
+        title = "Email Already Taken";
+      } else if (errorMessage.toLowerCase().includes('username')) {
+        title = "Username Already Taken";
+      }
+      
+      toast({
+        title,
+        description: errorMessage,
+        variant: "destructive"
+      });
     }
   };
 
@@ -268,6 +321,23 @@ const Auth: React.FC = () => {
                           value={registerData.name}
                           onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
                           className="pl-10"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="register-username">Username</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="register-username"
+                          type="text"
+                          placeholder="Choose a username"
+                          value={registerData.username}
+                          onChange={(e) => setRegisterData({ ...registerData, username: e.target.value })}
+                          className="pl-10"
+                          minLength={3}
+                          maxLength={100}
                           required
                         />
                       </div>

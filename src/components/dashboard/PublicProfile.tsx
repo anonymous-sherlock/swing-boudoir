@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { apiRequest } from '@/lib/api';
 
 interface UserProfile {
   id: string;
@@ -66,10 +67,10 @@ export function PublicProfile() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user?.id) {
+    if (user?.username) {
       fetchUserData();
     }
-  }, [user?.id]);
+  }, [user?.username]);
 
   // Countdown timer for competitions
   useEffect(() => {
@@ -105,41 +106,41 @@ export function PublicProfile() {
       const token = localStorage.getItem('token');
       
       // Fetch user profile
-      const profileResponse = await fetch(`/api/v1/users/${user?.id}/profile`, {
+      const profileResponse = await apiRequest(`/api/v1/users/${user?.id}/profile`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `BeFarer ${token}`,
           'Content-Type': 'application/json'
         }
       });
 
-      if (profileResponse.ok) {
-        const profileData = await profileResponse.json();
+      if (profileResponse.success) {
+        const profileData = profileResponse.data;
         setUserProfile(profileData);
       }
 
       // Fetch user stats
-      const statsResponse = await fetch(`/api/v1/users/${user?.id}/stats`, {
+      const statsResponse = await apiRequest(`/api/v1/users/${user?.id}/stats`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
 
-      if (statsResponse.ok) {
-        const statsData = await statsResponse.json();
+      if (statsResponse.success) {
+        const statsData = statsResponse.data;
         setUserStats(statsData);
       }
 
       // Fetch competition registrations
-      const competitionsResponse = await fetch(`/api/v1/users/${user?.id}/competitions`, {
+      const competitionsResponse = await apiRequest(`/api/v1/users/${user?.id}/competitions`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
 
-      if (competitionsResponse.ok) {
-        const competitionsData = await competitionsResponse.json();
+      if (competitionsResponse.success) {
+        const competitionsData = competitionsResponse.data;
         setCompetitions(competitionsData.competitions || []);
       }
 
@@ -151,7 +152,7 @@ export function PublicProfile() {
 
   const shareProfile = async () => {
     try {
-      const profileUrl = `${window.location.origin}/profile/${user?.id}`;
+      const profileUrl = `${window.location.origin}/profile/${user?.username}`;
       await navigator.clipboard.writeText(profileUrl);
       toast({
         title: "Profile link copied!",
@@ -222,16 +223,12 @@ export function PublicProfile() {
         </div>
         <div className="flex items-center space-x-2">
           <Link 
-            to={`/profile/${user?.id}`}
+            to={`/profile/${user?.username}`}
             className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-xs"
           >
             <Eye className="mr-1.5 h-3 w-3" />
             View Profile
           </Link>
-          <Button onClick={shareProfile} variant="outline" size="sm" className="text-xs px-3 py-1.5">
-            <Share2 className="mr-1.5 h-3 w-3" />
-            Share
-          </Button>
         </div>
       </div>
 
@@ -291,7 +288,7 @@ export function PublicProfile() {
             </Button>
           </div>
           <div className="bg-muted p-2 rounded-md mt-2">
-            <code className="text-xs break-all">{window.location.origin}/profile/{user?.id}</code>
+            <code className="text-xs break-all">{window.location.origin}/profile/{user?.username}</code>
           </div>
         </CardContent>
       </Card>

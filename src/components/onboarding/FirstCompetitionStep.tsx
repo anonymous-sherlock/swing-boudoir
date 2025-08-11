@@ -3,6 +3,7 @@ import { useOnboarding } from '@/contexts/OnboardingContext';
 import { Button } from '@/components/ui/button';
 import { Trophy, Calendar, DollarSign, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { competitionApi } from '@/lib/api';
 
 export const FirstCompetitionStep: React.FC = () => {
   const { onboardingData, updateOnboardingData, nextStep, completeStep } = useOnboarding();
@@ -13,20 +14,9 @@ export const FirstCompetitionStep: React.FC = () => {
     setIsRegistering(true);
     try {
       // Register for competition using API
-      const response = await fetch('/api/v1/contests/join', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          contestId: 'comp_1',
-          profileId: 'user_profile_id',
-          coverImage: onboardingData.profilePhoto || ''
-        })
-      });
+      const response = await competitionApi.register('comp_1');
 
-      if (response.ok) {
+      if (response.success) {
         updateOnboardingData({ firstCompetition: 'comp_1' });
         completeStep('first-competition');
         
@@ -37,12 +27,13 @@ export const FirstCompetitionStep: React.FC = () => {
         
         nextStep();
       } else {
-        throw new Error('Registration failed');
+        throw new Error(response.error || 'Registration failed');
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Please try again or contact support';
       toast({
         title: "Registration Failed",
-        description: "Please try again or contact support",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {

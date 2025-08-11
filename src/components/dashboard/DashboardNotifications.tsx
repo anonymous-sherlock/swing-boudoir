@@ -10,6 +10,7 @@ import {
   Info, 
   Trash2
 } from "lucide-react";
+import { apiRequest } from '@/lib/api';
 
 interface Notification {
   id: string;
@@ -40,15 +41,15 @@ export function DashboardNotifications() {
       setError(null);
 
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/v1/notifications?userId=${user?.id}`, {
+      const response = await apiRequest(`/api/v1/notifications?userId=${user?.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (response.success) {
+        const data = response.data;
         setNotifications(data.notifications || []);
       } else {
         setError('Failed to load notifications');

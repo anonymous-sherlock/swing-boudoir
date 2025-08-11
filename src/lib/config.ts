@@ -16,6 +16,7 @@ export const API_CONFIG = {
   
   // Main API - use relative URLs (works in both localhost and production)
   API_BASE_URL: 'https://api.swingboudoirmag.com/api/v1',
+  API_BASE_HOST: 'https://api.swingboudoirmag.com',
   
   // Upload service - use relative path (will be proxied in development)
   UPLOAD_URL: 'https://api.swingboudoirmag.com/api/v1/uploadthing',
@@ -32,7 +33,7 @@ export const API_CONFIG = {
 export const getApiUrl = (endpoint: string): string => {
   // If endpoint starts with /api/v1, use relative URL
   if (endpoint.startsWith('/api/v1')) {
-    return endpoint;
+    return `${API_CONFIG.API_BASE_HOST}${endpoint}`;
   }
   
   // Otherwise, prepend the API base URL
