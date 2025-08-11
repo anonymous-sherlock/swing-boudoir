@@ -1,6 +1,8 @@
 import CompetitionCard from "./CompetitionCard";
 import { useCompetitions } from "@/hooks/useCompetitions";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const CompetitionsSection = () => {
   const { getActiveCompetitions, isLoading } = useCompetitions();

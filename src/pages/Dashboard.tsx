@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { DashboardNotifications } from "@/components/dashboard/DashboardNotifications";
 import { EditProfile } from "@/components/dashboard/EditProfile";
@@ -11,16 +13,17 @@ import { Support } from "@/components/dashboard/Support";
 import { OfficialRules } from "@/components/dashboard/OfficialRules";
 import { PrivacyPolicy } from "@/components/dashboard/PrivacyPolicy";
 import Header from "@/components/Header";
+import { ONBOARDING_REDIRECT, authPages } from "@/routes";
 
-export type DashboardSection = 
-  | "notifications" 
-  | "edit-profile" 
-  | "public-profile" 
-  | "competitions" 
-  | "votes" 
-  | "prize-history" 
-  | "settings" 
-  | "support" 
+export type DashboardSection =
+  | "notifications"
+  | "edit-profile"
+  | "public-profile"
+  | "competitions"
+  | "votes"
+  | "prize-history"
+  | "settings"
+  | "support"
   | "official-rules"
   | "privacy";
 
@@ -47,70 +50,85 @@ function DashboardLayout({
         <aside className="hidden md:block">
           <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} />
         </aside>
-        
+
         {/* Mobile Sidebar */}
-        <Sidebar 
-          activeSection={activeSection} 
-          setActiveSection={setActiveSection}
-          isMobile={true}
-          isOpen={isMobileSidebarOpen}
-          onToggle={() => setIsMobileSidebarOpen(false)}
-        />
-        
+        <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} isMobile={true} isOpen={isMobileSidebarOpen} onToggle={() => setIsMobileSidebarOpen(false)} />
+
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
-          {children}
-        </main>
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
       </div>
     </div>
   );
 }
 
 export default function Dashboard() {
-  const [activeSection, setActiveSection] = useState<DashboardSection>("notifications");
+  const { section } = useParams<{ section?: DashboardSection }>();
+  const navigate = useNavigate();
+  const { isAuthenticated, checkUserNeedsOnboarding } = useAuth();
+  const [activeSection, setActiveSection] = useState<DashboardSection>((section as DashboardSection) || "notifications");
+
+  // Auth and onboarding checks
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate(authPages.login, { replace: true });
+    } else if (checkUserNeedsOnboarding()) {
+      navigate(ONBOARDING_REDIRECT, { replace: true });
+    }
+    // eslint-disable-next-line
+  }, [isAuthenticated]);
+
+  // Sync state with URL param (but do not redirect if section is missing)
+  useEffect(() => {
+    if (section && section !== activeSection) {
+      setActiveSection(section as DashboardSection);
+    }
+    // eslint-disable-next-line
+  }, [section]);
+
+  // Update URL when section changes (only if user changes section)
+  const handleSetActiveSection = (newSection: DashboardSection) => {
+    setActiveSection(newSection);
+    if (newSection !== section) {
+      navigate(`/dashboard/${newSection}`);
+    }
+  };
+
+  // No need to check loading here - it's handled globally
+
+  if (!isAuthenticated || checkUserNeedsOnboarding()) {
+    // Don't render dashboard if not authenticated or not onboarded
+    return null;
+  }
 
   const renderContent = () => {
-    console.log('Rendering dashboard section:', activeSection);
-    
     switch (activeSection) {
       case "notifications":
-        console.log('Rendering DashboardNotifications');
         return <DashboardNotifications />;
       case "edit-profile":
-        console.log('Rendering EditProfile');
         return <EditProfile />;
       case "public-profile":
-        console.log('Rendering PublicProfile');
         return <PublicProfile />;
       case "competitions":
-        console.log('Rendering DashboardCompetitions');
         return <DashboardCompetitions />;
       case "votes":
-        console.log('Rendering Votes');
         return <Votes />;
       case "prize-history":
-        console.log('Rendering PrizeHistory');
         return <PrizeHistory />;
       case "settings":
-        console.log('Rendering Settings');
         return <Settings />;
       case "support":
-        console.log('Rendering Support');
         return <Support />;
       case "official-rules":
-        console.log('Rendering OfficialRules');
         return <OfficialRules />;
       case "privacy":
-        console.log('Rendering PrivacyPolicy');
         return <PrivacyPolicy />;
       default:
-        console.log('Rendering default DashboardNotifications');
         return <DashboardNotifications />;
     }
   };
 
   return (
-    <DashboardLayout activeSection={activeSection} setActiveSection={setActiveSection}>
+    <DashboardLayout activeSection={activeSection} setActiveSection={handleSetActiveSection}>
       {renderContent()}
     </DashboardLayout>
   );

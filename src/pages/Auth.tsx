@@ -1,65 +1,51 @@
 /**
  * Authentication Page Component
- * 
+ *
  * This component provides:
  * - Manual email/password authentication
  * - Professional UI design
  * - Loading states and error handling
  * - Responsive design for all devices
- * 
+ *
  * @author Swing Boudoir Development Team
  * @version 1.0.0
  */
 
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2, Shield, Users, Trophy, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Features } from "@/constants/auth.constants";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { authPages, DEFAULT_AFTER_LOGIN_REDIRECT } from "@/routes";
+import { Eye, EyeOff, Loader2, Lock, Mail, Shield, Trophy, User } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 const Auth: React.FC = () => {
-  // Use the correct handlers from AuthContext
   const { handleLoginWithEmail, handleRegister, isLoading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
+  const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
+  const { id } = useParams<{ id: string }>();
   // Form states
-  const [loginData, setLoginData] = useState({
-    email: '',
-    password: ''
-  });
+  const [loginData, setLoginData] = useState({ email: "", password: "" });
+  const [registerData, setRegisterData] = useState({ name: "", username: "", email: "", password: "", confirmPassword: "" });
 
-  const [registerData, setRegisterData] = useState({
-    name: '',
-    username: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
-  });
-
-  const [searchParams] = useSearchParams();
-
+  // Set tab based on URL param
   useEffect(() => {
-   if(searchParams.has('login')){
-    setActiveTab('login');
-   }else if(searchParams.has('register')){
-    setActiveTab('register');
-   }
-  },[searchParams])
+    if (id === "sign-in") setActiveTab("login");
+    else if (id === "sign-up") setActiveTab("register");
+  }, [id]);
 
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard');
+      navigate(DEFAULT_AFTER_LOGIN_REDIRECT, { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
@@ -74,18 +60,22 @@ const Auth: React.FC = () => {
       });
       return;
     }
+    console.log("auth", loginData.email);
     try {
-      await handleLoginWithEmail(loginData.email, loginData.password);
+      await handleLoginWithEmail({
+        email: loginData.email,
+        password: loginData.password,
+      });
       toast({
         title: "Login Successful!",
-        description: "Welcome back! Redirecting to your dashboard..."
+        description: "Welcome back! Redirecting to your dashboard...",
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Please check your credentials and try again.";
       toast({
         title: "Login Failed",
         description: errorMessage,
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -125,55 +115,38 @@ const Auth: React.FC = () => {
       });
       return;
     }
-    
+
     try {
-      await handleRegister(
-        registerData.email,
-        registerData.password,
-        registerData.name,
-        registerData.username
-      );
+      await handleRegister({
+        name: registerData.name,
+        username: registerData.username,
+        email: registerData.email,
+        password: registerData.password,
+        rememberMe: true,
+        callbackURL:authPages.login,
+      });
       toast({
         title: "Registration Successful!",
-        description: "Welcome to Swing Boudoir! Setting up your profile..."
+        description: "Welcome to Swing Boudoir! Setting up your profile...",
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Please try again with different information.";
-      
+
       // Show specific error messages for common validation issues
       let title = "Registration Failed";
-      if (errorMessage.toLowerCase().includes('email')) {
+      if (errorMessage.toLowerCase().includes("email")) {
         title = "Email Already Taken";
-      } else if (errorMessage.toLowerCase().includes('username')) {
+      } else if (errorMessage.toLowerCase().includes("username")) {
         title = "Username Already Taken";
       }
-      
+
       toast({
         title,
         description: errorMessage,
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
-
-  // Features list for the landing page
-  const features = [
-    {
-      icon: Trophy,
-      title: "Exclusive Competitions",
-      description: "Join prestigious modeling competitions with amazing prizes"
-    },
-    {
-      icon: Users,
-      title: "Global Community",
-      description: "Connect with models from around the world"
-    },
-    {
-      icon: Shield,
-      title: "Secure Platform",
-      description: "Your privacy and security are our top priority"
-    }
-  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary via-primary/90 to-primary/80 flex items-center justify-center p-4">
@@ -182,28 +155,19 @@ const Auth: React.FC = () => {
         <div className="hidden lg:block text-white space-y-8">
           <div className="space-y-4">
             <h1 className="text-4xl font-bold leading-tight">
-              Welcome to{' '}
-              <span className="bg-gradient-to-r from-accent to-accent/80 bg-clip-text text-transparent">
-                Swing Boudoir
-              </span>
+              Welcome to <span className="bg-gradient-to-r from-accent to-accent/80 bg-clip-text text-transparent">Swing Boudoir</span>
             </h1>
-            <p className="text-xl text-white/90 leading-relaxed">
-              Join the most prestigious modeling platform and compete for life-changing opportunities.
-            </p>
+            <p className="text-xl text-white/90 leading-relaxed">Join the most prestigious modeling platform and compete for life-changing opportunities.</p>
           </div>
           <div className="space-y-6">
-            {features.map((feature, index) => (
+            {Features.map((feature, index) => (
               <div key={index} className="flex items-start space-x-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center">
                   <feature.icon className="w-6 h-6 text-accent" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-1">
-                    {feature.title}
-                  </h3>
-                  <p className="text-white/80">
-                    {feature.description}
-                  </p>
+                  <h3 className="text-lg font-semibold text-white mb-1">{feature.title}</h3>
+                  <p className="text-white/80">{feature.description}</p>
                 </div>
               </div>
             ))}
@@ -212,10 +176,7 @@ const Auth: React.FC = () => {
             <div className="flex items-center space-x-4 text-white/70">
               <div className="flex -space-x-2">
                 {[1, 2, 3, 4].map((i) => (
-                  <div
-                    key={i}
-                    className="w-8 h-8 rounded-full bg-gradient-to-r from-accent to-accent/80 border-2 border-white"
-                  />
+                  <div key={i} className="w-8 h-8 rounded-full bg-gradient-to-r from-accent to-accent/80 border-2 border-white" />
                 ))}
               </div>
               <span className="text-sm">Join 25,000+ models worldwide</span>
@@ -230,17 +191,24 @@ const Auth: React.FC = () => {
                 <Trophy className="w-8 h-8 text-white" />
               </div>
               <div>
-                <CardTitle className="text-2xl font-bold text-gray-900">
-                  Get Started
-                </CardTitle>
-                <CardDescription className="text-gray-600 mt-2">
-                  Sign in or create an account to access the platform
-                </CardDescription>
+                <CardTitle className="text-2xl font-bold text-gray-900">Get Started</CardTitle>
+                <CardDescription className="text-gray-600 mt-2">Sign in or create an account to access the platform</CardDescription>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Tabs for Login/Register */}
-              <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'login' | 'register')}>
+              <Tabs
+                value={activeTab}
+                onValueChange={(value) => {
+                  setActiveTab(value as "login" | "register");
+                  // Update URL based on active tab
+                  if (value === "login") {
+                    navigate("/auth/sign-in");
+                  } else if (value === "register") {
+                    navigate("/auth/sign-up");
+                  }
+                }}
+              >
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="login">Login</TabsTrigger>
                   <TabsTrigger value="register">Register</TabsTrigger>
@@ -283,19 +251,11 @@ const Auth: React.FC = () => {
                           className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                           onClick={() => setShowPassword(!showPassword)}
                         >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </Button>
                       </div>
                     </div>
-                    <Button
-                      type="submit"
-                      disabled={isLoading}
-                      className="w-full"
-                    >
+                    <Button type="submit" disabled={isLoading} className="w-full">
                       {isLoading ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -377,11 +337,7 @@ const Auth: React.FC = () => {
                           className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                           onClick={() => setShowPassword(!showPassword)}
                         >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </Button>
                       </div>
                     </div>
@@ -405,19 +361,11 @@ const Auth: React.FC = () => {
                           className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         >
-                          {showConfirmPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
+                          {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </Button>
                       </div>
                     </div>
-                    <Button
-                      type="submit"
-                      disabled={isLoading}
-                      className="w-full"
-                    >
+                    <Button type="submit" disabled={isLoading} className="w-full">
                       {isLoading ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -436,9 +384,7 @@ const Auth: React.FC = () => {
                   <Shield className="w-4 h-4" />
                   <span>Your data is protected with industry-standard security</span>
                 </div>
-                <p className="text-xs text-gray-500 leading-relaxed">
-                  By continuing, you agree to our Terms of Service and Privacy Policy. 
-                </p>
+                <p className="text-xs text-gray-500 leading-relaxed">By continuing, you agree to our Terms of Service and Privacy Policy.</p>
               </div>
             </CardContent>
           </Card>
@@ -453,4 +399,4 @@ const Auth: React.FC = () => {
   );
 };
 
-export default Auth; 
+export default Auth;

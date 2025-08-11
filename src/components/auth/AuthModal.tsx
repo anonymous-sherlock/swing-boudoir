@@ -57,7 +57,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
     setIsLoading(true);
     try {
-      await handleLoginWithEmail(loginEmail, loginPassword);
+      await handleLoginWithEmail({email: loginEmail, password: loginPassword});
       toast({
         title: "Login Successful!",
         description: "Redirecting to your dashboard..."
@@ -118,7 +118,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
     setIsLoading(true);
     try {
-      await handleRegister(registerEmail, registerPassword, registerName, registerUsername);
+      await handleRegister({email: registerEmail, password: registerPassword, name: registerName, username: registerUsername});
       toast({
         title: "Registration Successful!",
         description: "Welcome to Swing Boudoir! Setting up your profile..."

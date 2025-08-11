@@ -11,18 +11,10 @@ import { useUploadThing, uploadFiles } from "@/lib/uploadthing";
 import { useCompetitions } from "@/hooks/useCompetitions";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
+import { useProfile } from "@/hooks/useProfile";
+import { UpdateProfileRequest } from "@/hooks/useProfile";
 
-// Mock data - replace with API calls
-const mockProfile = {
-  name: "Jane Doe",
-  bio: "Model and fitness enthusiast passionate about empowering others.",
-  charity: "american-red-cross",
-  charityReason: "I believe in helping communities during disasters and emergencies.",
-  hobbies: "Fitness, Photography, Traveling, Cooking",
-  voterMessage: "Thank you for supporting me! Your vote means the world to me.",
-  freeVoterMessage: "Every vote counts! Thank you for your support."
-};
-
+// Charity options - this could come from an API in the future
 const charities = [
   { value: "american-red-cross", label: "American Red Cross" },
   { value: "unicef", label: "UNICEF" },
@@ -32,54 +24,85 @@ const charities = [
 ];
 
 export function EditProfile() {
-  const [profile, setProfile] = useState(mockProfile);
+  const [profile, setProfile] = useState({
+    name: "",
+    bio: "",
+    charity: "",
+    charityReason: "",
+    hobbies: "",
+    voterMessage: "",
+    freeVoterMessage: ""
+  });
   const [isEditing, setIsEditing] = useState(false);
   const [profileImages, setProfileImages] = useState<string[]>([]);
-  const [votingImages, setVotingImages] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { getModelRegistrations, getCompetitionById } = useCompetitions();
   const profileFileInputRef = useRef<HTMLInputElement>(null);
-  const votingFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Get user's registered competitions
-  const modelRegistrations = user ? getModelRegistrations(user.id) : [];
+  // Use the profile hook
+  const { 
+    useProfileByUserId, 
+    updateProfile, 
+    uploadProfilePhotos, 
+    removeProfilePhoto,
+    uploadCoverImage,
+    removeCoverImage
+  } = useProfile();
 
-  // Listen for registration changes
+  // Get profile data for the current user
+  const { data: profileData, isLoading: profileLoading } = useProfileByUserId(user?.id || '');
+
+  // Update local profile state when profile data changes
   useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'modelRegistrations') {
-        // Force re-render by updating a state
-        setProfile(prev => ({ ...prev }));
-      }
-    };
+    if (profileData) {
+      setProfile({
+        name: profileData.bio || "",
+        bio: profileData.bio || "",
+        charity: "", // This field doesn't exist in the API profile
+        charityReason: "", // This field doesn't exist in the API profile
+        hobbies: profileData.hobbiesAndPassions || "",
+        voterMessage: profileData.paidVoterMessage || "",
+        freeVoterMessage: profileData.freeVoterMessage || ""
+      });
 
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+      // Set profile images from API data
+      if (profileData.profilePhotos && profileData.profilePhotos.length > 0) {
+        setProfileImages(profileData.profilePhotos.map(photo => photo.url));
+      } else {
+        setProfileImages([]);
+      }
+    }
+  }, [profileData]);
 
   const { startUpload, routeConfig } = useUploadThing("profileImages", {
-    // onClientUploadComplete: () => {
-    //   alert("uploaded successfully!");
-    // },
-    // onUploadError: () => {
-    //   alert("error occurred while uploading");
-    // },
     onUploadBegin: (fileName) => {
       console.log("upload has begun for", fileName);
     },
   });
 
   const saveProfile = async () => {
+    if (!profileData?.id) {
+      toast({
+        title: "Error",
+        description: "Profile not found. Please try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSaving(true);
     try {
-      // TODO: API call to save profile
-      console.log("Saving profile:", profile);
-      // await fetch('/api/profile', { method: 'PUT', body: JSON.stringify(profile) });
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const updateData: UpdateProfileRequest = {
+        bio: profile.bio,
+        hobbiesAndPassions: profile.hobbies,
+        paidVoterMessage: profile.voterMessage,
+        freeVoterMessage: profile.freeVoterMessage,
+        // Note: charity and charityReason are not part of the API profile model
+        // These would need to be added to the API or stored separately
+      };
+
+      await updateProfile.mutateAsync({ id: profileData.id, data: updateData });
       
       setIsEditing(false);
       toast({
@@ -97,59 +120,152 @@ export function EditProfile() {
     }
   };
 
-  const handleFileUpload = (type: 'profile' | 'voting', files: FileList | null) => {
-    if (!files) return;
+  const handleFileUpload = async (files: FileList | null) => {
+    if (!files || !profileData?.id) return;
 
-    const maxImages = type === 'profile' ? 20 : 100;
-    const currentImages = type === 'profile' ? profileImages.length : votingImages.length;
+    const maxImages = 20;
+    const currentImages = profileImages.length;
 
     if (currentImages + files.length > maxImages) {
       toast({
         title: "Too Many Images",
-        description: `You can only upload up to ${maxImages} images for ${type} photos.`,
+        description: `You can only upload up to ${maxImages} profile images.`,
         variant: "destructive"
       });
       return;
     }
 
-    Array.from(files).forEach(file => {
-      if (!file.type.startsWith('image/')) {
-        toast({
-          title: "Invalid File",
-          description: "Please select only image files.",
-          variant: "destructive"
-        });
-        return;
-      }
+    try {
+      // Upload files to the API
+      await uploadProfilePhotos.mutateAsync({ 
+        id: profileData.id, 
+        files: Array.from(files) 
+      });
 
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const imageUrl = e.target?.result as string;
-        if (type === 'profile') {
-          setProfileImages(prev => [...prev, imageUrl]);
-        } else {
-          setVotingImages(prev => [...prev, imageUrl]);
+      // Update local state for immediate UI feedback
+      Array.from(files).forEach(file => {
+        if (!file.type.startsWith('image/')) {
+          toast({
+            title: "Invalid File",
+            description: "Please select only image files.",
+            variant: "destructive"
+          });
+          return;
         }
-      };
-      reader.readAsDataURL(file);
-    });
 
-    startUpload(Array.from(files))
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const imageUrl = e.target?.result as string;
+          setProfileImages(prev => [...prev, imageUrl]);
+        };
+        reader.readAsDataURL(file);
+      });
 
-
-    toast({
-      title: "Images Uploaded!",
-      description: `${files.length} image(s) have been uploaded successfully.`,
-    });
-  };
-
-  const removeImage = (type: 'profile' | 'voting', index: number) => {
-    if (type === 'profile') {
-      setProfileImages(prev => prev.filter((_, i) => i !== index));
-    } else {
-      setVotingImages(prev => prev.filter((_, i) => i !== index));
+      toast({
+        title: "Images Uploaded!",
+        description: `${files.length} image(s) have been uploaded successfully.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload images. Please try again.",
+        variant: "destructive"
+      });
     }
   };
+
+  const handleCoverImageUpload = async (files: FileList | null) => {
+    if (!files || !profileData?.id) return;
+
+    try {
+      await uploadCoverImage.mutateAsync({ 
+        id: profileData.id, 
+        file: Array.from(files)[0] 
+      });
+
+      toast({
+        title: "Cover Image Uploaded!",
+        description: "Your cover image has been uploaded successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload cover image. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleRemoveCoverImage = async () => {
+    if (!profileData?.id) return;
+
+    try {
+      await removeCoverImage.mutateAsync({ id: profileData.id });
+      toast({
+        title: "Cover Image Removed",
+        description: "Your cover image has been removed successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to remove cover image. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const removeImage = async (index: number) => {
+    if (!profileData?.id) return;
+
+    try {
+      // If we have the image ID from the API, we can remove it
+      // For now, we'll just remove from local state
+      // In a real implementation, you'd need to get the image ID
+      setProfileImages(prev => prev.filter((_, i) => i !== index));
+      
+      toast({
+        title: "Image Removed",
+        description: "Profile image has been removed successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to remove image. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleRemoveExistingPhoto = async (photoId: string) => {
+    if (!profileData?.id) return;
+
+    try {
+      await removeProfilePhoto.mutateAsync({ id: profileData.id, imageId: photoId });
+      toast({
+        title: "Profile Photo Removed",
+        description: "Profile photo has been removed successfully.",
+      });
+      // Update local state to remove the deleted photo
+      setProfileImages(prev => prev.filter(url => url !== profileData.profilePhotos?.find(p => p.id === photoId)?.url));
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to remove profile photo. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  if (profileLoading) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -158,11 +274,11 @@ export function EditProfile() {
         <Button 
           onClick={isEditing ? saveProfile : () => setIsEditing(true)}
           className="flex items-center gap-2"
-          disabled={isSaving}
+          disabled={isSaving || updateProfile.isPending}
           size="sm"
         >
           {isEditing ? <Save className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
-          {isEditing ? (isSaving ? "Saving..." : "Save Changes") : "Edit Profile"}
+          {isEditing ? (isSaving || updateProfile.isPending ? "Saving..." : "Save Changes") : "Edit Profile"}
         </Button>
       </div>
 
@@ -283,177 +399,175 @@ export function EditProfile() {
         </CardContent>
       </Card>
 
-      {/* Photo Upload Sections */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile Photos (Up to 20 images)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <input
-              type="file"
-              ref={profileFileInputRef}
-              multiple
-              accept="image/*"
-              onChange={(e) => handleFileUpload('profile', e.target.files)}
-              className="hidden"
-              aria-label="Upload profile photos"
-            />
-            
-            {profileImages.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                {profileImages.map((image, index) => (
-                  <div key={index} className="relative group">
-                    <img
-                      src={image}
-                      alt={`Profile ${index + 1}`}
-                      className="w-full h-32 object-cover rounded-lg"
-                    />
-                    <button
-                      onClick={() => removeImage('profile', index)}
-                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                      aria-label={`Remove profile image ${index + 1}`}
-                      title={`Remove profile image ${index + 1}`}
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
+      {/* Photo Upload Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Profile Cover Image</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <input
+            type="file"
+            id="coverImageInput"
+            accept="image/*"
+            onChange={(e) => handleCoverImageUpload(e.target.files)}
+            className="hidden"
+            aria-label="Upload profile cover image"
+            disabled={uploadCoverImage.isPending}
+          />
+          
+          {profileData?.coverImage?.url && (
+            <div className="mb-4">
+              <div className="relative group aspect-w-1 aspect-h-1 w-48 mx-auto">
+                <img
+                  src={profileData.coverImage.url}
+                  alt="Profile Cover"
+                  className="w-full h-full object-cover rounded-lg"
+                  onError={(e) => {
+                    console.error('Failed to load cover image:', e);
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <button
+                  onClick={handleRemoveCoverImage}
+                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="Remove cover image"
+                  title="Remove cover image"
+                  disabled={removeCoverImage.isPending}
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
-            )}
-            
-            <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
-              <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-4">
-                {profileImages.length}/20 images uploaded
-              </p>
-              <Button 
-                variant="outline"
-                onClick={() => profileFileInputRef.current?.click()}
-                disabled={profileImages.length >= 20}
-              >
-                <Upload className="mr-2 h-4 w-4" />
-                Upload Profile Photos
-              </Button>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Voting Photos (Up to 100 images)</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Only visible to voters. Each vote unlocks one image (20 at a time).
+          )}
+          
+          <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+            <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <p className="text-muted-foreground mb-4">
+              {profileData?.coverImage?.url ? "Cover image uploaded" : "No cover image uploaded"}
             </p>
-          </CardHeader>
-          <CardContent>
-            <input
-              type="file"
-              ref={votingFileInputRef}
-              multiple
-              accept="image/*"
-              onChange={(e) => handleFileUpload('voting', e.target.files)}
-              className="hidden"
-              aria-label="Upload voting photos"
-            />
-            
-            {votingImages.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                {votingImages.map((image, index) => (
-                  <div key={index} className="relative group">
+            <Button 
+              variant="outline"
+              onClick={() => document.getElementById('coverImageInput')?.click()}
+              disabled={uploadCoverImage.isPending}
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              {uploadCoverImage.isPending ? "Uploading..." : "Upload Cover Image"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Profile Photos Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Profile Photos (Up to 20 images)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <input
+            type="file"
+            ref={profileFileInputRef}
+            multiple
+            accept="image/*"
+            onChange={(e) => handleFileUpload(e.target.files)}
+            className="hidden"
+            aria-label="Upload profile photos"
+            disabled={uploadProfilePhotos.isPending}
+          />
+          
+          {profileImages.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              {profileImages.map((image, index) => (
+                <div key={index} className="relative group">
+                  <img
+                    src={image}
+                    alt={`Profile ${index + 1}`}
+                    className="w-full h-32 object-cover rounded-lg"
+                    onError={(e) => {
+                      console.error('Failed to load local profile image:', e);
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                  <button
+                    onClick={() => removeImage(index)}
+                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label={`Remove profile image ${index + 1}`}
+                    title={`Remove profile image ${index + 1}`}
+                    disabled={removeProfilePhoto.isPending}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {/* Show existing profile photos from API */}
+          {profileData?.profilePhotos && profileData.profilePhotos.length > 0 && (
+            <div className="mb-4">
+              <h4 className="text-sm font-medium mb-2 text-muted-foreground">Existing Profile Photos:</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {profileData.profilePhotos.map((photo, index) => (
+                  <div key={photo.id} className="relative group">
                     <img
-                      src={image}
-                      alt={`Voting ${index + 1}`}
+                      src={photo.url}
+                      alt={`Profile Photo ${index + 1}`}
                       className="w-full h-32 object-cover rounded-lg"
+                      onError={(e) => {
+                        console.error('Failed to load profile photo:', e);
+                        e.currentTarget.style.display = 'none';
+                      }}
                     />
                     <button
-                      onClick={() => removeImage('voting', index)}
+                      onClick={() => handleRemoveExistingPhoto(photo.id)}
                       className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                      aria-label={`Remove voting image ${index + 1}`}
-                      title={`Remove voting image ${index + 1}`}
+                      aria-label={`Remove profile photo ${index + 1}`}
+                      title={`Remove profile photo ${index + 1}`}
+                      disabled={removeProfilePhoto.isPending}
                     >
                       <X className="h-3 w-3" />
                     </button>
                   </div>
                 ))}
               </div>
-            )}
-            
-            <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
-              <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-4">
-                {votingImages.length}/100 images uploaded
-              </p>
-              <Button 
-                variant="outline"
-                onClick={() => votingFileInputRef.current?.click()}
-                disabled={votingImages.length >= 100}
-              >
-                <Upload className="mr-2 h-4 w-4" />
-                Upload Voting Photos
-              </Button>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          )}
+          
+          <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+            <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <p className="text-muted-foreground mb-4">
+              {profileImages.length}/20 images uploaded
+            </p>
+            <Button 
+              variant="outline"
+              onClick={() => profileFileInputRef.current?.click()}
+              disabled={profileImages.length >= 20 || uploadProfilePhotos.isPending}
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              {uploadProfilePhotos.isPending ? "Uploading..." : "Upload Profile Photos"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Competition Enrollments */}
+      {/* Competition Enrollments - Removed mock data, showing empty state */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
             <Trophy className="mr-2 h-5 w-5" />
-            Competition Enrollments ({modelRegistrations.length})
+            Competition Enrollments
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {modelRegistrations.length === 0 ? (
-            <div className="text-center py-8">
-              <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h4 className="text-lg font-semibold mb-2">No Competitions Registered</h4>
-              <p className="text-muted-foreground mb-4">
-                You haven't registered for any competitions yet.
-              </p>
-              <Button variant="outline" onClick={() => window.location.href = '/competitions'}>
-                Browse Competitions
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {modelRegistrations.map((registration) => {
-                const competition = getCompetitionById(registration.competitionId);
-                if (!competition) return null;
-
-                return (
-                  <div key={registration.competitionId} className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-semibold">{competition.title}</h4>
-                      <Badge variant={competition.status === 'active' ? 'default' : 'secondary'}>
-                        {competition.status === 'active' ? 'Active' : competition.status === 'coming-soon' ? 'Coming Soon' : 'Ended'}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-2">{competition.prize}</p>
-                    <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
-                      <div className="flex items-center">
-                        <Calendar className="mr-1 h-4 w-4" />
-                        <span>Registered: {new Date(registration.registeredAt).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Trophy className="mr-1 h-4 w-4" />
-                        <span>{registration.currentVotes || 0} votes</span>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">View Details</Button>
-                      <Button variant="outline" size="sm">
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit Photos
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          <div className="text-center py-8">
+            <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h4 className="text-lg font-semibold mb-2">No Competitions Registered</h4>
+            <p className="text-muted-foreground mb-4">
+              You haven't registered for any competitions yet.
+            </p>
+            <Button variant="outline" onClick={() => window.location.href = '/competitions'}>
+              Browse Competitions
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

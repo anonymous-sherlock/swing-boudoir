@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,9 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { apiRequest } from '@/lib/api';
+import { useCompetitions } from '@/hooks/useCompetitions';
+import { Competition as CompetitionType } from '@/types/competitions.types';
+import { formatUsdAbbrev } from '@/lib/utils';
 
 interface UserProfile {
   id: string;
@@ -44,62 +47,18 @@ interface UserStats {
   totalEarnings: number;
 }
 
-interface CompetitionRegistration {
-  id: string;
-  competitionId: string;
-  competitionName: string;
-  competitionStatus: 'active' | 'coming-soon' | 'ended';
-  registrationDate: string;
-  votes: number;
-  rank: number;
-  totalParticipants: number;
-  endDate: string;
-  prize: string;
-}
+// Joined contests are read from useCompetitions()
 
 export function PublicProfile() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [userStats, setUserStats] = useState<UserStats | null>(null);
-  const [competitions, setCompetitions] = useState<CompetitionRegistration[]>([]);
   const [timeLeft, setTimeLeft] = useState<{ [key: string]: string }>({});
   const [error, setError] = useState<string | null>(null);
+  const { joinedCompetitions, isLoadingJoined } = useCompetitions();
 
-  useEffect(() => {
-    if (user?.username) {
-      fetchUserData();
-    }
-  }, [user?.username]);
-
-  // Countdown timer for competitions
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const newTimeLeft: { [key: string]: string } = {};
-      
-      competitions.forEach(competition => {
-        const now = new Date().getTime();
-        const end = new Date(competition.endDate).getTime();
-        const difference = end - now;
-
-        if (difference > 0) {
-          const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-          const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-          const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-          const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-          
-          newTimeLeft[competition.id] = `${days.toString().padStart(2, '0')} : ${hours.toString().padStart(2, '0')} : ${minutes.toString().padStart(2, '0')} : ${seconds.toString().padStart(2, '0')}`;
-        } else {
-          newTimeLeft[competition.id] = "Ended";
-        }
-      });
-      setTimeLeft(newTimeLeft);
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [competitions]);
-
-  const fetchUserData = async () => {
+  const fetchUserData = useCallback(async () => {
     try {
       setError(null);
 
@@ -108,7 +67,7 @@ export function PublicProfile() {
       // Fetch user profile
       const profileResponse = await apiRequest(`/api/v1/users/${user?.id}/profile`, {
         headers: {
-          'Authorization': `BeFarer ${token}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -131,24 +90,46 @@ export function PublicProfile() {
         setUserStats(statsData);
       }
 
-      // Fetch competition registrations
-      const competitionsResponse = await apiRequest(`/api/v1/users/${user?.id}/competitions`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (competitionsResponse.success) {
-        const competitionsData = competitionsResponse.data;
-        setCompetitions(competitionsData.competitions || []);
-      }
+      // Joined contests are loaded via useCompetitions()
 
     } catch (error) {
       console.error('Error fetching user data:', error);
       setError('Failed to load profile data');
     }
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user?.username) {
+      fetchUserData();
+    }
+  }, [user?.username, fetchUserData]);
+
+  // Countdown timer for joined contests
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const newTimeLeft: { [key: string]: string } = {};
+      
+      (joinedCompetitions || []).forEach((competition: CompetitionType) => {
+        const now = new Date().getTime();
+        const end = new Date(competition.endDate).getTime();
+        const difference = end - now;
+
+        if (difference > 0) {
+          const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+          const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+          const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+          
+          newTimeLeft[competition.id] = `${days.toString().padStart(2, '0')} : ${hours.toString().padStart(2, '0')} : ${minutes.toString().padStart(2, '0')} : ${seconds.toString().padStart(2, '0')}`;
+        } else {
+          newTimeLeft[competition.id] = "Ended";
+        }
+      });
+      setTimeLeft(newTimeLeft);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [joinedCompetitions]);
 
   const shareProfile = async () => {
     try {
@@ -187,6 +168,15 @@ export function PublicProfile() {
       default:
         return { label: 'Unknown', color: 'bg-gray-500' };
     }
+  };
+
+  const computeStatusForContest = (contest: CompetitionType): 'active' | 'coming-soon' | 'ended' => {
+    const now = new Date();
+    const start = new Date(contest.startDate);
+    const end = new Date(contest.endDate);
+    if (now < start) return 'coming-soon';
+    if (now > end) return 'ended';
+    return 'active';
   };
 
   // Show error state
@@ -265,7 +255,7 @@ export function PublicProfile() {
               <div className="text-xs text-muted-foreground">Current Rank</div>
             </div>
             <div className="text-center">
-              <div className="text-lg font-bold text-primary">{competitions.length}</div>
+              <div className="text-lg font-bold text-primary">{joinedCompetitions?.length || 0}</div>
               <div className="text-xs text-muted-foreground">Registered</div>
             </div>
           </div>
@@ -293,20 +283,22 @@ export function PublicProfile() {
         </CardContent>
       </Card>
 
-      {/* Registered Competitions */}
+      {/* Joined Contests */}
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="font-semibold text-sm">Your Competitions</h3>
+              <h3 className="font-semibold text-sm">Joined Contests</h3>
               <p className="text-xs text-muted-foreground">
-                {competitions.length} registered competitions
+                {joinedCompetitions?.length || 0} joined
               </p>
             </div>
             <Trophy className="h-4 w-4 text-muted-foreground" />
           </div>
           
-          {competitions.length === 0 ? (
+          {isLoadingJoined ? (
+            <div className="text-center py-6 text-sm text-muted-foreground">Loading...</div>
+          ) : (joinedCompetitions?.length || 0) === 0 ? (
             <div className="text-center py-6">
               <Users className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
               <p className="text-sm text-muted-foreground">No competitions registered</p>
@@ -317,80 +309,65 @@ export function PublicProfile() {
           ) : (
             <div className="space-y-4">
               {/* Registered Active Competitions */}
-              {competitions
-                .filter(comp => comp.competitionStatus === 'active')
-                .map((competition) => (
+              {(joinedCompetitions || [])
+                .filter((comp: CompetitionType) => computeStatusForContest(comp) === 'active')
+                .map((competition: CompetitionType) => (
                   <div key={competition.id} className="border rounded-md p-3 bg-green-50">
                     <div className="flex items-center justify-between mb-1.5">
-                      <h5 className="font-medium text-xs">{competition.competitionName}</h5>
+                      <h5 className="font-medium text-xs">{competition.name}</h5>
                       <div className="flex items-center space-x-2">
                         <Badge variant="secondary" className="text-xs px-2 py-0.5 bg-green-100 text-green-800">
                           Active
                         </Badge>
-                        <Badge variant="secondary" className="text-xs px-2 py-0.5">
-                          Rank #{competition.rank || 'N/A'}
-                        </Badge>
                       </div>
                     </div>
-                    <p className="text-xs text-muted-foreground mb-1.5">{competition.prize}</p>
+                    <p className="text-xs text-muted-foreground mb-1.5">Prize Pool: {formatUsdAbbrev(competition.prizePool)}</p>
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <div className="flex items-center">
                         <Clock className="mr-1 h-3 w-3" />
                         <span>{timeLeft[competition.id] || "Loading..."}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Trophy className="mr-1 h-3 w-3" />
-                        <span>{competition.votes || 0} votes</span>
                       </div>
                     </div>
                   </div>
                 ))}
 
               {/* Registered Coming Soon Competitions */}
-              {competitions
-                .filter(comp => comp.competitionStatus === 'coming-soon')
-                .map((competition) => (
+              {(joinedCompetitions || [])
+                .filter((comp: CompetitionType) => computeStatusForContest(comp) === 'coming-soon')
+                .map((competition: CompetitionType) => (
                   <div key={competition.id} className="border rounded-md p-3 bg-blue-50">
                     <div className="flex items-center justify-between mb-1.5">
-                      <h5 className="font-medium text-xs">{competition.competitionName}</h5>
+                      <h5 className="font-medium text-xs">{competition.name}</h5>
                       <Badge variant="secondary" className="text-xs px-2 py-0.5 bg-blue-100 text-blue-800">
                         Coming Soon
                       </Badge>
                     </div>
-                    <p className="text-xs text-muted-foreground mb-1.5">{competition.prize}</p>
+                    <p className="text-xs text-muted-foreground mb-1.5">Starts {formatDate(competition.startDate)}</p>
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <div className="flex items-center">
                         <Clock className="mr-1 h-3 w-3" />
                         <span>{timeLeft[competition.id] || "Loading..."}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Trophy className="mr-1 h-3 w-3" />
-                        <span>0 votes</span>
                       </div>
                     </div>
                   </div>
                 ))}
 
               {/* Registered Ended Competitions */}
-              {competitions
-                .filter(comp => comp.competitionStatus === 'ended')
-                .map((competition) => (
+              {(joinedCompetitions || [])
+                .filter((comp: CompetitionType) => computeStatusForContest(comp) === 'ended')
+                .map((competition: CompetitionType) => (
                   <div key={competition.id} className="border rounded-md p-3 bg-gray-50">
                     <div className="flex items-center justify-between mb-1.5">
-                      <h5 className="font-medium text-xs">{competition.competitionName}</h5>
+                      <h5 className="font-medium text-xs">{competition.name}</h5>
                       <Badge variant="secondary" className="text-xs px-2 py-0.5 bg-gray-100 text-gray-800">
                         Ended
                       </Badge>
                     </div>
-                    <p className="text-xs text-muted-foreground mb-1.5">{competition.prize}</p>
+                    <p className="text-xs text-muted-foreground mb-1.5">Ended {formatDate(competition.endDate)}</p>
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <div className="flex items-center">
                         <Clock className="mr-1 h-3 w-3" />
                         <span>Ended</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Trophy className="mr-1 h-3 w-3" />
-                        <span>{competition.votes || 0} votes</span>
                       </div>
                     </div>
                   </div>

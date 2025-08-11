@@ -1,5 +1,5 @@
 import Header from "@/components/Header";
-import HeroSection from "@/components/HeroSection";
+import HeroSection from "@/components/home/HeroSection";
 import CompetitionsSection from "@/components/CompetitionsSection";
 import Footer from "@/components/Footer";
 

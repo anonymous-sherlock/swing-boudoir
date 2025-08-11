@@ -66,8 +66,8 @@
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     /* Typography scale */
-    --font-display: 'Playfair Display', serif;
-    --font-body: 'Inter', sans-serif;
+    --font-display: "Playfair Display", serif;
+    --font-body: "Inter", sans-serif;
   }
 
   .dark {
@@ -171,5 +171,26 @@
   /* Scroll behavior */
   html {
     scroll-behavior: smooth;
+  }
+
+  .custom-loader {
+    margin: 0 auto;
+    width: 50px;
+    height: 50px;
+    --pc: radial-gradient(farthest-side, #fbd051 92%, #0000);
+    background: var(--pc) 50% 0, var(--pc) 50% 100%, var(--pc) 100% 50%, var(--pc) 0 50%;
+    background-size: 10px 10px;
+    background-repeat: no-repeat;
+    animation: spin 1.5s linear infinite;
+    position: relative;
+  }
+  .custom-loader:before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    margin: 3px;
+    background: repeating-conic-gradient(transparent 0 35deg, #fbd051 0 90deg);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 0);
+    border-radius: 50%;
   }
 }

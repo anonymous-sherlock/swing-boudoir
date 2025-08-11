@@ -1,173 +1,143 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { 
-  Bell, 
-  CheckCircle, 
-  AlertCircle, 
-  Info, 
-  Trash2
-} from "lucide-react";
-import { apiRequest } from '@/lib/api';
+import { Card, CardContent } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
+import { api } from "@/lib/api";
+import { AUTH_TOKEN_KEY } from "@/lib/auth";
+import { Notification, NotificationsListResponse } from "@/types/notifications.types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
+import { AlertCircle, Bell, CheckCircle, Info } from "lucide-react";
 
-interface Notification {
-  id: string;
-  message: string;
-  userId: string;
-  profileId?: string;
-  createdAt: string;
-  updatedAt: string;
-  isRead: boolean;
-  archived: boolean;
-  icon?: 'WARNING' | 'SUCESS' | 'INFO';
-  action?: string;
-}
+// API functions
+const fetchNotifications = async (profileId: string): Promise<NotificationsListResponse> => {
+  const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  if (!token) throw new Error("No authentication token");
+  const response = await api.get<NotificationsListResponse>(`/api/v1/notifications?profileId=${profileId}`);
+  if (!response.success) {
+    throw new Error(response.error);
+  }
+  return response.data;
+};
+
+const markNotificationAsRead = async (notificationId: string): Promise<void> => {
+  const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  if (!token) throw new Error("No authentication token");
+
+  const response = await api.patch(`/api/v1/notifications/${notificationId}/read`);
+  if (!response.success) {
+    throw new Error(response.error);
+  }
+};
+
+const markAllNotificationsAsRead = async (profileId: string): Promise<void> => {
+  const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  if (!token) throw new Error("No authentication token");
+
+  const response = await api.patch(`/api/v1/notifications/${profileId}/read`);
+};
+
+// Utility functions
+const getNotificationIcon = (icon?: string) => {
+  switch (icon) {
+    case "WARNING":
+      return <AlertCircle className="h-4 w-4 text-yellow-500" />;
+    case "SUCCESS":
+      return <CheckCircle className="h-4 w-4 text-green-500" />;
+    case "INFO":
+      return <Info className="h-4 w-4 text-blue-500" />;
+    default:
+      return <Bell className="h-4 w-4 text-gray-500" />;
+  }
+};
 
 export function DashboardNotifications() {
   const { user } = useAuth();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const profileId = user?.profileId;
 
-  useEffect(() => {
-    if (user?.id) {
-      loadNotifications();
-    }
-  }, [user?.id]);
+  // Fetch notifications
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ["notifications", profileId],
+    queryFn: () => fetchNotifications(profileId!),
+    enabled: !!profileId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: false,
+  });
 
-  const loadNotifications = async () => {
-    try {
-      setError(null);
-
-      const token = localStorage.getItem('token');
-      const response = await apiRequest(`/api/v1/notifications?userId=${user?.id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+  // Mark single notification as read
+  const markAsReadMutation = useMutation({
+    mutationFn: markNotificationAsRead,
+    onSuccess: (_, notificationId) => {
+      queryClient.setQueryData(["notifications", profileId], (old: Notification[] | undefined) => {
+        if (!old) return old;
+        return old.map((notification) => (notification.id === notificationId ? { ...notification, isRead: true } : notification));
       });
+    },
+  });
 
-      if (response.success) {
-        const data = response.data;
-        setNotifications(data.notifications || []);
-      } else {
-        setError('Failed to load notifications');
-      }
-    } catch (error) {
-      console.error('Error loading notifications:', error);
-      setError('Failed to load notifications');
-    }
-  };
-
-  const markAsRead = async (notificationId: string) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/v1/notifications/${notificationId}/read`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+  // Mark all notifications as read
+  const markAllAsReadMutation = useMutation({
+    mutationFn: markAllNotificationsAsRead,
+    onSuccess: () => {
+      queryClient.setQueryData(["notifications", profileId], (old: Notification[] | undefined) => {
+        if (!old) return old;
+        return old.map((notification) => ({ ...notification, isRead: true }));
       });
+    },
+  });
 
-      if (response.ok) {
-        setNotifications(prev => 
-          prev.map(notification => 
-            notification.id === notificationId 
-              ? { ...notification, isRead: true }
-              : notification
-          )
-        );
-      }
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-    }
-  };
+  const unreadCount = data?.notifications?.filter((n) => !n.isRead).length ?? 0;
 
-  const markAllAsRead = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/v1/notifications/mark-all-read', {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        setNotifications(prev => 
-          prev.map(notification => ({ ...notification, isRead: true }))
-        );
-      }
-    } catch (error) {
-      console.error('Error marking all notifications as read:', error);
-    }
-  };
-
-  const getIcon = (icon?: string) => {
-    switch (icon) {
-      case 'WARNING':
-        return <AlertCircle className="h-4 w-4 text-yellow-500" />;
-      case 'SUCESS':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'INFO':
-        return <Info className="h-4 w-4 text-blue-500" />;
-      default:
-        return <Bell className="h-4 w-4 text-gray-500" />;
-    }
-  };
-
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-    
-    if (diffInMinutes < 1) return 'Just now';
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
-    return `${Math.floor(diffInMinutes / 1440)}d ago`;
-  };
-
-  const unreadCount = notifications.filter(n => !n.isRead).length;
-
-  // Show no data message
-  if (notifications.length === 0 && !error) {
+  // Loading state
+  if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">Notifications</h1>
         </div>
-        
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
-            <Bell className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-semibold mb-2">No notifications yet</h3>
-            <p className="text-muted-foreground">
-              You'll see notifications here when you receive votes, join competitions, or get important updates.
-            </p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading notifications...</p>
           </div>
         </div>
       </div>
     );
   }
 
+  // Error state
   if (error) {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">Notifications</h1>
         </div>
-        
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <AlertCircle className="h-12 w-12 mx-auto mb-4 text-red-500" />
             <h3 className="text-lg font-semibold mb-2">Error loading notifications</h3>
-            <p className="text-muted-foreground mb-4">{error}</p>
-            <Button onClick={loadNotifications} variant="outline">
+            <p className="text-muted-foreground mb-4">{error instanceof Error ? error.message : "Failed to load notifications"}</p>
+            <Button onClick={() => refetch()} variant="outline">
               Try Again
             </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // No notifications state
+  if (!data?.notifications || data.notifications.length === 0) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-foreground">Notifications</h1>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <Bell className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <p className="text-muted-foreground">You'll see notifications here when you receive votes, join competitions, or get important updates.</p>
           </div>
         </div>
       </div>
@@ -181,48 +151,27 @@ export function DashboardNotifications() {
         <div className="flex items-center space-x-2">
           <Badge variant="secondary">{unreadCount} unread</Badge>
           {unreadCount > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={markAllAsRead}
-              className="text-xs"
-            >
-              Mark all as read
+            <Button variant="outline" size="sm" onClick={() => markAllAsReadMutation.mutate(profileId!)} disabled={markAllAsReadMutation.isPending} className="text-xs">
+              {markAllAsReadMutation.isPending ? "Marking..." : "Mark all as read"}
             </Button>
           )}
         </div>
       </div>
 
       <div className="space-y-4">
-        {notifications.map((notification) => (
-          <Card 
-            key={notification.id} 
-            className={`transition-all duration-200 ${
-              !notification.isRead ? 'border-l-4 border-l-primary bg-primary/5' : ''
-            }`}
-          >
+        {data.notifications.map((notification) => (
+          <Card key={notification.id} className={`transition-all duration-200 ${!notification.isRead ? "border-l-4 border-l-primary bg-primary/5" : ""}`}>
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-start space-x-3 flex-1">
-                  <div className="mt-1">
-                    {getIcon(notification.icon)}
-                  </div>
+                  <div className="mt-1">{getNotificationIcon(notification.icon)}</div>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm ${!notification.isRead ? 'font-medium' : 'text-muted-foreground'}`}>
-                      {notification.message}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {formatTime(notification.createdAt)}
-                    </p>
+                    <p className={`text-sm ${!notification.isRead ? "font-medium" : "text-muted-foreground"}`}>{notification.message}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}</p>
                   </div>
                 </div>
                 {!notification.isRead && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => markAsRead(notification.id)}
-                    className="ml-2"
-                  >
+                  <Button variant="ghost" size="sm" onClick={() => markAsReadMutation.mutate(notification.id)} disabled={markAsReadMutation.isPending} className="ml-2">
                     <CheckCircle className="h-4 w-4" />
                   </Button>
                 )}

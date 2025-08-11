@@ -15,6 +15,7 @@ import { jwtDecode } from 'jwt-decode';
 
 // API Configuration
 export const API_BASE_URL = '/api/v1';
+export const AUTH_TOKEN_KEY = "b-auth-swing"
 
 // JWT Token Interface
 export interface JWTPayload {
@@ -59,7 +60,7 @@ export const registerUser = async (userData: { name: string; email: string; pass
   try {
     // Get existing users from localStorage
     const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
-    
+
     // Check if email already exists
     const emailExists = existingUsers.some((user: StoredUser) => user.email === userData.email);
     if (emailExists) {
@@ -93,7 +94,7 @@ export const registerUser = async (userData: { name: string; email: string; pass
     // Store authentication data
     sessionStorage.setItem('authToken', token);
     sessionStorage.setItem('userData', JSON.stringify(newUser));
-    
+
     return {
       success: true,
       user: newUser,
@@ -117,9 +118,9 @@ export const loginWithEmail = async (credentials: { email: string; password: str
   try {
     // Get users from localStorage
     const users = JSON.parse(localStorage.getItem('users') || '[]');
-    
+
     // Find user with matching credentials
-    const user = users.find((u: StoredUser) => 
+    const user = users.find((u: StoredUser) =>
       u.email === credentials.email && u.password === credentials.password
     );
 
@@ -144,7 +145,7 @@ export const loginWithEmail = async (credentials: { email: string; password: str
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
     }));
-    
+
     return {
       success: true,
       user: {
@@ -176,12 +177,12 @@ export const validateToken = (token: string): JWTPayload | null => {
   try {
     const decoded = jwtDecode<JWTPayload>(token);
     const currentTime = Date.now() / 1000;
-    
+
     // Check if token is expired
     if (decoded.exp < currentTime) {
       return null;
     }
-    
+
     return decoded;
   } catch (error) {
     console.error('Token validation error:', error);
@@ -196,7 +197,7 @@ export const validateToken = (token: string): JWTPayload | null => {
 export const getAuthToken = (): string | null => {
   const token = sessionStorage.getItem('authToken');
   if (!token) return null;
-  
+
   // Validate token before returning
   const isValid = validateToken(token);
   if (!isValid) {
@@ -205,7 +206,7 @@ export const getAuthToken = (): string | null => {
     sessionStorage.removeItem('userData');
     return null;
   }
-  
+
   return token;
 };
 
@@ -216,11 +217,11 @@ export const getAuthToken = (): string | null => {
 export const getCurrentUser = (): User | null => {
   const userData = sessionStorage.getItem('userData');
   const token = getAuthToken();
-  
+
   if (!userData || !token) {
     return null;
   }
-  
+
   try {
     return JSON.parse(userData) as User;
   } catch (error) {
@@ -236,7 +237,7 @@ export const logout = (): void => {
   // Clear session storage
   sessionStorage.removeItem('authToken');
   sessionStorage.removeItem('userData');
-  
+
   // Clear any refresh token timers
   if (window.tokenRefreshTimer) {
     clearTimeout(window.tokenRefreshTimer);
@@ -252,10 +253,10 @@ const setupTokenRefresh = (token: string): void => {
     const decoded = jwtDecode<JWTPayload>(token);
     const currentTime = Date.now() / 1000;
     const timeUntilExpiry = (decoded.exp - currentTime) * 1000;
-    
+
     // Refresh token 5 minutes before expiry
     const refreshTime = Math.max(timeUntilExpiry - (5 * 60 * 1000), 60000); // Minimum 1 minute
-    
+
     window.tokenRefreshTimer = setTimeout(async () => {
       await refreshToken();
     }, refreshTime);
@@ -271,7 +272,7 @@ const refreshToken = async (): Promise<void> => {
   try {
     const currentToken = getAuthToken();
     if (!currentToken) return;
-    
+
     const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
       method: 'POST',
       headers: {
@@ -279,9 +280,9 @@ const refreshToken = async (): Promise<void> => {
         'Content-Type': 'application/json',
       },
     });
-    
+
     const result: AuthResponse = await response.json();
-    
+
     if (result.success && result.token) {
       sessionStorage.setItem('authToken', result.token);
       setupTokenRefresh(result.token);
@@ -302,12 +303,12 @@ const refreshToken = async (): Promise<void> => {
 export const createAuthHeaders = (): Headers => {
   const headers = new Headers();
   headers.append('Content-Type', 'application/json');
-  
+
   const token = getAuthToken();
   if (token) {
     headers.append('Authorization', `Bearer ${token}`);
   }
-  
+
   return headers;
 };
 

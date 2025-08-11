@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Heart, Users, DollarSign, MessageSquare, AlertCircle } from "lucide-react";
-import { apiRequest } from '@/lib/api';
+import { api, apiRequest } from '@/lib/api';
 
 interface Vote {
   id: string;
@@ -34,11 +34,6 @@ export function Votes() {
   const [voteStats, setVoteStats] = useState<VoteStats | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user?.id) {
-      fetchVoteData();
-    }
-  }, [user?.id]);
 
   const fetchVoteData = async () => {
     try {
@@ -47,15 +42,14 @@ export function Votes() {
       const token = localStorage.getItem('token');
       
       // Fetch vote statistics
-      const statsResponse = await apiRequest(`/api/v1/votes/stats?profileId=${user?.id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const statsResponse = await api.get(`/api/v1/votes/stats?profileId=${user?.profileId}`);
+
+      if (!statsResponse.success) {
+        throw new Error('Failed to fetch vote statistics');
+      } 
 
       if (statsResponse.success) {
-        const statsData = await statsResponse.json();
+        const statsData = await statsResponse.data;
         setVoteStats(statsData as VoteStats);
       }
 
@@ -68,20 +62,20 @@ export function Votes() {
       });
 
       if (topVotersResponse.success) {
-        const topVotersData = await topVotersResponse.json() as { votes?: Vote[] };
+        const topVotersData = await topVotersResponse.data as { votes?: Vote[] };
         setTopVoters(topVotersData.votes || []);
       }
 
       // Fetch recent votes
-      const recentVotesResponse = await fetch(`/api/v1/votes/recent?profileId=${user?.id}&limit=20`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const recentVotesResponse = await api.get(`/api/v1/votes/recent?profileId=${user?.id}&limit=20`);
 
-      if (recentVotesResponse.ok) {
-        const recentVotesData = await recentVotesResponse.json();
+      if (recentVotesResponse.success) {
+        const recentVotesData = await recentVotesResponse.data;
+        setRecentVotes(recentVotesData.votes || []);
+      } 
+
+      if (recentVotesResponse.success) {
+        const recentVotesData = await recentVotesResponse.data;
         setRecentVotes(recentVotesData.votes || []);
       }
 
