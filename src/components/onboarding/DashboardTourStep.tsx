@@ -91,10 +91,10 @@ export const DashboardTourStep: React.FC = () => {
       <div className="text-center">
         <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl p-8 max-w-lg mx-auto">
           <h3 className="text-2xl font-bold mb-4">
-            🎉 You're All Set!
+             You're All Set!
           </h3>
           <p className="text-purple-100 mb-6">
-            Congratulations! You're ready to start earning money and building your following. 
+            Congratulations!
             Your profile is set up and you understand how everything works!
           </p>
           <Button

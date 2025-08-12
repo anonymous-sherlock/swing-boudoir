@@ -24,9 +24,9 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({ children }) 
         <div className="max-w-2xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-sm">S</span>
-              </div>
+              {/* <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-sm">SB</span>
+              </div> */}
               <span className="text-xl font-bold text-gray-800">Swing Boudoir</span>
             </div>
             
@@ -59,7 +59,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({ children }) 
             </div>
 
             {/* Simple Navigation */}
-            <div className="bg-gray-50 px-8 py-6 border-t">
+            {/* <div className="bg-gray-50 px-8 py-6 border-t">
               <div className="flex items-center justify-between">
                 <Button
                   variant="outline"
@@ -86,7 +86,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({ children }) 
                   ))}
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

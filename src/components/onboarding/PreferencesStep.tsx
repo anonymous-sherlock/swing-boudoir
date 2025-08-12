@@ -44,9 +44,9 @@ export const PreferencesStep: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="max-w-3xl mx-auto p-6 space-y-10">
       {/* Header */}
-      <div className="text-center space-y-4">
+      <div className="text-center space-y-3">
         <h2 className="text-3xl font-bold text-gray-900">
           What do you want to achieve?
         </h2>
@@ -56,42 +56,44 @@ export const PreferencesStep: React.FC = () => {
       </div>
 
       {/* Goals Selection */}
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-          {goals.map((goal) => (
-            <div 
-              key={goal.id} 
-              className={`border-2 rounded-xl p-6 cursor-pointer transition-all duration-200 hover:shadow-md ${
-                onboardingData.preferences.goals.includes(goal.id)
-                  ? 'border-purple-500 bg-purple-50'
-                  : 'border-gray-200 bg-white'
-              }`}
-              onClick={() => handleGoalChange(goal.id, !onboardingData.preferences.goals.includes(goal.id))}
-            >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+        {goals.map((goal) => (
+          <div 
+            key={goal.id} 
+            className={`border-2 rounded-lg p-5 cursor-pointer transition-all hover:shadow-sm ${
+              onboardingData.preferences.goals.includes(goal.id)
+                ? 'border-purple-400 bg-purple-50'
+                : 'border-gray-200 bg-white hover:border-gray-300'
+            }`}
+            onClick={() => handleGoalChange(goal.id, !onboardingData.preferences.goals.includes(goal.id))}
+          >
+            <div className="flex items-center space-x-4">
+              <Checkbox
+                id={goal.id}
+                checked={onboardingData.preferences.goals.includes(goal.id)}
+                onCheckedChange={(checked) => handleGoalChange(goal.id, checked as boolean)}
+                className="data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+              />
               <div className="flex items-center space-x-3">
-                <Checkbox
-                  id={goal.id}
-                  checked={onboardingData.preferences.goals.includes(goal.id)}
-                  onCheckedChange={(checked) => handleGoalChange(goal.id, checked as boolean)}
-                  className="data-[state=checked]:bg-purple-500 data-[state=checked]:border-purple-500"
-                />
-                <div className="flex items-center space-x-3">
-                  <div className="text-purple-600">
-                    {goal.icon}
-                  </div>
-                  <Label htmlFor={goal.id} className="text-lg font-semibold cursor-pointer">
-                    {goal.label}
-                  </Label>
+                <div className={`${
+                  onboardingData.preferences.goals.includes(goal.id) 
+                    ? 'text-purple-600' 
+                    : 'text-gray-600'
+                }`}>
+                  {goal.icon}
                 </div>
+                <Label htmlFor={goal.id} className="text-lg font-medium cursor-pointer text-gray-900">
+                  {goal.label}
+                </Label>
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
 
       {/* Tips */}
-      <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 max-w-2xl mx-auto">
-        <h3 className="text-lg font-semibold text-gray-900 mb-3 text-center">💡 Pro Tips</h3>
+      <div className="bg-purple-50 rounded-lg p-6 max-w-2xl mx-auto border border-purple-100">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">💡 Pro Tips</h3>
         <div className="space-y-2 text-sm text-gray-700">
           <p>• Choose multiple goals to increase your opportunities</p>
           <p>• You can change these settings later in your profile</p>
@@ -99,22 +101,14 @@ export const PreferencesStep: React.FC = () => {
         </div>
       </div>
 
-      {/* Continue Button */}
-      <div className="text-center pt-6">
-        <Button
-          onClick={handleContinue}
-          size="lg"
-          disabled={onboardingData.preferences.goals.length === 0}
-          className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-12 py-4 text-lg font-semibold rounded-2xl disabled:opacity-50"
-        >
-          Continue
-        </Button>
-        {onboardingData.preferences.goals.length === 0 && (
-          <p className="text-sm text-red-600 mt-2">
+      {/* Error Message */}
+      {onboardingData.preferences.goals.length === 0 && (
+        <div className="text-center">
+          <p className="text-sm text-red-600">
             Please select at least one goal
           </p>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
-}; 
+};

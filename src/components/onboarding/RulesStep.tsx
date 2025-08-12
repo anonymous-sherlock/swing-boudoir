@@ -103,14 +103,14 @@ export const RulesStep: React.FC = () => {
 
       {/* Continue Button */}
       <div className="text-center pt-6">
-        <Button
+        {/* <Button
           onClick={handleContinue}
           size="lg"
           disabled={!onboardingData.rulesAccepted}
           className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-12 py-4 text-lg font-semibold rounded-2xl disabled:opacity-50"
         >
           Continue
-        </Button>
+        </Button> */}
         {!onboardingData.rulesAccepted && (
           <p className="text-sm text-red-600 mt-2">
             Please accept the rules to continue
