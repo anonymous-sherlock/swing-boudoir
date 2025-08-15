@@ -1,0 +1,6 @@
+import { createFileRoute } from '@tanstack/react-router'
+import AddContest from '@/pages/AddContest'
+
+export const Route = createFileRoute('/admin/add-contest')({
+  component: AddContest,
+})

@@ -1,0 +1,8 @@
+import { createFileRoute } from '@tanstack/react-router'
+import Dashboard from '@/pages/Dashboard'
+
+// Dynamic dashboard section route: /dashboard/:section
+export const Route = createFileRoute('/dashboard/dashboard/$section')({
+  component: Dashboard,
+})
+
