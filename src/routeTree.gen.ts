@@ -24,7 +24,10 @@ import { Route as ProfileIdRouteImport } from './routes/profile.$id'
 import { Route as DashboardSectionRouteImport } from './routes/dashboard/$section'
 import { Route as AuthIdRouteImport } from './routes/auth/$id'
 import { Route as AdminWinnersRouteImport } from './routes/admin/winners'
+import { Route as AdminVotesBoostRouteImport } from './routes/admin/votes-boost'
 import { Route as AdminProfilesRouteImport } from './routes/admin/profiles'
+import { Route as AdminPaymentsRouteImport } from './routes/admin/payments'
+import { Route as AdminLeaderboardRouteImport } from './routes/admin/leaderboard'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
 import { Route as AdminUsersIndexRouteImport } from './routes/admin/users/index'
 import { Route as AdminContestsIndexRouteImport } from './routes/admin/contests/index'
@@ -106,9 +109,24 @@ const AdminWinnersRoute = AdminWinnersRouteImport.update({
   path: '/winners',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminVotesBoostRoute = AdminVotesBoostRouteImport.update({
+  id: '/votes-boost',
+  path: '/votes-boost',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminProfilesRoute = AdminProfilesRouteImport.update({
   id: '/profiles',
   path: '/profiles',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPaymentsRoute = AdminPaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLeaderboardRoute = AdminLeaderboardRouteImport.update({
+  id: '/leaderboard',
+  path: '/leaderboard',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
@@ -146,7 +164,10 @@ export interface FileRoutesByFullPath {
   '/rules': typeof RulesRoute
   '/winners': typeof WinnersRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/leaderboard': typeof AdminLeaderboardRoute
+  '/admin/payments': typeof AdminPaymentsRoute
   '/admin/profiles': typeof AdminProfilesRoute
+  '/admin/votes-boost': typeof AdminVotesBoostRoute
   '/admin/winners': typeof AdminWinnersRoute
   '/auth/$id': typeof AuthIdRoute
   '/dashboard/$section': typeof DashboardSectionRoute
@@ -168,7 +189,10 @@ export interface FileRoutesByTo {
   '/rules': typeof RulesRoute
   '/winners': typeof WinnersRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/leaderboard': typeof AdminLeaderboardRoute
+  '/admin/payments': typeof AdminPaymentsRoute
   '/admin/profiles': typeof AdminProfilesRoute
+  '/admin/votes-boost': typeof AdminVotesBoostRoute
   '/admin/winners': typeof AdminWinnersRoute
   '/auth/$id': typeof AuthIdRoute
   '/dashboard/$section': typeof DashboardSectionRoute
@@ -192,7 +216,10 @@ export interface FileRoutesById {
   '/rules': typeof RulesRoute
   '/winners': typeof WinnersRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/leaderboard': typeof AdminLeaderboardRoute
+  '/admin/payments': typeof AdminPaymentsRoute
   '/admin/profiles': typeof AdminProfilesRoute
+  '/admin/votes-boost': typeof AdminVotesBoostRoute
   '/admin/winners': typeof AdminWinnersRoute
   '/auth/$id': typeof AuthIdRoute
   '/dashboard/$section': typeof DashboardSectionRoute
@@ -217,7 +244,10 @@ export interface FileRouteTypes {
     | '/rules'
     | '/winners'
     | '/admin/analytics'
+    | '/admin/leaderboard'
+    | '/admin/payments'
     | '/admin/profiles'
+    | '/admin/votes-boost'
     | '/admin/winners'
     | '/auth/$id'
     | '/dashboard/$section'
@@ -239,7 +269,10 @@ export interface FileRouteTypes {
     | '/rules'
     | '/winners'
     | '/admin/analytics'
+    | '/admin/leaderboard'
+    | '/admin/payments'
     | '/admin/profiles'
+    | '/admin/votes-boost'
     | '/admin/winners'
     | '/auth/$id'
     | '/dashboard/$section'
@@ -262,7 +295,10 @@ export interface FileRouteTypes {
     | '/rules'
     | '/winners'
     | '/admin/analytics'
+    | '/admin/leaderboard'
+    | '/admin/payments'
     | '/admin/profiles'
+    | '/admin/votes-boost'
     | '/admin/winners'
     | '/auth/$id'
     | '/dashboard/$section'
@@ -400,11 +436,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminWinnersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/votes-boost': {
+      id: '/admin/votes-boost'
+      path: '/votes-boost'
+      fullPath: '/admin/votes-boost'
+      preLoaderRoute: typeof AdminVotesBoostRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/profiles': {
       id: '/admin/profiles'
       path: '/profiles'
       fullPath: '/admin/profiles'
       preLoaderRoute: typeof AdminProfilesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/payments': {
+      id: '/admin/payments'
+      path: '/payments'
+      fullPath: '/admin/payments'
+      preLoaderRoute: typeof AdminPaymentsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/leaderboard': {
+      id: '/admin/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/admin/leaderboard'
+      preLoaderRoute: typeof AdminLeaderboardRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/analytics': {
@@ -447,7 +504,10 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
+  AdminLeaderboardRoute: typeof AdminLeaderboardRoute
+  AdminPaymentsRoute: typeof AdminPaymentsRoute
   AdminProfilesRoute: typeof AdminProfilesRoute
+  AdminVotesBoostRoute: typeof AdminVotesBoostRoute
   AdminWinnersRoute: typeof AdminWinnersRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminContestsAddContestRoute: typeof AdminContestsAddContestRoute
@@ -458,7 +518,10 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAnalyticsRoute: AdminAnalyticsRoute,
+  AdminLeaderboardRoute: AdminLeaderboardRoute,
+  AdminPaymentsRoute: AdminPaymentsRoute,
   AdminProfilesRoute: AdminProfilesRoute,
+  AdminVotesBoostRoute: AdminVotesBoostRoute,
   AdminWinnersRoute: AdminWinnersRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminContestsAddContestRoute: AdminContestsAddContestRoute,

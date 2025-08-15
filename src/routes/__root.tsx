@@ -5,7 +5,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { QueryClient } from "@tanstack/react-query";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
-
+import { NuqsAdapter } from "nuqs/adapters/react";
 
 function AppShell() {
   const { isLoading } = useAuth();
@@ -31,9 +31,11 @@ interface MyRouterContext {
 export const Route = createRootRoute<MyRouterContext>({
   component: () => (
     <AuthProvider>
-      <OnboardingProvider>
-        <AppShell />
-      </OnboardingProvider>
+      <NuqsAdapter>
+        <OnboardingProvider>
+          <AppShell />
+        </OnboardingProvider>
+      </NuqsAdapter>
     </AuthProvider>
   ),
 });

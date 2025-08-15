@@ -31,6 +31,7 @@ export function AdminLayout() {
       '/admin/add-contest': 'Add Contest',
       '/admin/winners': 'Winners',
       '/admin/profiles': 'Profiles',
+      '/admin/payments': 'Payments',
     }
     return pathMap[path] || 'Admin Panel'
   }
