@@ -5,20 +5,63 @@ import { PaginatedResponse, Pagination } from './common.types';
  */
 export interface Notification {
   id: string;
+  userId: string;
+  profileId?: string;
+  type: NotificationType;
+  title: string;
   message: string;
-  profileId: string;
+  data?: Record<string, unknown>;
+  isRead: boolean;
+  isArchived: boolean;
+  priority: 'low' | 'medium' | 'high';
   createdAt: string;
   updatedAt: string;
-  isRead: boolean;
-  archived: boolean;
-  icon?: "WARNING" | "SUCCESS" | "INFO";
-  action?: string | null;
+  expiresAt?: string;
 }
 
-/**
- * Notifications API response with pagination
- */
+export type NotificationType = 
+  | 'competition_joined'
+  | 'competition_left'
+  | 'competition_created'
+  | 'competition_upcoming'
+  | 'vote_received'
+  | 'vote_premium'
+  | 'settings_changed'
+  | 'reminder'
+  | 'tip'
+  | 'motivation'
+  | 'system';
+
+export interface NotificationCreateRequest {
+  userId: string;
+  profileId?: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  data?: Record<string, unknown>;
+  priority?: 'low' | 'medium' | 'high';
+  expiresAt?: string;
+}
+
+export interface NotificationUpdateRequest {
+  isRead?: boolean;
+  isArchived?: boolean;
+}
+
 export interface NotificationsListResponse {
-  notifications: Notification[];
-  pagination: Pagination;
+  data: Notification[];
+  pagination: {
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+    nextPage: number | null;
+    previousPage: number | null;
+  };
+}
+
+export interface NotificationCounts {
+  total: number;
+  unread: number;
+  archived: number;
 }

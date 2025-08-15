@@ -17,11 +17,13 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OnboardingIndexRouteImport } from './routes/onboarding/index'
+import { Route as LeaderboardIndexRouteImport } from './routes/leaderboard/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
-import { Route as CompetitionsIndexRouteImport } from './routes/competitions/index'
+import { Route as CompetitionIndexRouteImport } from './routes/competition/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as ProfileIdRouteImport } from './routes/profile.$id'
 import { Route as DashboardSectionRouteImport } from './routes/dashboard/$section'
+import { Route as CompetitionIdRouteImport } from './routes/competition/$id'
 import { Route as AuthIdRouteImport } from './routes/auth/$id'
 import { Route as AdminWinnersRouteImport } from './routes/admin/winners'
 import { Route as AdminProfilesRouteImport } from './routes/admin/profiles'
@@ -71,14 +73,19 @@ const OnboardingIndexRoute = OnboardingIndexRouteImport.update({
   path: '/onboarding/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LeaderboardIndexRoute = LeaderboardIndexRouteImport.update({
+  id: '/leaderboard/',
+  path: '/leaderboard/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/dashboard/',
   path: '/dashboard/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CompetitionsIndexRoute = CompetitionsIndexRouteImport.update({
-  id: '/competitions/',
-  path: '/competitions/',
+const CompetitionIndexRoute = CompetitionIndexRouteImport.update({
+  id: '/competition/',
+  path: '/competition/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -94,6 +101,11 @@ const ProfileIdRoute = ProfileIdRouteImport.update({
 const DashboardSectionRoute = DashboardSectionRouteImport.update({
   id: '/dashboard/$section',
   path: '/dashboard/$section',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompetitionIdRoute = CompetitionIdRouteImport.update({
+  id: '/competition/$id',
+  path: '/competition/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthIdRoute = AuthIdRouteImport.update({
@@ -149,11 +161,13 @@ export interface FileRoutesByFullPath {
   '/admin/profiles': typeof AdminProfilesRoute
   '/admin/winners': typeof AdminWinnersRoute
   '/auth/$id': typeof AuthIdRoute
+  '/competition/$id': typeof CompetitionIdRoute
   '/dashboard/$section': typeof DashboardSectionRoute
   '/profile/$id': typeof ProfileIdRoute
   '/admin/': typeof AdminIndexRoute
-  '/competitions': typeof CompetitionsIndexRoute
+  '/competition': typeof CompetitionIndexRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/leaderboard': typeof LeaderboardIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
   '/admin/contests/add-contest': typeof AdminContestsAddContestRoute
   '/admin/contests/create': typeof AdminContestsCreateRoute
@@ -171,11 +185,13 @@ export interface FileRoutesByTo {
   '/admin/profiles': typeof AdminProfilesRoute
   '/admin/winners': typeof AdminWinnersRoute
   '/auth/$id': typeof AuthIdRoute
+  '/competition/$id': typeof CompetitionIdRoute
   '/dashboard/$section': typeof DashboardSectionRoute
   '/profile/$id': typeof ProfileIdRoute
   '/admin': typeof AdminIndexRoute
-  '/competitions': typeof CompetitionsIndexRoute
+  '/competition': typeof CompetitionIndexRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/leaderboard': typeof LeaderboardIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
   '/admin/contests/add-contest': typeof AdminContestsAddContestRoute
   '/admin/contests/create': typeof AdminContestsCreateRoute
@@ -195,11 +211,13 @@ export interface FileRoutesById {
   '/admin/profiles': typeof AdminProfilesRoute
   '/admin/winners': typeof AdminWinnersRoute
   '/auth/$id': typeof AuthIdRoute
+  '/competition/$id': typeof CompetitionIdRoute
   '/dashboard/$section': typeof DashboardSectionRoute
   '/profile/$id': typeof ProfileIdRoute
   '/admin/': typeof AdminIndexRoute
-  '/competitions/': typeof CompetitionsIndexRoute
+  '/competition/': typeof CompetitionIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/leaderboard/': typeof LeaderboardIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
   '/admin/contests/add-contest': typeof AdminContestsAddContestRoute
   '/admin/contests/create': typeof AdminContestsCreateRoute
@@ -220,11 +238,13 @@ export interface FileRouteTypes {
     | '/admin/profiles'
     | '/admin/winners'
     | '/auth/$id'
+    | '/competition/$id'
     | '/dashboard/$section'
     | '/profile/$id'
     | '/admin/'
-    | '/competitions'
+    | '/competition'
     | '/dashboard'
+    | '/leaderboard'
     | '/onboarding'
     | '/admin/contests/add-contest'
     | '/admin/contests/create'
@@ -242,11 +262,13 @@ export interface FileRouteTypes {
     | '/admin/profiles'
     | '/admin/winners'
     | '/auth/$id'
+    | '/competition/$id'
     | '/dashboard/$section'
     | '/profile/$id'
     | '/admin'
-    | '/competitions'
+    | '/competition'
     | '/dashboard'
+    | '/leaderboard'
     | '/onboarding'
     | '/admin/contests/add-contest'
     | '/admin/contests/create'
@@ -265,11 +287,13 @@ export interface FileRouteTypes {
     | '/admin/profiles'
     | '/admin/winners'
     | '/auth/$id'
+    | '/competition/$id'
     | '/dashboard/$section'
     | '/profile/$id'
     | '/admin/'
-    | '/competitions/'
+    | '/competition/'
     | '/dashboard/'
+    | '/leaderboard/'
     | '/onboarding/'
     | '/admin/contests/add-contest'
     | '/admin/contests/create'
@@ -286,10 +310,12 @@ export interface RootRouteChildren {
   RulesRoute: typeof RulesRoute
   WinnersRoute: typeof WinnersRoute
   AuthIdRoute: typeof AuthIdRoute
+  CompetitionIdRoute: typeof CompetitionIdRoute
   DashboardSectionRoute: typeof DashboardSectionRoute
   ProfileIdRoute: typeof ProfileIdRoute
-  CompetitionsIndexRoute: typeof CompetitionsIndexRoute
+  CompetitionIndexRoute: typeof CompetitionIndexRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
+  LeaderboardIndexRoute: typeof LeaderboardIndexRoute
   OnboardingIndexRoute: typeof OnboardingIndexRoute
 }
 
@@ -351,6 +377,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/leaderboard/': {
+      id: '/leaderboard/'
+      path: '/leaderboard'
+      fullPath: '/leaderboard'
+      preLoaderRoute: typeof LeaderboardIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard/': {
       id: '/dashboard/'
       path: '/dashboard'
@@ -358,11 +391,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/competitions/': {
-      id: '/competitions/'
-      path: '/competitions'
-      fullPath: '/competitions'
-      preLoaderRoute: typeof CompetitionsIndexRouteImport
+    '/competition/': {
+      id: '/competition/'
+      path: '/competition'
+      fullPath: '/competition'
+      preLoaderRoute: typeof CompetitionIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -384,6 +417,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard/$section'
       fullPath: '/dashboard/$section'
       preLoaderRoute: typeof DashboardSectionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/competition/$id': {
+      id: '/competition/$id'
+      path: '/competition/$id'
+      fullPath: '/competition/$id'
+      preLoaderRoute: typeof CompetitionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/$id': {
@@ -478,10 +518,12 @@ const rootRouteChildren: RootRouteChildren = {
   RulesRoute: RulesRoute,
   WinnersRoute: WinnersRoute,
   AuthIdRoute: AuthIdRoute,
+  CompetitionIdRoute: CompetitionIdRoute,
   DashboardSectionRoute: DashboardSectionRoute,
   ProfileIdRoute: ProfileIdRoute,
-  CompetitionsIndexRoute: CompetitionsIndexRoute,
+  CompetitionIndexRoute: CompetitionIndexRoute,
   DashboardIndexRoute: DashboardIndexRoute,
+  LeaderboardIndexRoute: LeaderboardIndexRoute,
   OnboardingIndexRoute: OnboardingIndexRoute,
 }
 export const routeTree = rootRouteImport

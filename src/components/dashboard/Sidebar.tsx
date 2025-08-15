@@ -12,13 +12,16 @@ import {
   Lock,
   LogOut,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  TrendingUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DashboardSection } from "@/pages/Dashboard";
+// import { DashboardSection } from "@/pages/Dashboard";
+
 import { useAuth } from "@/contexts/AuthContext";
-import { useRouter } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { DashboardSection } from "@/routes/dashboard/$section";
 
 interface SidebarProps {
   activeSection: DashboardSection;
@@ -29,18 +32,18 @@ interface SidebarProps {
 }
 
 const sidebarItemsMain = [
-  { id: "notifications" as DashboardSection, label: "Notifications", icon: Bell },
-  { id: "public-profile" as DashboardSection, label: "Public Profile", icon: Users },
   { id: "competitions" as DashboardSection, label: "Competitions", icon: Trophy },
+  { id: "public-profile" as DashboardSection, label: "Public Profile", icon: Users },
   { id: "votes" as DashboardSection, label: "Votes", icon: Vote },
   { id: "prize-history" as DashboardSection, label: "Prize History", icon: Gift },
-  { id: "settings" as DashboardSection, label: "Settings", icon: SettingsIcon },
+  { id: "leaderboard" as DashboardSection, label: "Leaderboard", icon: TrendingUp },
 ];
 
 const sidebarItemsSecondary = [
   { id: "support" as DashboardSection, label: "Support", icon: HelpCircle },
   { id: "official-rules" as DashboardSection, label: "Official Rules", icon: FileText },
   { id: "privacy" as DashboardSection, label: "Privacy Policy", icon: Lock },
+  { id: "settings" as DashboardSection, label: "Settings", icon: SettingsIcon },
 ];
 
 export function Sidebar({ 
@@ -51,12 +54,12 @@ export function Sidebar({
   onToggle 
 }: SidebarProps) {
   const { handleLogout } = useAuth();
-  const router = useRouter();
+  const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
 
   const handleLogoutClick = async () => {
     await handleLogout();
-            router.navigate({ to: '/' });
+    navigate('/');
   };
 
   const toggleExpand = () => {
@@ -66,18 +69,29 @@ export function Sidebar({
   // Mobile sidebar
   if (isMobile) {
     return (
-      <div className={`fixed inset-0 z-50 bg-black bg-opacity-50 transition-opacity duration-300 ${
-        isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-      }`}>
-        <div className={`fixed left-0 top-0 h-full bg-card border-r border-border transition-transform duration-300 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}>
-          <div className="w-64 h-full flex flex-col">
-            <div className="p-4 border-b border-border">
+      <div 
+        className={`fixed inset-0 z-50 transition-opacity duration-300 ${
+          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={onToggle} // Close sidebar when clicking outside
+      >
+        {/* Semi-transparent overlay */}
+        <div className="absolute inset-0 bg-black bg-opacity-70"></div>
+        
+        {/* Sidebar content */}
+        <div 
+          className={`fixed left-0 top-0 h-full bg-white border-r border-border transition-transform duration-300 mobile-sidebar ${
+            isOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+          onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside sidebar
+          style={{ backgroundColor: '#ffffff' }}
+        >
+          <div className="w-64 h-full flex flex-col bg-white shadow-2xl mobile-sidebar" style={{ backgroundColor: '#ffffff' }}>
+            <div className="p-4 border-b border-border bg-white mobile-sidebar" style={{ backgroundColor: '#ffffff' }}>
               <h2 className="text-xl font-bold text-foreground">Dashboard</h2>
             </div>
             
-            <nav className="flex-1 p-4 space-y-2">
+            <nav className="flex-1 p-4 space-y-2 bg-white mobile-sidebar" style={{ backgroundColor: '#ffffff' }}>
               {sidebarItemsMain.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -97,8 +111,8 @@ export function Sidebar({
               })}
             </nav>
 
-            <div className="p-4 border-t border-border">
-              <nav className="space-y-2">
+            <div className="p-4 border-t border-border bg-white mobile-sidebar" style={{ backgroundColor: '#ffffff' }}>
+              <nav className="space-y-2 bg-white mobile-sidebar" style={{ backgroundColor: '#ffffff' }}>
                 {sidebarItemsSecondary.map((item) => {
                   const Icon = item.icon;
                   return (

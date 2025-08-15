@@ -3,18 +3,22 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Share, Calendar, Users, Gift, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useCompetitions } from "@/hooks/useCompetitions";
 import { Competition } from "@/types/competitions.types";
 import { formatDistanceToNow, isAfter, isBefore, startOfDay } from "date-fns";
 import { formatUsdAbbrev } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
+import { notificationService } from "@/lib/notificationService";
 import { AUTH_TOKEN_KEY } from "@/lib/auth";
 import { useState } from "react";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Link } from "@tanstack/react-router";
 
 export function DashboardCompetitions() {
   const { toast } = useToast();
-
+  const { isLoading, getActiveCompetitions, getComingSoonCompetitions, getCompletedCompetitions, joinedCompetitions, isLoadingJoined, refetchJoined, joinContest } =
+    useCompetitions();
 
   const activeCompetitions = getActiveCompetitions();
   const comingSoonCompetitions = getComingSoonCompetitions();
@@ -43,6 +47,16 @@ export function DashboardCompetitions() {
   const handleJoinContest = async ({ competitionId, competitionName }) => {
     try {
       await joinContest(competitionId);
+      
+      // Trigger notification for joining competition
+      if (user?.id && user?.profileId) {
+        await notificationService.notifyCompetitionJoined(
+          user.id,
+          user.profileId,
+          competitionName
+        );
+      }
+      
       toast({
         title: "Success!",
         description: `You have joined ${competitionName}`,
@@ -144,7 +158,7 @@ export function DashboardCompetitions() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6 sm:p-4">
       <Tabs defaultValue="active">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">Contest</h1>
@@ -215,7 +229,9 @@ export function DashboardCompetitions() {
                                   competitionName: competition.name,
                                 })}>Register</Button>
                               )}
-                              <Button variant="outline">View Details</Button>
+                              <Button variant="outline" asChild>
+                                <Link to={`/competition/${competition.id}`}>View Details</Link>
+                              </Button>
                             </div>
                           </div>
                           <div className="w-full md:w-1/3">{renderCoverImage(competition)}</div>
@@ -336,7 +352,9 @@ export function DashboardCompetitions() {
                                 <Share className="mr-2 h-4 w-4" />
                                 Share Profile
                               </Button>
-                              <Button variant="outline">View Details</Button>
+                              <Button variant="outline" asChild>
+                                <Link to={`/competition/${competition.id}`}>View Details</Link>
+                              </Button>
                             </div>
                           </div>
                           <div className="w-full md:w-1/3">{renderCoverImage(competition)}</div>
@@ -439,7 +457,9 @@ export function DashboardCompetitions() {
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          <Button variant="outline">View Results</Button>
+                          <Button variant="outline" asChild>
+                            <Link to={`/competition/${competition.id}`}>View Details</Link>
+                          </Button>
                         </div>
                       </div>
                       <div className="w-full md:w-1/3">{renderCoverImage(competition)}</div>

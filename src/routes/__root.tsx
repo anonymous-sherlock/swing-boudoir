@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { QueryClient } from "@tanstack/react-query";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 
 
 function AppShell() {
@@ -32,7 +33,9 @@ export const Route = createRootRoute<MyRouterContext>({
   component: () => (
     <AuthProvider>
       <OnboardingProvider>
+        <NotificationProvider>
         <AppShell />
+        </NotificationProvider>
       </OnboardingProvider>
     </AuthProvider>
   ),
