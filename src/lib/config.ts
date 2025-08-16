@@ -10,7 +10,7 @@ const isDevelopment = import.meta.env.DEV;
 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
 // Preferred dev host (can be overridden with VITE_API_HOST)
-const DEV_HOST = (import.meta.env.VITE_API_HOST as string) || 'http://localhost:9999';
+const DEV_HOST = (import.meta.env.VITE_API_HOST as string) || 'https://api.swingboudoirmag.com';
 const PROD_HOST = 'https://api.swingboudoirmag.com';
 
 // API Base URLs - Using env-aware values

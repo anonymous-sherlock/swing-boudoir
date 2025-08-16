@@ -3,7 +3,7 @@ import { FileText } from "lucide-react";
 
 export function TermsOfService() {
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6 sm:p-4">
       <h1 className="text-2xl font-bold text-foreground">Terms of Service</h1>
 
       <Card>
