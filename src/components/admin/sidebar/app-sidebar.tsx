@@ -2,67 +2,65 @@ import * as React from "react";
 import { Link } from "@tanstack/react-router";
 import { BookOpen, Bot, Command, Frame, LifeBuoy, Map, PieChart, Send, Settings2, SquareTerminal, User, CreditCard, Zap, Trophy } from "lucide-react";
 
-import { NavMain } from "@/components/admin/sidebar/nav-main";
-import { NavProjects } from "@/components/admin/sidebar/nav-projects";
-import { NavSecondary } from "@/components/admin/sidebar/nav-secondary";
-import { NavUser } from "@/components/admin/sidebar/nav-user";
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import { NavMain } from '@/components/admin/sidebar/nav-main';
+import { NavProjects } from '@/components/admin/sidebar/nav-projects';
+import { NavSecondary } from '@/components/admin/sidebar/nav-secondary';
+import { NavUser } from '@/components/admin/sidebar/nav-user';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from '@/components/ui/sidebar';
 
 const data = {
   user: {
-    name: "Admin",
-    email: "admin@swingboudior.com",
-    avatar: "/avatars/admin.jpg",
+    name: 'Admin',
+    email: 'admin@swingboudior.com',
+    avatar: '/avatars/admin.jpg',
   },
   navMain: [
     {
-      title: "Dashboard",
-      url: "/admin",
+      title: 'Dashboard',
+      url: '/admin',
       icon: PieChart,
-      items: [
-        {
-          title: "Overview",
-          url: "/admin",
-        },
-        {
-          title: "Analytics",
-          url: "/admin/analytics",
-        },
-      ],
     },
     {
-      title: "Contests",
-      url: "/admin/contests",
+      title: 'Contests',
+      url: '/admin/contests',
       icon: SquareTerminal,
       items: [
         {
-          title: "All Contests",
-          url: "/admin/contests",
+          title: 'All Contests',
+          url: '/admin/contests',
         },
         {
-          title: "Add Contest",
-          url: "/admin/contests/create",
+          title: 'Add Contest',
+          url: '/admin/contests/create',
         },
         {
-          title: "Manage Winners",
-          url: "/admin/winners",
+          title: 'Manage Winners',
+          url: '/admin/winners',
         },
       ],
     },
     {
-      title: "Users",
-      url: "/admin/users",
+      title: 'Users',
+      url: '/admin/users',
       icon: Bot,
       items: [
         {
-          title: "All Users",
-          url: "/admin/users",
+          title: 'All Users',
+          url: '/admin/users',
         },
       ],
     },
     {
-      title: "Profiles",
-      url: "/admin/profiles",
+      title: 'Profiles',
+      url: '/admin/profiles',
       icon: User,
     },
     {
@@ -83,15 +81,15 @@ const data = {
   ],
   navSecondary: [
     {
-      title: "Support",
-      url: "#",
+      title: 'Support',
+      url: '#',
       icon: LifeBuoy,
     },
   ],
   projects: [
     {
-      name: "Sales & Marketing",
-      url: "#",
+      name: 'Sales & Marketing',
+      url: '#',
       icon: PieChart,
     },
   ],
