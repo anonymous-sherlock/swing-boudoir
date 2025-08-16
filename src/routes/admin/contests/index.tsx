@@ -446,9 +446,13 @@ function ContestsPage() {
                                 </div>
                               </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="flex items-center gap-2 w-full">
-                              <Edit className="w-3 h-3" />
-                              <p>Edit</p>
+                            <DropdownMenuItem asChild className="flex items-center gap-2 w-full">
+                              <Link to={`/admin/contests/$id/edit`} params={{ id: contest.id }}>
+                                <div className="flex items-center gap-2 w-full">
+                                  <Edit className="w-3 h-3" />
+                                  <p>Edit</p>
+                                </div>
+                              </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               className="text-red-600 w-full"
