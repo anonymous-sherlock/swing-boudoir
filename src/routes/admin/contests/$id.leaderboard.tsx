@@ -19,7 +19,7 @@ import {
   TableHeader,
 } from '@/components/ui/table';
 import { useContestLeaderboard, useContestStats } from '@/hooks/api/useContests';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { Award, Crown, Filter, Medal, RefreshCw, Search, Trophy, X } from 'lucide-react';
 import { useQueryState } from 'nuqs';
 import { format } from 'date-fns';
@@ -190,7 +190,13 @@ function RouteComponent() {
             <Crown className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{contestStats?.totalVotes}</div>
+            {sortedData[0].totalVotes > 0 ? (
+              <Link to={`/profile/$id`} params={{ id: sortedData[0]?.username ?? '' }}>
+                {sortedData[0]?.username ? '@' + sortedData[0].username : ''}
+              </Link>
+            ) : (
+              <p className="text-sm">N/A</p>
+            )}
           </CardContent>
         </Card>
         <Card>
@@ -288,7 +294,6 @@ function RouteComponent() {
                 <TableHead className="w-16">Rank</TableHead>
                 <TableHead>Profile</TableHead>
                 <TableHead>Username</TableHead>
-                <TableHead>Bio</TableHead>
                 <TableHead className="text-right">Total Votes</TableHead>
                 <TableHead className="text-right">Free Votes</TableHead>
                 <TableHead className="text-right">Paid Votes</TableHead>
@@ -312,57 +317,58 @@ function RouteComponent() {
                   </TableCell>
                 </TableRow>
               ) : (
-                sortedData.map(entry => (
-                  <TableRow key={entry.profileId}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getRankIcon(entry.rank)}
-                        <Badge variant={getRankBadgeVariant(entry.rank)}>#{entry.rank}</Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={entry.avatarUrl || undefined} />
-                          <AvatarFallback>
-                            {entry.displayUsername?.[0] || entry.username[0] || '?'}
-                          </AvatarFallback>
-                        </Avatar>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-medium">
-                          {entry.displayUsername || entry.username}
+                sortedData
+                  .filter(entry => {
+                    return entry.totalVotes > 0;
+                  })
+                  .map(entry => (
+                    <TableRow key={entry.profileId}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {getRankIcon(entry.rank)}
+                          <Badge variant={getRankBadgeVariant(entry.rank)}>#{entry.rank}</Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={entry.avatarUrl || undefined} />
+                            <AvatarFallback>
+                              {entry.displayUsername?.[0] || entry.username[0] || '?'}
+                            </AvatarFallback>
+                          </Avatar>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium">
+                            {entry.displayUsername || entry.username}
+                          </span>
+                          <span className="text-sm text-muted-foreground">@{entry.username}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant="default" className="font-mono">
+                          {entry.totalVotes.toLocaleString()}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span className="text-sm text-muted-foreground">
+                          {entry.freeVotes.toLocaleString()}
                         </span>
-                        <span className="text-sm text-muted-foreground">@{entry.username}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="max-w-xs truncate">{entry.bio || 'No bio'}</div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Badge variant="default" className="font-mono">
-                        {entry.totalVotes.toLocaleString()}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <span className="text-sm text-muted-foreground">
-                        {entry.freeVotes.toLocaleString()}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <span className="text-sm text-muted-foreground">
-                        {entry.paidVotes.toLocaleString()}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-muted-foreground">
-                        {format(new Date(contestStats?.startDate!), 'MMM dd, yyyy')}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                ))
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span className="text-sm text-muted-foreground">
+                          {entry.paidVotes.toLocaleString()}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {format(new Date(contestStats?.startDate!), 'MMM dd, yyyy')}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))
               )}
             </TableBody>
           </Table>

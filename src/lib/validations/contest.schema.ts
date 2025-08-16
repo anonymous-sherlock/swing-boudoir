@@ -38,6 +38,21 @@ export const ContestSchema = z.object({
   winnerProfileId: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
+  awards: z.array(
+    z.object({
+      name: z.string(),
+      icon: z.string(),
+    })
+  ),
+  images: z
+    .array(
+      z.object({
+        id: z.string(),
+        key: z.string(),
+        url: z.string(),
+      })
+    )
+    .nullable(),
 });
 
 export const ContestInsertSchema = ContestSchema.pick({
@@ -62,3 +77,5 @@ export const ContestInsertSchema = ContestSchema.pick({
   ),
   tags: z.array(z.string()),
 });
+
+export const ContestEditSchema = ContestSchema.partial();
