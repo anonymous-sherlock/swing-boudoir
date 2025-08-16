@@ -26,7 +26,6 @@ const postApiv1profile_Body = z
   .object({
     userId: z.string(),
     bio: z.string().nullable(),
-    avatarUrl: z.string().max(255).nullable(),
     phone: z.string().max(20).nullable(),
     address: z.string(),
     city: z.string().max(100).nullable(),
@@ -47,13 +46,13 @@ const postApiv1profile_Body = z
     linkedin: z.string().max(255).nullish(),
     website: z.string().max(255).nullish(),
     other: z.string().max(255).nullish(),
+    bannerImageId: z.string().nullable(),
   })
   .passthrough();
 const patchApiv1profileId_Body = z
   .object({
     userId: z.string(),
     bio: z.string().nullable(),
-    avatarUrl: z.string().max(255).nullable(),
     phone: z.string().max(20).nullable(),
     address: z.string(),
     city: z.string().max(100).nullable(),
@@ -74,8 +73,12 @@ const patchApiv1profileId_Body = z
     linkedin: z.string().max(255).nullable(),
     website: z.string().max(255).nullable(),
     other: z.string().max(255).nullable(),
+    bannerImageId: z.string().nullable(),
   })
   .partial()
+  .passthrough();
+const postApiv1profileIduploadphotos_Body = z
+  .object({ files: z.union([z.unknown(), z.array(z.unknown())]) })
   .passthrough();
 const postApiv1notifications_Body = z
   .object({
@@ -148,9 +151,6 @@ const patchApiv1contestId_Body = z
   })
   .partial()
   .passthrough();
-const postApiv1contestIduploadimages_Body = z
-  .object({ files: z.union([z.unknown(), z.array(z.unknown())]) })
-  .passthrough();
 const postApiv1contestContestIdawards_Body = z.array(
   z.object({ name: z.string().min(1), icon: z.string().min(1) }).passthrough()
 );
@@ -193,11 +193,11 @@ export const schemas = {
   patchApiv1usersId_Body,
   postApiv1profile_Body,
   patchApiv1profileId_Body,
+  postApiv1profileIduploadphotos_Body,
   postApiv1notifications_Body,
   putApiv1notificationsId_Body,
   postApiv1contest_Body,
   patchApiv1contestId_Body,
-  postApiv1contestIduploadimages_Body,
   postApiv1contestContestIdawards_Body,
   patchApiv1awardsId_Body,
   postApiv1contestjoin_Body,
@@ -208,6 +208,144 @@ export const schemas = {
 };
 
 const endpoints = makeApi([
+  {
+    method: "get",
+    path: "/api/v1/analytics/contests",
+    alias: "getApiv1analyticscontests",
+    description: `Get contest-specific analytics including total, active, upcoming contests and prize pool`,
+    requestFormat: "json",
+    response: z
+      .object({
+        total: z.number(),
+        active: z.number(),
+        upcoming: z.number(),
+        prizePool: z.number(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Authentication required`,
+        schema: z
+          .object({
+            message: z.string(),
+            statusText: z.string(),
+            status: z.number(),
+          })
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/analytics/dashboard",
+    alias: "getApiv1analyticsdashboard",
+    description: `Get comprehensive statistics for admin dashboard including total competitions, users, votes, prize pool, and onboarded users`,
+    requestFormat: "json",
+    response: z
+      .object({
+        totalCompetitions: z.number(),
+        totalUsers: z.number(),
+        totalVotes: z.number(),
+        totalPrizePool: z.number(),
+        totalOnboardedUsers: z.number(),
+        freeVotes: z.number(),
+        paidVotes: z.number(),
+        activeCompetitions: z.number(),
+        completedCompetitions: z.number(),
+        totalParticipants: z.number(),
+        totalRevenue: z.number(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Authentication required`,
+        schema: z
+          .object({
+            message: z.string(),
+            statusText: z.string(),
+            status: z.number(),
+          })
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/analytics/detailed",
+    alias: "getApiv1analyticsdetailed",
+    description: `Get detailed analytics with time-based data and breakdowns`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "period",
+        type: "Query",
+        schema: z
+          .enum(["7d", "30d", "90d", "1y", "all"])
+          .optional()
+          .default("30d"),
+      },
+    ],
+    response: z
+      .object({
+        period: z.string(),
+        userGrowth: z
+          .object({
+            total: z.number(),
+            newThisPeriod: z.number(),
+            growthRate: z.number(),
+          })
+          .passthrough(),
+        voteActivity: z
+          .object({
+            total: z.number(),
+            thisPeriod: z.number(),
+            averagePerDay: z.number(),
+            freeVotes: z.number(),
+            paidVotes: z.number(),
+          })
+          .passthrough(),
+        competitionMetrics: z
+          .object({
+            total: z.number(),
+            active: z.number(),
+            completed: z.number(),
+            averagePrizePool: z.number(),
+            totalPrizePool: z.number(),
+          })
+          .passthrough(),
+        revenueMetrics: z
+          .object({
+            total: z.number(),
+            thisPeriod: z.number(),
+            averagePerVote: z.number(),
+            conversionRate: z.number(),
+          })
+          .passthrough(),
+        participationMetrics: z
+          .object({
+            totalParticipants: z.number(),
+            activeParticipants: z.number(),
+            averageParticipationRate: z.number(),
+          })
+          .passthrough(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Authentication required`,
+        schema: z
+          .object({
+            message: z.string(),
+            statusText: z.string(),
+            status: z.number(),
+          })
+          .passthrough(),
+      },
+    ],
+  },
   {
     method: "get",
     path: "/api/v1/awards/:id",
@@ -726,21 +864,21 @@ const endpoints = makeApi([
                 name: z.string(),
                 url: z.string(),
                 size: z.number().nullable(),
-                caption: z.string().nullable(),
                 type: z.string().nullable(),
                 status: z.enum(["FAILED", "PROCESSING", "COMPLETED"]),
                 mediaType: z.enum([
-                  "USER_IMAGE",
-                  "PROFILE_IMAGE",
-                  "PROFILE_COVER_IMAGE",
-                  "CONTEST_PARTICIPATION_COVER",
-                  "PROFILE_AVATAR",
-                  "VOTING_IMAGE",
                   "COVER_IMAGE",
                   "CONTEST_IMAGE",
+                  "CONTEST_PARTICIPATION_COVER",
+                  "PROFILE_IMAGE",
+                  "PROFILE_COVER_IMAGE",
+                  "PROFILE_BANNER_IMAGE",
                 ]),
                 createdAt: z.string(),
                 updatedAt: z.string(),
+                profileId: z.string().nullable(),
+                caption: z.string().nullable(),
+                contestId: z.string().nullable(),
               })
               .passthrough()
               .nullable(),
@@ -853,21 +991,21 @@ const endpoints = makeApi([
                   name: z.string(),
                   url: z.string(),
                   size: z.number().nullable(),
-                  caption: z.string().nullable(),
                   type: z.string().nullable(),
                   status: z.enum(["FAILED", "PROCESSING", "COMPLETED"]),
                   mediaType: z.enum([
-                    "USER_IMAGE",
-                    "PROFILE_IMAGE",
-                    "PROFILE_COVER_IMAGE",
-                    "CONTEST_PARTICIPATION_COVER",
-                    "PROFILE_AVATAR",
-                    "VOTING_IMAGE",
                     "COVER_IMAGE",
                     "CONTEST_IMAGE",
+                    "CONTEST_PARTICIPATION_COVER",
+                    "PROFILE_IMAGE",
+                    "PROFILE_COVER_IMAGE",
+                    "PROFILE_BANNER_IMAGE",
                   ]),
                   createdAt: z.string(),
                   updatedAt: z.string(),
+                  profileId: z.string().nullable(),
+                  caption: z.string().nullable(),
+                  contestId: z.string().nullable(),
                 })
                 .passthrough()
                 .nullable(),
@@ -1352,7 +1490,7 @@ const endpoints = makeApi([
       {
         name: "body",
         type: "Body",
-        schema: postApiv1contestIduploadimages_Body,
+        schema: postApiv1profileIduploadphotos_Body,
       },
       {
         name: "id",
@@ -1447,7 +1585,6 @@ const endpoints = makeApi([
             id: z.string(),
             userId: z.string(),
             bio: z.string().nullable(),
-            avatarUrl: z.string().max(255).nullable(),
             phone: z.string().max(20).nullable(),
             address: z.string(),
             city: z.string().max(100).nullable(),
@@ -1470,6 +1607,7 @@ const endpoints = makeApi([
             linkedin: z.string().max(255).nullable(),
             website: z.string().max(255).nullable(),
             other: z.string().max(255).nullable(),
+            bannerImageId: z.string().nullable(),
           })
           .passthrough()
           .nullable(),
@@ -1575,7 +1713,6 @@ const endpoints = makeApi([
             id: z.string(),
             userId: z.string(),
             bio: z.string().nullable(),
-            avatarUrl: z.string().max(255).nullable(),
             phone: z.string().max(20).nullable(),
             address: z.string(),
             city: z.string().max(100).nullable(),
@@ -1598,6 +1735,7 @@ const endpoints = makeApi([
             linkedin: z.string().max(255).nullable(),
             website: z.string().max(255).nullable(),
             other: z.string().max(255).nullable(),
+            bannerImageId: z.string().nullable(),
           })
           .passthrough()
           .nullable(),
@@ -1926,21 +2064,21 @@ const endpoints = makeApi([
             name: z.string(),
             url: z.string(),
             size: z.number().nullable(),
-            caption: z.string().nullable(),
             type: z.string().nullable(),
             status: z.enum(["FAILED", "PROCESSING", "COMPLETED"]),
             mediaType: z.enum([
-              "USER_IMAGE",
-              "PROFILE_IMAGE",
-              "PROFILE_COVER_IMAGE",
-              "CONTEST_PARTICIPATION_COVER",
-              "PROFILE_AVATAR",
-              "VOTING_IMAGE",
               "COVER_IMAGE",
               "CONTEST_IMAGE",
+              "CONTEST_PARTICIPATION_COVER",
+              "PROFILE_IMAGE",
+              "PROFILE_COVER_IMAGE",
+              "PROFILE_BANNER_IMAGE",
             ]),
             createdAt: z.string(),
             updatedAt: z.string(),
+            profileId: z.string().nullable(),
+            caption: z.string().nullable(),
+            contestId: z.string().nullable(),
           })
           .passthrough()
           .nullable(),
@@ -2073,21 +2211,21 @@ const endpoints = makeApi([
             name: z.string(),
             url: z.string(),
             size: z.number().nullable(),
-            caption: z.string().nullable(),
             type: z.string().nullable(),
             status: z.enum(["FAILED", "PROCESSING", "COMPLETED"]),
             mediaType: z.enum([
-              "USER_IMAGE",
-              "PROFILE_IMAGE",
-              "PROFILE_COVER_IMAGE",
-              "CONTEST_PARTICIPATION_COVER",
-              "PROFILE_AVATAR",
-              "VOTING_IMAGE",
               "COVER_IMAGE",
               "CONTEST_IMAGE",
+              "CONTEST_PARTICIPATION_COVER",
+              "PROFILE_IMAGE",
+              "PROFILE_COVER_IMAGE",
+              "PROFILE_BANNER_IMAGE",
             ]),
             createdAt: z.string(),
             updatedAt: z.string(),
+            profileId: z.string().nullable(),
+            caption: z.string().nullable(),
+            contestId: z.string().nullable(),
           })
           .passthrough()
           .nullable(),
@@ -2176,21 +2314,21 @@ const endpoints = makeApi([
             name: z.string(),
             url: z.string(),
             size: z.number().nullable(),
-            caption: z.string().nullable(),
             type: z.string().nullable(),
             status: z.enum(["FAILED", "PROCESSING", "COMPLETED"]),
             mediaType: z.enum([
-              "USER_IMAGE",
-              "PROFILE_IMAGE",
-              "PROFILE_COVER_IMAGE",
-              "CONTEST_PARTICIPATION_COVER",
-              "PROFILE_AVATAR",
-              "VOTING_IMAGE",
               "COVER_IMAGE",
               "CONTEST_IMAGE",
+              "CONTEST_PARTICIPATION_COVER",
+              "PROFILE_IMAGE",
+              "PROFILE_COVER_IMAGE",
+              "PROFILE_BANNER_IMAGE",
             ]),
             createdAt: z.string(),
             updatedAt: z.string(),
+            profileId: z.string().nullable(),
+            caption: z.string().nullable(),
+            contestId: z.string().nullable(),
           })
           .passthrough()
           .nullable(),
@@ -2592,7 +2730,7 @@ const endpoints = makeApi([
               userId: z.string(),
               username: z.string(),
               displayUsername: z.string().nullable(),
-              avatarUrl: z.string().nullable(),
+              coverImage: z.string().nullable(),
               bio: z.string().nullable(),
               totalVotes: z.number(),
               freeVotes: z.number(),
@@ -3274,7 +3412,6 @@ const endpoints = makeApi([
               id: z.string(),
               userId: z.string(),
               bio: z.string().nullable(),
-              avatarUrl: z.string().max(255).nullable(),
               phone: z.string().max(20).nullable(),
               address: z.string(),
               city: z.string().max(100).nullable(),
@@ -3297,7 +3434,17 @@ const endpoints = makeApi([
               linkedin: z.string().max(255).nullable(),
               website: z.string().max(255).nullable(),
               other: z.string().max(255).nullable(),
+              bannerImageId: z.string().nullable(),
               coverImage: z
+                .object({
+                  id: z.string(),
+                  key: z.string(),
+                  caption: z.string().nullable(),
+                  url: z.string(),
+                })
+                .passthrough()
+                .nullable(),
+              bannerImage: z
                 .object({
                   id: z.string(),
                   key: z.string(),
@@ -3353,7 +3500,6 @@ const endpoints = makeApi([
         id: z.string(),
         userId: z.string(),
         bio: z.string().nullable(),
-        avatarUrl: z.string().max(255).nullable(),
         phone: z.string().max(20).nullable(),
         address: z.string(),
         city: z.string().max(100).nullable(),
@@ -3376,6 +3522,7 @@ const endpoints = makeApi([
         linkedin: z.string().max(255).nullable(),
         website: z.string().max(255).nullable(),
         other: z.string().max(255).nullable(),
+        bannerImageId: z.string().nullable(),
       })
       .passthrough(),
     errors: [
@@ -3433,7 +3580,6 @@ const endpoints = makeApi([
         id: z.string(),
         userId: z.string(),
         bio: z.string().nullable(),
-        avatarUrl: z.string().max(255).nullable(),
         phone: z.string().max(20).nullable(),
         address: z.string(),
         city: z.string().max(100).nullable(),
@@ -3456,7 +3602,17 @@ const endpoints = makeApi([
         linkedin: z.string().max(255).nullable(),
         website: z.string().max(255).nullable(),
         other: z.string().max(255).nullable(),
+        bannerImageId: z.string().nullable(),
         coverImage: z
+          .object({
+            id: z.string(),
+            key: z.string(),
+            caption: z.string().nullable(),
+            url: z.string(),
+          })
+          .passthrough()
+          .nullable(),
+        bannerImage: z
           .object({
             id: z.string(),
             key: z.string(),
@@ -3517,7 +3673,6 @@ const endpoints = makeApi([
         id: z.string(),
         userId: z.string(),
         bio: z.string().nullable(),
-        avatarUrl: z.string().max(255).nullable(),
         phone: z.string().max(20).nullable(),
         address: z.string(),
         city: z.string().max(100).nullable(),
@@ -3540,6 +3695,7 @@ const endpoints = makeApi([
         linkedin: z.string().max(255).nullable(),
         website: z.string().max(255).nullable(),
         other: z.string().max(255).nullable(),
+        bannerImageId: z.string().nullable(),
       })
       .passthrough(),
     errors: [
@@ -3653,9 +3809,9 @@ const endpoints = makeApi([
   },
   {
     method: "post",
-    path: "/api/v1/profile/:id/upload/cover",
-    alias: "postApiv1profileIduploadcover",
-    description: `Upload a cover image for a specific profile`,
+    path: "/api/v1/profile/:id/upload/banner",
+    alias: "postApiv1profileIduploadbanner",
+    description: `Upload a banner image for a specific profile`,
     requestFormat: "form-data",
     parameters: [
       {
@@ -3674,7 +3830,6 @@ const endpoints = makeApi([
         id: z.string(),
         userId: z.string(),
         bio: z.string().nullable(),
-        avatarUrl: z.string().max(255).nullable(),
         phone: z.string().max(20).nullable(),
         address: z.string(),
         city: z.string().max(100).nullable(),
@@ -3697,6 +3852,80 @@ const endpoints = makeApi([
         linkedin: z.string().max(255).nullable(),
         website: z.string().max(255).nullable(),
         other: z.string().max(255).nullable(),
+        bannerImageId: z.string().nullable(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 400,
+        description: `Upload failed`,
+        schema: z
+          .object({
+            message: z.string(),
+            statusText: z.string(),
+            status: z.number(),
+          })
+          .passthrough(),
+      },
+      {
+        status: 404,
+        description: `Profile not found`,
+        schema: z
+          .object({
+            message: z.string(),
+            statusText: z.string(),
+            status: z.number(),
+          })
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/profile/:id/upload/cover",
+    alias: "postApiv1profileIduploadcover",
+    description: `Upload a cover image for a specific profile`,
+    requestFormat: "form-data",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ file: z.unknown() }).passthrough(),
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string(),
+      },
+    ],
+    response: z
+      .object({
+        id: z.string(),
+        userId: z.string(),
+        bio: z.string().nullable(),
+        phone: z.string().max(20).nullable(),
+        address: z.string(),
+        city: z.string().max(100).nullable(),
+        country: z.string().max(100).nullable(),
+        postalCode: z.string().max(20).nullable(),
+        dateOfBirth: z.string().nullable(),
+        gender: z.string().max(50).nullable(),
+        hobbiesAndPassions: z.string().nullable(),
+        paidVoterMessage: z.string().nullable(),
+        freeVoterMessage: z.string().nullable(),
+        createdAt: z.string(),
+        updatedAt: z.string(),
+        lastFreeVoteAt: z.string().nullable(),
+        coverImageId: z.string().nullable(),
+        instagram: z.string().max(255).nullable(),
+        tiktok: z.string().max(255).nullable(),
+        youtube: z.string().max(255).nullable(),
+        facebook: z.string().max(255).nullable(),
+        twitter: z.string().max(255).nullable(),
+        linkedin: z.string().max(255).nullable(),
+        website: z.string().max(255).nullable(),
+        other: z.string().max(255).nullable(),
+        bannerImageId: z.string().nullable(),
       })
       .passthrough(),
     errors: [
@@ -3734,7 +3963,7 @@ const endpoints = makeApi([
       {
         name: "body",
         type: "Body",
-        schema: z.object({ files: z.array(z.unknown()) }).passthrough(),
+        schema: postApiv1profileIduploadphotos_Body,
       },
       {
         name: "id",
@@ -3747,7 +3976,6 @@ const endpoints = makeApi([
         id: z.string(),
         userId: z.string(),
         bio: z.string().nullable(),
-        avatarUrl: z.string().max(255).nullable(),
         phone: z.string().max(20).nullable(),
         address: z.string(),
         city: z.string().max(100).nullable(),
@@ -3770,6 +3998,7 @@ const endpoints = makeApi([
         linkedin: z.string().max(255).nullable(),
         website: z.string().max(255).nullable(),
         other: z.string().max(255).nullable(),
+        bannerImageId: z.string().nullable(),
       })
       .passthrough(),
     errors: [
@@ -3815,7 +4044,6 @@ const endpoints = makeApi([
         id: z.string(),
         userId: z.string(),
         bio: z.string().nullable(),
-        avatarUrl: z.string().max(255).nullable(),
         phone: z.string().max(20).nullable(),
         address: z.string(),
         city: z.string().max(100).nullable(),
@@ -3838,7 +4066,17 @@ const endpoints = makeApi([
         linkedin: z.string().max(255).nullable(),
         website: z.string().max(255).nullable(),
         other: z.string().max(255).nullable(),
+        bannerImageId: z.string().nullable(),
         coverImage: z
+          .object({
+            id: z.string(),
+            key: z.string(),
+            caption: z.string().nullable(),
+            url: z.string(),
+          })
+          .passthrough()
+          .nullable(),
+        bannerImage: z
           .object({
             id: z.string(),
             key: z.string(),
@@ -3893,7 +4131,6 @@ const endpoints = makeApi([
         id: z.string(),
         userId: z.string(),
         bio: z.string().nullable(),
-        avatarUrl: z.string().max(255).nullable(),
         phone: z.string().max(20).nullable(),
         address: z.string(),
         city: z.string().max(100).nullable(),
@@ -3916,7 +4153,17 @@ const endpoints = makeApi([
         linkedin: z.string().max(255).nullable(),
         website: z.string().max(255).nullable(),
         other: z.string().max(255).nullable(),
+        bannerImageId: z.string().nullable(),
         coverImage: z
+          .object({
+            id: z.string(),
+            key: z.string(),
+            caption: z.string().nullable(),
+            url: z.string(),
+          })
+          .passthrough()
+          .nullable(),
+        bannerImage: z
           .object({
             id: z.string(),
             key: z.string(),
@@ -4183,7 +4430,7 @@ const endpoints = makeApi([
               id: z.string(),
               userId: z.string(),
               bio: z.string().nullable(),
-              avatarUrl: z.string().nullable(),
+              coverImage: z.string().nullable(),
               city: z.string().nullable(),
               country: z.string().nullable(),
               gender: z.string().nullable(),
@@ -4705,7 +4952,6 @@ const endpoints = makeApi([
         id: z.string(),
         userId: z.string(),
         bio: z.string().nullable(),
-        avatarUrl: z.string().max(255).nullable(),
         phone: z.string().max(20).nullable(),
         address: z.string(),
         city: z.string().max(100).nullable(),
@@ -4728,6 +4974,7 @@ const endpoints = makeApi([
         linkedin: z.string().max(255).nullable(),
         website: z.string().max(255).nullable(),
         other: z.string().max(255).nullable(),
+        bannerImageId: z.string().nullable(),
       })
       .passthrough(),
     errors: [

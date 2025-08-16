@@ -1,5 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { hc } from '@/lib/api-client';
+import z from 'zod';
+import { schemas } from '@/lib/validations/api-helper';
+import { ProfileInsertSchema } from '@/lib/validations/profile.schema';
+import type { ProfileSelectSchemaType } from '@/lib/validations/profile.schema';
 
 // Profile types
 export interface Profile {
@@ -27,14 +32,15 @@ export interface Profile {
     caption: string | null;
     url: string;
   } | null;
-  profilePhotos?: {
-    id: string;
-    key: string;
-    caption: string | null;
-    url: string;
-  }[] | null;
+  profilePhotos?:
+    | {
+        id: string;
+        key: string;
+        caption: string | null;
+        url: string;
+      }[]
+    | null;
 }
-
 
 export interface PaginatedResponse<T> {
   data: T[];
@@ -98,7 +104,9 @@ export const profileKeys = {
 // Profile API functions
 const profileApi = {
   // Get all profiles with pagination
-  getProfiles: async (params: { page?: number; limit?: number } = {}): Promise<PaginatedResponse<Profile>> => {
+  getProfiles: async (
+    params: { page?: number; limit?: number } = {}
+  ): Promise<PaginatedResponse<Profile>> => {
     const searchParams = new URLSearchParams();
     if (params.page) searchParams.append('page', params.page.toString());
     if (params.limit) searchParams.append('limit', params.limit.toString());
@@ -126,8 +134,9 @@ const profileApi = {
   },
 
   // Create profile
-  createProfile: async (data: CreateProfileRequest): Promise<Profile> => {
-    const response = await api.post('/api/v1/profile', data);
+
+  createProfile: async (data: z.infer<typeof ProfileInsertSchema>) :Promise<ProfileSelectSchemaType>=> {
+    const response = await api.post('/api/v1/profile', data) ;
     return response.data;
   },
 
@@ -227,7 +236,7 @@ export const useProfile = () => {
   const updateProfile = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateProfileRequest }) =>
       profileApi.updateProfile(id, data),
-    onSuccess: (data) => {
+    onSuccess: data => {
       queryClient.invalidateQueries({ queryKey: profileKeys.detail(data.id) });
       queryClient.invalidateQueries({ queryKey: profileKeys.lists() });
     },
@@ -241,9 +250,8 @@ export const useProfile = () => {
   });
 
   const uploadCoverImage = useMutation({
-    mutationFn: ({ id, file }: { id: string; file: File }) =>
-      profileApi.uploadCoverImage(id, file),
-    onSuccess: (data) => {
+    mutationFn: ({ id, file }: { id: string; file: File }) => profileApi.uploadCoverImage(id, file),
+    onSuccess: data => {
       queryClient.invalidateQueries({ queryKey: profileKeys.detail(data.id) });
     },
   });
@@ -251,7 +259,7 @@ export const useProfile = () => {
   const uploadProfilePhotos = useMutation({
     mutationFn: ({ id, files }: { id: string; files: File[] }) =>
       profileApi.uploadProfilePhotos(id, files),
-    onSuccess: (data) => {
+    onSuccess: data => {
       queryClient.invalidateQueries({ queryKey: profileKeys.detail(data.id) });
     },
   });
@@ -265,8 +273,7 @@ export const useProfile = () => {
   });
 
   const removeCoverImage = useMutation({
-    mutationFn: ({ id }: { id: string }) =>
-      profileApi.removeCoverImage(id),
+    mutationFn: ({ id }: { id: string }) => profileApi.removeCoverImage(id),
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: profileKeys.detail(variables.id) });
     },
