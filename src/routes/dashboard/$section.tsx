@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import Dashboard from "@/pages/Dashboard";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 export const dashboardSections = [
   "notifications",
@@ -30,6 +31,10 @@ export const Route = createFileRoute("/dashboard/$section")({
       return { section } as const;
     },
   },
-  component: Dashboard,
+  component: () => (
+    <ProtectedRoute>
+      <Dashboard />
+    </ProtectedRoute>
+  ),
 });
 

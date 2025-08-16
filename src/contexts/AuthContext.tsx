@@ -176,7 +176,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Login with email
   const handleLoginWithEmail = async (data: SignInWithEmailRequest) => {
-    const { email, password } = data;
+    const { email, password, callbackURL } = data;
+    console.log("AuthContext - Email login called with:", { email, callbackURL });
     setIsLoading(true);
     setError(null);
     console.log(email, password);
@@ -198,11 +199,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Store token first
       localStorage.setItem(AUTH_TOKEN_KEY, response.data.token);
 
-      // Invalidate and refetch session data
-      queryClient.invalidateQueries({ queryKey: ["session"] });
+      // Redirect to callback URL if provided, otherwise go to dashboard
+      const redirectTo = callbackURL || DEFAULT_AFTER_LOGIN_REDIRECT;
+      console.log("AuthContext - Email login redirect:", { callbackURL, redirectTo, DEFAULT_AFTER_LOGIN_REDIRECT });
+      
+      // Use setTimeout to ensure navigation happens after state updates
+      setTimeout(() => {
+        console.log("AuthContext - Executing navigation to:", redirectTo);
+        router.navigate({ to: redirectTo, replace: true });
+      }, 100);
 
-      // For login, always go to dashboard
-      router.navigate({ to: DEFAULT_AFTER_LOGIN_REDIRECT });
+      // Invalidate and refetch session data after navigation
+      queryClient.invalidateQueries({ queryKey: ["session"] });
     } catch (error: unknown) {
       console.error("Login error:", error);
       if (error instanceof Error) {
@@ -252,11 +260,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Store token first
       localStorage.setItem(AUTH_TOKEN_KEY, response.data.token);
 
-      // Invalidate and refetch session data
-      queryClient.invalidateQueries({ queryKey: ["session"] });
+      // Redirect to callback URL if provided, otherwise go to dashboard
+      const redirectTo = callbackURL || DEFAULT_AFTER_LOGIN_REDIRECT;
+      console.log("AuthContext - Username login redirect:", { callbackURL, redirectTo, DEFAULT_AFTER_LOGIN_REDIRECT });
+      
+      // Use setTimeout to ensure navigation happens after state updates
+      setTimeout(() => {
+        console.log("AuthContext - Executing navigation to:", redirectTo);
+        router.navigate({ to: redirectTo, replace: true });
+      }, 100);
 
-      // For login, always go to dashboard
-      router.navigate({ to: DEFAULT_AFTER_LOGIN_REDIRECT });
+      // Invalidate and refetch session data after navigation
+      queryClient.invalidateQueries({ queryKey: ["session"] });
     } catch (error: unknown) {
       console.error("Username login error:", error);
       if (error instanceof Error) {

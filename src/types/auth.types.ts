@@ -41,6 +41,7 @@ export interface SignUpWithEmailRequest {
 export interface SignInWithEmailRequest {
   email: string,
   password: string,
+  callbackURL?: string | null,
 }
 
 export interface SignInWithEmailResponse {

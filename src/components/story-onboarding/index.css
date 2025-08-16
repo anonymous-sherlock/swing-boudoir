@@ -1,30 +1,36 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap");
 
-
-body {
-  font-family: 'Inter', sans-serif;
+html body[data-scroll-locked] {
+  --removed-body-scroll-bar-size: 0 !important;
+  margin-right: 0 !important;
+  overflow-y: scroll !important;
+}
+/* Scope onboarding styles to prevent global conflicts */
+.onboarding-app {
+  font-family: "Inter", sans-serif;
   background: #000;
   color: #fff;
   overflow-x: hidden;
+  padding-left: calc(100vw - 100%);
 }
 
-.app {
+.onboarding-app .app {
   min-height: 100vh;
   position: relative;
 }
 
-.scene-container {
+.onboarding-app .scene-container {
   min-height: 100vh;
   position: relative;
   transition: opacity 0.3s ease-in-out;
 }
 
-.scene-container.transitioning {
+.onboarding-app .scene-container.transitioning {
   opacity: 0;
 }
 
 /* Glassmorphism Card Styles */
-.glass-card {
+.onboarding-app .glass-card {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -33,7 +39,7 @@ body {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-.glass-card-dark {
+.onboarding-app .glass-card-dark {
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -43,21 +49,21 @@ body {
 }
 
 /* Typography */
-.headline {
-  font-family: 'Playfair Display', serif;
+.onboarding-app .headline {
+  font-family: "Playfair Display", serif;
   font-size: clamp(2.5rem, 5vw, 4rem);
   font-weight: 600;
   line-height: 1.2;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #fff 0%, #D4AF37 100%);
+  background: linear-gradient(135deg, #fff 0%, #d4af37 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   margin-bottom: 1rem;
 }
 
-.subheading {
-  font-family: 'Inter', sans-serif;
+.onboarding-app .subheading {
+  font-family: "Inter", sans-serif;
   font-size: clamp(1.125rem, 2vw, 1.5rem);
   font-weight: 300;
   color: rgba(255, 255, 255, 0.8);
@@ -65,8 +71,8 @@ body {
   margin-bottom: 2rem;
 }
 
-.section-title {
-  font-family: 'Playfair Display', serif;
+.onboarding-app .section-title {
+  font-family: "Playfair Display", serif;
   font-size: clamp(1.5rem, 3vw, 2.5rem);
   font-weight: 500;
   color: #fff;
@@ -74,11 +80,11 @@ body {
 }
 
 /* Form Styles */
-.form-group {
+.onboarding-app .form-group {
   margin-bottom: 1.5rem;
 }
 
-.form-label {
+.onboarding-app .form-label {
   display: block;
   font-size: 0.875rem;
   font-weight: 500;
@@ -88,7 +94,9 @@ body {
   text-transform: uppercase;
 }
 
-.form-input, .form-select, .form-textarea {
+.form-input,
+.form-select,
+.form-textarea {
   width: 100%;
   padding: 1rem 1.5rem;
   background: rgba(255, 255, 255, 0.1);
@@ -100,38 +108,41 @@ body {
   backdrop-filter: blur(10px);
 }
 
-.form-input:focus, .form-select:focus, .form-textarea:focus {
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
   outline: none;
-  border-color: #D4AF37;
+  border-color: #d4af37;
   box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
   background: rgba(255, 255, 255, 0.15);
 }
 
-.form-input::placeholder, .form-textarea::placeholder {
+.form-input::placeholder,
+.form-textarea::placeholder {
   color: rgba(255, 255, 255, 0.5);
 }
 
-.form-grid {
+.onboarding-app .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
 }
 
-.form-grid-2 {
+.onboarding-app .form-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
 }
 
-.form-grid-3 {
+.onboarding-app .form-grid-3 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
 }
 
 /* Button Styles */
-.btn-primary {
-  background: linear-gradient(135deg, #D4AF37 0%, #E8B4CB 100%);
+.onboarding-app .btn-primary {
+  background: linear-gradient(135deg, #d4af37 0%, #e8b4cb 100%);
   color: #000;
   font-weight: 600;
   font-size: 1.1rem;
@@ -149,13 +160,13 @@ body {
   justify-content: center;
 }
 
-.btn-primary:hover {
+.onboarding-app .btn-primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 10px 30px rgba(212, 175, 55, 0.4);
-  background: linear-gradient(135deg, #E8B4CB 0%, #D4AF37 100%);
+  background: linear-gradient(135deg, #e8b4cb 0%, #d4af37 100%);
 }
 
-.btn-secondary {
+.onboarding-app .btn-secondary {
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -168,14 +179,14 @@ body {
   backdrop-filter: blur(10px);
 }
 
-.btn-secondary:hover {
+.onboarding-app .btn-secondary:hover {
   background: rgba(255, 255, 255, 0.2);
   transform: translateY(-1px);
   box-shadow: 0 5px 20px rgba(255, 255, 255, 0.1);
 }
 
 /* Progress Indicator */
-.progress-indicator {
+.onboarding-app .progress-indicator {
   position: fixed;
   top: 1%;
   left: 50%;
@@ -193,14 +204,14 @@ body {
   min-width: 600px;
 }
 
-.progress-steps-container {
+.onboarding-app .progress-steps-container {
   display: flex;
   align-items: center;
   gap: 1rem;
   flex: 1;
 }
 
-.nav-arrows-container {
+.onboarding-app .nav-arrows-container {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -208,7 +219,7 @@ body {
 }
 
 /* Navigation Arrows - Custom styles for shadcn Button */
-.nav-arrow-custom {
+.onboarding-app .nav-arrow-custom {
   width: 38px !important;
   height: 38px !important;
   border-radius: 50% !important;
@@ -220,22 +231,22 @@ body {
   transition: all 0.3s ease !important;
 }
 
-.nav-arrow-custom:hover:not(.nav-arrow-disabled) {
+.onboarding-app .nav-arrow-custom:hover:not(.nav-arrow-disabled) {
   background: rgba(212, 175, 55, 0.2) !important;
-  border-color: #D4AF37 !important;
-  color: #D4AF37 !important;
+  border-color: #d4af37 !important;
+  color: #d4af37 !important;
   transform: scale(1.05);
   box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
 }
 
-.nav-arrow-custom.nav-arrow-disabled {
+.onboarding-app .nav-arrow-custom.nav-arrow-disabled {
   opacity: 0.3 !important;
   cursor: not-allowed !important;
   background: rgba(0, 0, 0, 0.6) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-.nav-arrow-custom.nav-arrow-disabled:hover {
+.onboarding-app .nav-arrow-custom.nav-arrow-disabled:hover {
   transform: none !important;
   background: rgba(0, 0, 0, 0.6) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
@@ -243,7 +254,7 @@ body {
   box-shadow: none !important;
 }
 
-.progress-step {
+.onboarding-app .progress-step {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -252,15 +263,15 @@ body {
   transition: all 0.3s ease;
 }
 
-.progress-step.active {
-  color: #D4AF37;
+.onboarding-app .progress-step.active {
+  color: #d4af37;
 }
 
-.progress-step.completed {
-  color: #D4AF37;
+.onboarding-app .progress-step.completed {
+  color: #d4af37;
 }
 
-.progress-dot {
+.onboarding-app .progress-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -268,33 +279,33 @@ body {
   transition: all 0.3s ease;
 }
 
-.progress-step.active .progress-dot {
-  background: #D4AF37;
+.onboarding-app .progress-step.active .progress-dot {
+  background: #d4af37;
   box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
 }
 
-.progress-step.completed .progress-dot {
-  background: #D4AF37;
+.onboarding-app .progress-step.completed .progress-dot {
+  background: #d4af37;
 }
 
-.progress-line {
+.onboarding-app .progress-line {
   width: 2rem;
   height: 1px;
   background: rgba(255, 255, 255, 0.2);
   transition: all 0.3s ease;
 }
 
-.progress-line.active {
-  background: linear-gradient(90deg, #D4AF37 0%, rgba(212, 175, 55, 0.3) 100%);
+.onboarding-app .progress-line.active {
+  background: linear-gradient(90deg, #d4af37 0%, rgba(212, 175, 55, 0.3) 100%);
 }
 
-.progress-line.completed {
+.onboarding-app .progress-line.completed {
   /* background: rgba(255, 255, 255, 0.5); */
-  background: #D4AF37;
+  background: #d4af37;
 }
 
 /* Scene Backgrounds */
-.scene-background {
+.onboarding-app .scene-background {
   position: absolute;
   top: 0;
   left: 0;
@@ -303,11 +314,10 @@ body {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  z-index: -1;
 }
 
-.scene-background::before {
-  content: '';
+.onboarding-app .scene-background::before {
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -317,7 +327,7 @@ body {
   z-index: 1;
 }
 
-.scene-content {
+.onboarding-app .scene-content {
   position: relative;
   z-index: 2;
   min-height: 100vh;
@@ -350,22 +360,22 @@ body {
   }
 }
 
-.animate-fade-in-up {
+.onboarding-app .animate-fade-in-up {
   animation: fadeInUp 0.6s ease-out forwards;
 }
 
-.animate-fade-in-scale {
+.onboarding-app .animate-fade-in-scale {
   animation: fadeInScale 0.6s ease-out forwards;
 }
 
 /* Flash Effect */
-.flash-effect {
+.onboarding-app .flash-effect {
   position: relative;
   overflow: hidden;
 }
 
-.flash-effect::before {
-  content: '';
+.onboarding-app .flash-effect::before {
+  content: "";
   position: absolute;
   top: 0;
   left: -100%;
@@ -376,19 +386,19 @@ body {
   pointer-events: none;
 }
 
-.flash-effect:hover::before {
+.onboarding-app .flash-effect:hover::before {
   left: 100%;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .progress-indicator {
+  .onboarding-app .progress-indicator {
     width: calc(100% - 2rem);
   }
-  .scene-content {
+  .onboarding-app .scene-content {
     padding: 1rem;
   }
-  .progress-indicator {
+  .onboarding-app .progress-indicator {
     top: 1rem;
     left: 1rem;
     right: 1rem;
@@ -397,47 +407,49 @@ body {
     gap: 0.5rem;
     min-width: auto;
   }
-  
-  .progress-steps-container {
+
+  .onboarding-app .progress-steps-container {
     width: 100%;
     justify-content: center;
   }
-  
-  .nav-arrows-container {
+
+  .onboarding-app .nav-arrows-container {
     margin-left: 0;
     margin-top: 0;
   }
-  
-  .progress-step {
+
+  .onboarding-app .progress-step {
     font-size: 0.75rem;
   }
-  
-  .progress-line {
+
+  .onboarding-app .progress-line {
     width: 1rem;
   }
-  
-  .nav-arrow-custom {
+
+  .onboarding-app .nav-arrow-custom {
     width: 36px !important;
     height: 36px !important;
   }
-  
-  .glass-card, .glass-card-dark {
+
+  .onboarding-app .glass-card,
+  .onboarding-app .glass-card-dark {
     padding: 1.5rem;
     margin: 1rem;
   }
-  
-  .form-grid-2, .form-grid-3 {
+
+  .onboarding-app .form-grid-2,
+  .onboarding-app .form-grid-3 {
     grid-template-columns: 1fr;
   }
-  
-  .btn-primary {
+
+  .onboarding-app .btn-primary {
     width: 100%;
     padding: 1rem 2rem;
   }
 }
 
 /* Upload area styles */
-.upload-area {
+.onboarding-app .upload-area {
   border: 2px dashed rgba(255, 255, 255, 0.3);
   border-radius: 16px;
   padding: 3rem 2rem;
@@ -448,23 +460,24 @@ body {
   backdrop-filter: blur(10px);
 }
 
-.upload-area:hover, .upload-area.dragover {
-  border-color: #D4AF37;
+.onboarding-app .upload-area:hover,
+.onboarding-app .upload-area.dragover {
+  border-color: #d4af37;
   background: rgba(212, 175, 55, 0.1);
 }
 
-.upload-area.dragover {
+.onboarding-app .upload-area.dragover {
   transform: scale(1.02);
 }
 
-.photo-preview {
+.onboarding-app .photo-preview {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 1rem;
   margin-top: 1.5rem;
 }
 
-.photo-item {
+.onboarding-app .photo-item {
   position: relative;
   aspect-ratio: 3/4;
   border-radius: 8px;
@@ -472,13 +485,13 @@ body {
   background: rgba(255, 255, 255, 0.1);
 }
 
-.photo-item img {
+.onboarding-app .photo-item img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.photo-remove {
+.onboarding-app .photo-remove {
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
@@ -495,7 +508,61 @@ body {
   transition: background-color 0.2s;
 }
 
-.photo-remove:hover {
-  background: #E8B4CB;
+.onboarding-app .photo-remove:hover {
+  background: #e8b4cb;
   color: #000;
+}
+
+/* Banner and Avatar Layout Styles */
+.onboarding-app .banner-avatar-layout {
+  position: relative;
+  margin-bottom: 5rem;
+}
+
+.onboarding-app .banner-upload-area {
+  position: relative;
+  width: 100%;
+  height: 12rem;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px dashed rgba(255, 255, 255, 0.4);
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.onboarding-app .banner-upload-area:hover {
+  border-color: #d4af37;
+  background: rgba(212, 175, 55, 0.1);
+}
+
+.onboarding-app .banner-upload-area.dragover {
+  border-color: #d4af37;
+  background: rgba(212, 175, 55, 0.2);
+}
+
+.onboarding-app .avatar-overlap {
+  position: absolute;
+  bottom: -4rem;
+  left: 2rem;
+  z-index: 10;
+}
+
+.onboarding-app .avatar-upload-area {
+  width: 8rem;
+  height: 8rem;
+  border-radius: 50%;
+  border: 4px solid white;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.onboarding-app .avatar-upload-area:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
 }
