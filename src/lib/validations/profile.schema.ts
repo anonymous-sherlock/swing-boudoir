@@ -1,0 +1,76 @@
+import {z } from "zod";
+
+import { MediaSelectSchema } from "./media.schema";
+
+export const ProfileSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  bio: z.string().nullable(),
+  phone: z.string().max(20).nullable(),
+  address: z.string(),
+  city: z.string().max(100).nullable(),
+  country: z.string().max(100).nullable(),
+  postalCode: z.string().max(20).nullable(),
+  dateOfBirth: z.date().nullable(),
+  gender: z.string().max(50).nullable(),
+  hobbiesAndPassions: z.string().nullable(),
+  paidVoterMessage: z.string().nullable(),
+  freeVoterMessage: z.string().nullable(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  lastFreeVoteAt: z.date().nullable(),
+  coverImageId: z.string().nullable(),
+  instagram: z.string().max(255).nullable(),
+  tiktok: z.string().max(255).nullable(),
+  youtube: z.string().max(255).nullable(),
+  facebook: z.string().max(255).nullable(),
+  twitter: z.string().max(255).nullable(),
+  linkedin: z.string().max(255).nullable(),
+  website: z.string().max(255).nullable(),
+  other: z.string().max(255).nullable(),
+  bannerImageId: z.string().nullable(),
+})
+
+export const ProfileInsertSchema = ProfileSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lastFreeVoteAt: true,
+  bannerImageId:true,
+  coverImageId: true,
+}).extend({
+  instagram: z.string().max(255).nullable().optional(),
+  tiktok: z.string().max(255).nullable().optional(),
+  youtube: z.string().max(255).nullable().optional(),
+  facebook: z.string().max(255).nullable().optional(),
+  twitter: z.string().max(255).nullable().optional(),
+  linkedin: z.string().max(255).nullable().optional(),
+  website: z.string().max(255).nullable().optional(),
+  other: z.string().max(255).nullable().optional(),
+});
+
+export const ProfileSelectSchema = ProfileSchema;
+
+export const ProfileSelectSchemaWithMediaRelation = ProfileSchema.extend({
+  coverImage: MediaSelectSchema.pick({
+    id: true,
+    key: true,
+    caption: true,
+    url: true,
+  }).nullable(),
+  bannerImage: MediaSelectSchema.pick({
+    id: true,
+    key: true,
+    caption: true,
+    url: true,
+  }).nullable(),
+  profilePhotos: z.array(MediaSelectSchema.pick({
+    id: true,
+    key: true,
+    caption: true,
+    url: true,
+  })).nullable(),
+});
+
+
+export type ProfileSelectSchemaType = z.infer<typeof ProfileSelectSchema>;
