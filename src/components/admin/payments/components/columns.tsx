@@ -6,63 +6,42 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { DataTableColumnHeader } from "@/components/data-table/column-header";
 
-export function getColumns(
-  handleRowDeselection?: ((rowId: string) => void) | null | undefined
-): ColumnDef<PaymentCamelCase, unknown>[] {
+export function getColumns(handleRowDeselection?: ((rowId: string) => void) | null | undefined): ColumnDef<PaymentCamelCase, unknown>[] {
   return [
     {
       accessorKey: "id",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Payment ID" />
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Payment ID" />,
       cell: ({ row }) => {
         const id = row.getValue("id") as string;
-        return (
-          <div className="font-mono text-sm">
-            {id.slice(0, 8)}...
-          </div>
-        );
+        return <div className="font-mono text-sm">{id.slice(0, 8)}...</div>;
       },
       enableSorting: true,
       enableHiding: true,
     },
     {
-      accessorKey: "payer.user.name",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Payer" />
-      ),
+      accessorKey: "payer",
+      accessorFn: (data) => data.payer.user.name,
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Payer" />,
       cell: ({ row }) => {
-        const payer = row.getValue("payer") as PaymentCamelCase["payer"];
-        return (
-          <div className="text-sm font-medium">
-            {payer.user.name}
-          </div>
-        );
+        const payerName = row.getValue("payer") as string;
+        return <div className="text-sm font-medium">{payerName}</div>;
       },
       enableSorting: true,
       enableHiding: true,
     },
     {
       accessorKey: "amount",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Amount" />
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Amount" />,
       cell: ({ row }) => {
         const amount = row.getValue("amount") as number;
-        return (
-          <div className="text-sm font-medium">
-            ${amount.toFixed(2)}
-          </div>
-        );
+        return <div className="text-sm font-medium">${amount.toFixed(2)}</div>;
       },
       enableSorting: true,
       enableHiding: true,
     },
     {
       accessorKey: "status",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Status" />
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
       cell: ({ row }) => {
         const status = row.getValue("status") as string;
         const getStatusColor = (status: string) => {
@@ -77,29 +56,21 @@ export function getColumns(
               return "bg-gray-100 text-gray-800";
           }
         };
-        return (
-          <Badge className={getStatusColor(status)}>
-            {status}
-          </Badge>
-        );
+        return <Badge className={getStatusColor(status)}>{status}</Badge>;
       },
       enableSorting: true,
       enableHiding: true,
     },
     {
       accessorKey: "votes",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Votes" />
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Votes" />,
       cell: ({ row }) => {
         const votes = row.getValue("votes") as PaymentCamelCase["votes"];
-        const totalVotes = votes.length;
-        const paidVotes = votes.filter(vote => vote.type === "PAID").length;
-        
+        const paidVotes = votes.filter((vote) => vote.count).length;
+
         return (
           <div className="text-sm">
-            <div>{totalVotes} total</div>
-            <div className="text-gray-500">{paidVotes} paid</div>
+            <div>{votes.reduce((acc, vote) => acc + (vote.count || 0), 0)} Votes</div>  
           </div>
         );
       },
@@ -108,19 +79,15 @@ export function getColumns(
     },
     {
       accessorKey: "contests",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Contests" />
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Contests" />,
       cell: ({ row }) => {
         const votes = row.getValue("votes") as PaymentCamelCase["votes"];
-        const contests = [...new Set(votes.map(vote => vote.contest.name))];
-        
+        const contests = [...new Set(votes.map((vote) => vote.contest.name))];
+
         return (
           <div className="text-sm">
             {contests.slice(0, 2).join(", ")}
-            {contests.length > 2 && (
-              <span className="text-gray-500"> +{contests.length - 2} more</span>
-            )}
+            {contests.length > 2 && <span className="text-gray-500"> +{contests.length - 2} more</span>}
           </div>
         );
       },
@@ -129,16 +96,10 @@ export function getColumns(
     },
     {
       accessorKey: "createdAt",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Date" />
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Date" />,
       cell: ({ row }) => {
         const date = row.getValue("createdAt") as string;
-        return (
-          <div className="text-sm">
-            {format(new Date(date), "MMM dd, yyyy")}
-          </div>
-        );
+        return <div className="text-sm">{format(new Date(date), "MMM dd, yyyy")}</div>;
       },
       enableSorting: true,
       enableHiding: true,

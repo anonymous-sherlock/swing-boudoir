@@ -8,6 +8,7 @@ export const dashboardSections = [
   "competitions",
   "votes",
   "prize-history",
+  "leaderboard",
   "settings",
   "support",
   "official-rules",

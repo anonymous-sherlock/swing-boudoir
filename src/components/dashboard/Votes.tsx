@@ -113,7 +113,7 @@ export function Votes() {
   // Show error state
   if (error) {
     return (
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6 sm:p-4">
         <h1 className="text-2xl font-bold text-foreground">Votes</h1>
         
         <div className="flex items-center justify-center py-12">
@@ -134,7 +134,7 @@ export function Votes() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6 sm:p-4">
       <h1 className="text-2xl font-bold text-foreground">Votes</h1>
 
       {/* Vote Statistics */}

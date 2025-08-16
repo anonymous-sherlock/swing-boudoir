@@ -5,11 +5,47 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Bell, Mail, Smartphone, Megaphone as Marketing, Lock, User, Trash2, LogOut, Cookie, Shield, Instagram } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Bell, 
+  Mail, 
+  Smartphone, 
+  Lock, 
+  User, 
+  Trash2, 
+  LogOut, 
+  Shield, 
+  Instagram,
+  Eye,
+  EyeOff,
+  Globe,
+  Download,
+  Upload,
+  Settings as SettingsIcon,
+  Monitor,
+  Moon,
+  Sun,
+  Palette,
+  Languages,
+  HelpCircle,
+  MessageSquare,
+  Star,
+  Clock,
+  MapPin,
+  Calendar,
+  Zap,
+  Volume2,
+  VolumeX,
+  Wifi,
+  WifiOff,
+  Activity
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { EditProfile } from "./EditProfile";
 import { useProfile } from "@/hooks/api/useProfile";
+import { notificationService } from "@/lib/notificationService";
 
 interface UserProfile {
   id: string;
@@ -32,23 +68,44 @@ interface UserProfile {
   updatedAt: string;
 }
 
-// Mock settings data
 const mockSettings = {
   notifications: {
     email: true,
+    push: true,
     sms: false,
-    marketing: true,
+    marketing: false,
+    competitions: true,
+    results: true,
+    reminders: true,
   },
   privacy: {
-    acceptAllCookies: false,
-    acceptNecessaryCookies: true,
+    profileVisibility: "public",
+    showEmail: false,
+    showPhone: false,
+    showLocation: true,
+    allowMessages: true,
+    allowFollows: true,
   },
+  preferences: {
+    theme: "system",
+    language: "en",
+    timezone: "UTC",
+    dateFormat: "MM/DD/YYYY",
+    currency: "USD",
+    autoSave: true,
+    soundEffects: true,
+  },
+  security: {
+    twoFactor: false,
+    loginAlerts: true,
+    sessionTimeout: "30",
+  }
 };
 
 export function Settings() {
   const { user, handleLogout } = useAuth();
-
   const [settings, setSettings] = useState(mockSettings);
+  const [activeTab, setActiveTab] = useState("account");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwords, setPasswords] = useState({
     current: "",
@@ -59,14 +116,23 @@ export function Settings() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [phone, setPhone] = useState("");
   const [isSavingPhone, setIsSavingPhone] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const { toast } = useToast();
   const { updateProfile } = useProfile();
 
-  // Fetch user profile data
+  const tabs = [
+    { id: "account", label: "Account", icon: User },
+    { id: "notifications", label: "Notifications", icon: Bell },
+    { id: "privacy", label: "Privacy", icon: Shield },
+    { id: "preferences", label: "Preferences", icon: SettingsIcon },
+    { id: "security", label: "Security", icon: Lock },
+    { id: "advanced", label: "Advanced", icon: Zap },
+  ];
+
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (!user) return;
-
       try {
         const token = localStorage.getItem("token");
         const response = await fetch(`/api/v1/users/${user.id}/profile`, {
@@ -75,7 +141,6 @@ export function Settings() {
             "Content-Type": "application/json",
           },
         });
-
         if (response.ok) {
           const profile = await response.json();
           setUserProfile(profile);
@@ -85,40 +150,38 @@ export function Settings() {
         console.error("Error fetching user profile:", error);
       }
     };
-
     fetchUserProfile();
   }, [user]);
 
   const updateNotificationSetting = (key: string, value: boolean) => {
-    setSettings((prev) => ({
+    setSettings(prev => ({
       ...prev,
-      notifications: {
-        ...prev.notifications,
-        [key]: value,
-      },
+      notifications: { ...prev.notifications, [key]: value }
     }));
-
-    // TODO: API call to update settings
-    toast({
-      title: "Settings Updated",
-      description: "Your notification preferences have been saved.",
-    });
+    if (user?.id && user?.profileId) {
+      notificationService.notifySettingsChanged(user.id, user.profileId, `Notification: ${key}`);
+    }
   };
 
-  const updatePrivacySetting = (key: string, value: boolean) => {
-    setSettings((prev) => ({
+  const updatePrivacySetting = (key: string, value: boolean | string) => {
+    setSettings(prev => ({
       ...prev,
-      privacy: {
-        ...prev.privacy,
-        [key]: value,
-      },
+      privacy: { ...prev.privacy, [key]: value }
     }));
+  };
 
-    // TODO: API call to update settings
-    toast({
-      title: "Privacy Settings Updated",
-      description: "Your cookie preferences have been saved.",
-    });
+  const updatePreference = (key: string, value: boolean | string) => {
+    setSettings(prev => ({
+      ...prev,
+      preferences: { ...prev.preferences, [key]: value }
+    }));
+  };
+
+  const updateSecuritySetting = (key: string, value: boolean | string) => {
+    setSettings(prev => ({
+      ...prev,
+      security: { ...prev.security, [key]: value }
+    }));
   };
 
   const changePassword = async () => {
@@ -130,23 +193,25 @@ export function Settings() {
       });
       return;
     }
-
-    // TODO: API call to change password
     console.log("Changing password");
     toast({
       title: "Password Changed",
       description: "Your password has been updated successfully.",
     });
-
     setIsChangingPassword(false);
     setPasswords({ current: "", new: "", confirm: "" });
   };
 
+  const exportData = () => {
+    toast({
+      title: "Export Started",
+      description: "Your data export will be emailed to you within 24 hours.",
+    });
+  };
+
   const deleteAccount = async () => {
     const confirmed = window.confirm("Are you sure you want to delete your account? This action cannot be undone.");
-
     if (confirmed) {
-      // TODO: API call to delete account
       console.log("Deleting account");
       toast({
         title: "Account Deletion",
@@ -161,13 +226,13 @@ export function Settings() {
     try {
       await updateProfile.mutateAsync({ id: userProfile.id, data: { phone } });
       toast({
-        title: "Phone Updated!",
+        title: "Phone Updated",
         description: "Your phone number has been updated successfully.",
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update phone number. Please try again.",
+        description: "Failed to update phone number.",
         variant: "destructive",
       });
     } finally {
@@ -175,245 +240,539 @@ export function Settings() {
     }
   };
 
+  if (showEditProfile) {
+    return (
+      <div className="max-w-6xl mx-auto space-y-6 sm:p-4">
+        <Button variant="outline" size="sm" onClick={() => setShowEditProfile(false)}>
+          ← Back to Settings
+        </Button>
+        <EditProfile />
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold text-foreground">Settings</h1>
-      {!showEditProfile ? (
-        <>
-          {/* User Profile Summary */}
-          <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
-            <CardHeader>
-              <CardTitle className="flex items-center text-purple-800">
-                <User className="mr-2 h-5 w-5" />
-                Profile Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">Name</Label>
-                  <p className="text-lg font-semibold text-gray-900">{user?.name || "Not set"}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">Email</Label>
-                  <p className="text-lg font-semibold text-gray-900">{user?.email || "Not set"}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">Phone Number</Label>
-                  <p className="text-lg font-semibold text-gray-900">{userProfile?.phone || "Not set"}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">Instagram</Label>
-                  <p className="text-lg font-semibold text-gray-900 flex items-center">
-                    {userProfile?.hobbiesAndPassions ? (
-                      <>
-                        <Instagram className="w-4 h-4 mr-2" />
-                        {userProfile.hobbiesAndPassions}
-                      </>
-                    ) : (
-                      "Not set"
-                    )}
-                  </p>
-                </div>
-              </div>
-              <Button
-                variant="default"
-                size="lg"
-                className="w-full md:w-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-                onClick={() => setShowEditProfile(true)}
+    <div className="max-w-6xl mx-auto space-y-6 sm:p-4">
+      <div className="mb-6">
+        <h1 className="text-xl font-semibold text-foreground">Settings</h1>
+        <p className="text-sm text-muted-foreground">Manage your account and preferences</p>
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Sidebar Navigation */}
+        <div className="lg:w-64 space-y-2">
+          {tabs.map(tab => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`w-full flex items-center space-x-3 px-3 py-2 text-sm rounded-md transition-colors ${
+                  activeTab === tab.id
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-muted text-muted-foreground"
+                }`}
               >
-                <User className="mr-2 h-4 w-4" />
-                Edit Profile
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Notifications */}
-          {/* <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Bell className="mr-2 h-5 w-5" />
-                Manage Notifications
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <Mail className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <Label htmlFor="email-notifications" className="text-base font-medium">
-                      Email Notifications
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      Receive important updates via email
-                    </p>
-                  </div>
-                </div>
-                <Switch
-                  id="email-notifications"
-                  checked={settings.notifications.email}
-                  onCheckedChange={(checked) => updateNotificationSetting('email', checked)}
-                />
-              </div>
-
-              <Separator />
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <Smartphone className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <Label htmlFor="sms-notifications" className="text-base font-medium">
-                      SMS Notifications
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      Receive urgent updates via SMS
-                    </p>
-                  </div>
-                </div>
-                <Switch
-                  id="sms-notifications"
-                  checked={settings.notifications.sms}
-                  onCheckedChange={(checked) => updateNotificationSetting('sms', checked)}
-                />
-              </div>
-
-              <Separator />
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <Marketing className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <Label htmlFor="marketing-notifications" className="text-base font-medium">
-                      Marketing Notifications
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      Receive promotional offers and marketing content
-                    </p>
-                  </div>
-                </div>
-                <Switch
-                  id="marketing-notifications"
-                  checked={settings.notifications.marketing}
-                  onCheckedChange={(checked) => updateNotificationSetting('marketing', checked)}
-                />
-              </div>
-            </CardContent>
-          </Card> */}
-
-          {/* Account Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <User className="mr-2 h-5 w-5" />
-                Account Settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Private Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input id="email" type="email" defaultValue={user?.email || ""} disabled className="bg-muted" />
-                    <p className="text-xs text-muted-foreground mt-1">Contact support to change your email address</p>
-                  </div>
-                  <div>
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <div className="flex gap-2">
-                      <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 (555) 123-4567" disabled={isSavingPhone} />
-                      <Button onClick={handleSavePhone} disabled={isSavingPhone} variant="outline">
-                        {isSavingPhone ? "Saving..." : "Save"}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">Change Password</h3>
-                  {!isChangingPassword && (
-                    <Button variant="outline" onClick={() => setIsChangingPassword(true)}>
-                      <Lock className="mr-2 h-4 w-4" />
-                      Change Password
-                    </Button>
-                  )}
-                </div>
-
-                {isChangingPassword && (
-                  <div className="space-y-4 p-4 border rounded-lg">
-                    <div>
-                      <Label htmlFor="current-password">Current Password</Label>
-                      <Input id="current-password" type="password" value={passwords.current} onChange={(e) => setPasswords((prev) => ({ ...prev, current: e.target.value }))} />
-                    </div>
-                    <div>
-                      <Label htmlFor="new-password">New Password</Label>
-                      <Input id="new-password" type="password" value={passwords.new} onChange={(e) => setPasswords((prev) => ({ ...prev, new: e.target.value }))} />
-                    </div>
-                    <div>
-                      <Label htmlFor="confirm-password">Confirm New Password</Label>
-                      <Input id="confirm-password" type="password" value={passwords.confirm} onChange={(e) => setPasswords((prev) => ({ ...prev, confirm: e.target.value }))} />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button onClick={changePassword}>Save Password</Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setIsChangingPassword(false);
-                          setPasswords({ current: "", new: "", confirm: "" });
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <Separator />
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <Trash2 className="h-5 w-5 text-destructive" />
-                  <div>
-                    <Label className="text-base font-medium text-destructive">Delete Account</Label>
-                    <p className="text-sm text-muted-foreground">Permanently delete your account and all associated data</p>
-                  </div>
-                </div>
-                <Button variant="destructive" onClick={deleteAccount}>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete Account
-                </Button>
-              </div>
-
-              <Separator />
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <LogOut className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <Label className="text-base font-medium">Log Out</Label>
-                    <p className="text-sm text-muted-foreground">Sign out of your account on this device</p>
-                  </div>
-                </div>
-                <Button variant="outline" onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Log Out
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </>
-      ) : (
-        <div className="my-6">
-          <Button variant="outline" size="sm" className="mb-4" onClick={() => setShowEditProfile(false)}>
-            ← Back to Settings
-          </Button>
-          <EditProfile />
+                <Icon className="h-4 w-4" />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
-      )}
+
+        {/* Content Area */}
+        <div className="flex-1 space-y-4">
+          {activeTab === "account" && (
+            <>
+              {/* Profile Summary */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Profile Overview</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
+                      <User className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{user?.name || "Unknown User"}</p>
+                      <p className="text-sm text-muted-foreground">{user?.email}</p>
+                    </div>
+                    <div className="ml-auto">
+                      <Badge variant="secondary">Active</Badge>
+                    </div>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setShowEditProfile(true)}
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Edit Profile
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Contact Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Contact Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="email" className="text-sm">Email</Label>
+                      <Input 
+                        id="email" 
+                        type="email" 
+                        value={user?.email || ""} 
+                        disabled 
+                        className="bg-muted"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="phone" className="text-sm">Phone</Label>
+                      <div className="flex space-x-2">
+                        <Input 
+                          id="phone" 
+                          value={phone} 
+                          onChange={(e) => setPhone(e.target.value)}
+                          placeholder="+1 (555) 123-4567"
+                          disabled={isSavingPhone}
+                        />
+                        <Button 
+                          onClick={handleSavePhone} 
+                          disabled={isSavingPhone}
+                          variant="outline" 
+                          size="sm"
+                        >
+                          {isSavingPhone ? "..." : "Save"}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Password */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Password</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {!isChangingPassword ? (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm">Last changed 30 days ago</p>
+                        <p className="text-xs text-muted-foreground">Keep your account secure</p>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setIsChangingPassword(true)}
+                      >
+                        <Lock className="h-4 w-4 mr-2" />
+                        Change
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div>
+                        <Label htmlFor="current" className="text-sm">Current Password</Label>
+                        <div className="relative">
+                          <Input 
+                            id="current"
+                            type={showCurrentPassword ? "text" : "password"}
+                            value={passwords.current}
+                            onChange={(e) => setPasswords(prev => ({ ...prev, current: e.target.value }))}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-0 top-0 h-full px-3"
+                            onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                          >
+                            {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="new" className="text-sm">New Password</Label>
+                        <div className="relative">
+                          <Input 
+                            id="new"
+                            type={showNewPassword ? "text" : "password"}
+                            value={passwords.new}
+                            onChange={(e) => setPasswords(prev => ({ ...prev, new: e.target.value }))}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-0 top-0 h-full px-3"
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                          >
+                            {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="confirm" className="text-sm">Confirm Password</Label>
+                        <Input 
+                          id="confirm"
+                          type="password"
+                          value={passwords.confirm}
+                          onChange={(e) => setPasswords(prev => ({ ...prev, confirm: e.target.value }))}
+                        />
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button onClick={changePassword} size="sm">Update Password</Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            setIsChangingPassword(false);
+                            setPasswords({ current: "", new: "", confirm: "" });
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+          {activeTab === "notifications" && (
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Email Notifications</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {[
+                    { key: "email", label: "Email Updates", desc: "General account updates" },
+                    { key: "competitions", label: "Competition Updates", desc: "New competitions and results" },
+                    { key: "results", label: "Result Notifications", desc: "When competition results are announced" },
+                    { key: "reminders", label: "Deadline Reminders", desc: "Reminders before deadlines" },
+                  ].map(item => (
+                    <div key={item.key} className="flex items-center justify-between py-2">
+                      <div>
+                        <p className="text-sm font-medium">{item.label}</p>
+                        <p className="text-xs text-muted-foreground">{item.desc}</p>
+                      </div>
+                      <Switch
+                        checked={settings.notifications[item.key as keyof typeof settings.notifications]}
+                        onCheckedChange={(checked) => updateNotificationSetting(item.key, checked)}
+                      />
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Push Notifications</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {[
+                    { key: "push", label: "Browser Notifications", desc: "Instant notifications in browser" },
+                    { key: "sms", label: "SMS Notifications", desc: "Text messages for urgent updates" },
+                  ].map(item => (
+                    <div key={item.key} className="flex items-center justify-between py-2">
+                      <div>
+                        <p className="text-sm font-medium">{item.label}</p>
+                        <p className="text-xs text-muted-foreground">{item.desc}</p>
+                      </div>
+                      <Switch
+                        checked={settings.notifications[item.key as keyof typeof settings.notifications]}
+                        onCheckedChange={(checked) => updateNotificationSetting(item.key, checked)}
+                      />
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+          {activeTab === "privacy" && (
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Profile Visibility</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label className="text-sm">Who can see your profile?</Label>
+                    <Select
+                      value={settings.privacy.profileVisibility}
+                      onValueChange={(value) => updatePrivacySetting("profileVisibility", value)}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="public">Everyone</SelectItem>
+                        <SelectItem value="registered">Registered Users Only</SelectItem>
+                        <SelectItem value="private">Only Me</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {[
+                    { key: "showEmail", label: "Show Email", desc: "Display email on profile" },
+                    { key: "showPhone", label: "Show Phone", desc: "Display phone number on profile" },
+                    { key: "showLocation", label: "Show Location", desc: "Display location information" },
+                    { key: "allowMessages", label: "Allow Messages", desc: "Let others send you messages" },
+                    { key: "allowFollows", label: "Allow Follows", desc: "Let others follow your activity" },
+                  ].map(item => (
+                    <div key={item.key} className="flex items-center justify-between py-2">
+                      <div>
+                        <p className="text-sm font-medium">{item.label}</p>
+                        <p className="text-xs text-muted-foreground">{item.desc}</p>
+                      </div>
+                      <Switch
+                        checked={settings.privacy[item.key as keyof typeof settings.privacy] as boolean}
+                        onCheckedChange={(checked) => updatePrivacySetting(item.key, checked)}
+                      />
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+          {activeTab === "preferences" && (
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Appearance</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label className="text-sm">Theme</Label>
+                    <Select
+                      value={settings.preferences.theme}
+                      onValueChange={(value) => updatePreference("theme", value)}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="light">Light</SelectItem>
+                        <SelectItem value="dark">Dark</SelectItem>
+                        <SelectItem value="system">System</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Localization</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm">Language</Label>
+                      <Select
+                        value={settings.preferences.language}
+                        onValueChange={(value) => updatePreference("language", value)}
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="en">English</SelectItem>
+                          <SelectItem value="es">Español</SelectItem>
+                          <SelectItem value="fr">Français</SelectItem>
+                          <SelectItem value="de">Deutsch</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-sm">Timezone</Label>
+                      <Select
+                        value={settings.preferences.timezone}
+                        onValueChange={(value) => updatePreference("timezone", value)}
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="UTC">UTC</SelectItem>
+                          <SelectItem value="EST">Eastern Time</SelectItem>
+                          <SelectItem value="PST">Pacific Time</SelectItem>
+                          <SelectItem value="GMT">GMT</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">General Preferences</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {[
+                    { key: "autoSave", label: "Auto-save", desc: "Automatically save your work" },
+                    { key: "soundEffects", label: "Sound Effects", desc: "Play sounds for interactions" },
+                  ].map(item => (
+                    <div key={item.key} className="flex items-center justify-between py-2">
+                      <div>
+                        <p className="text-sm font-medium">{item.label}</p>
+                        <p className="text-xs text-muted-foreground">{item.desc}</p>
+                      </div>
+                      <Switch
+                        checked={settings.preferences[item.key as keyof typeof settings.preferences] as boolean}
+                        onCheckedChange={(checked) => updatePreference(item.key, checked)}
+                      />
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+          {activeTab === "security" && (
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Two-Factor Authentication</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">Enable 2FA</p>
+                      <p className="text-xs text-muted-foreground">Add an extra layer of security</p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {settings.security.twoFactor && <Badge variant="secondary">Enabled</Badge>}
+                      <Switch
+                        checked={settings.security.twoFactor}
+                        onCheckedChange={(checked) => updateSecuritySetting("twoFactor", checked)}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Login Security</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between py-2">
+                    <div>
+                      <p className="text-sm font-medium">Login Alerts</p>
+                      <p className="text-xs text-muted-foreground">Get notified of new logins</p>
+                    </div>
+                    <Switch
+                      checked={settings.security.loginAlerts}
+                      onCheckedChange={(checked) => updateSecuritySetting("loginAlerts", checked)}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label className="text-sm">Session Timeout (minutes)</Label>
+                    <Select
+                      value={settings.security.sessionTimeout}
+                      onValueChange={(value) => updateSecuritySetting("sessionTimeout", value)}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="15">15 minutes</SelectItem>
+                        <SelectItem value="30">30 minutes</SelectItem>
+                        <SelectItem value="60">1 hour</SelectItem>
+                        <SelectItem value="120">2 hours</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+          {activeTab === "advanced" && (
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Data Management</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">Export Account Data</p>
+                      <p className="text-xs text-muted-foreground">Download all your data</p>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={exportData}>
+                      <Download className="h-4 w-4 mr-2" />
+                      Export
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Account Status</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4 text-center">
+                    <div className="p-3 bg-muted rounded-lg">
+                      <p className="text-lg font-semibold">142</p>
+                      <p className="text-xs text-muted-foreground">Days Active</p>
+                    </div>
+                    <div className="p-3 bg-muted rounded-lg">
+                      <p className="text-lg font-semibold">23</p>
+                      <p className="text-xs text-muted-foreground">Competitions</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Danger Zone</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-destructive">Delete Account</p>
+                      <p className="text-xs text-muted-foreground">Permanently delete your account</p>
+                    </div>
+                    <Button variant="destructive" size="sm" onClick={deleteAccount}>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </Button>
+                  </div>
+
+                  <Separator />
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">Sign Out</p>
+                      <p className="text-xs text-muted-foreground">Sign out from this device</p>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={handleLogout}>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign Out
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

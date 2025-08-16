@@ -6,6 +6,7 @@ import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { QueryClient } from "@tanstack/react-query";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { NuqsAdapter } from "nuqs/adapters/react";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 
 function AppShell() {
   const { isLoading } = useAuth();
@@ -33,7 +34,9 @@ export const Route = createRootRoute<MyRouterContext>({
     <AuthProvider>
       <NuqsAdapter>
         <OnboardingProvider>
-          <AppShell />
+          <NotificationProvider>
+            <AppShell />
+          </NotificationProvider>
         </OnboardingProvider>
       </NuqsAdapter>
     </AuthProvider>

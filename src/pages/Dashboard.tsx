@@ -15,6 +15,7 @@ import { PrivacyPolicy } from "@/components/dashboard/PrivacyPolicy";
 import Header from "@/components/Header";
 import { ONBOARDING_REDIRECT } from "@/routes";
 import { DashboardSection } from "@/routes/dashboard/$section";
+import Leaderboard from "@/pages/Leaderboard";
 
 function DashboardLayout({
   activeSection = "notifications",
@@ -112,6 +113,8 @@ export default function Dashboard() {
         return <Votes />;
       case "prize-history":
         return <PrizeHistory />;
+        case "leaderboard":
+          return <Leaderboard />;
       case "settings":
         return <Settings />;
       case "support":

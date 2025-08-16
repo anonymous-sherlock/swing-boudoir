@@ -2,15 +2,14 @@ import { CompetitionCard } from "@/components/CompetitionCard";
 import Header from "@/components/Header";
 import { PageLoader } from "@/components/PageLoader";
 import { Button } from "@/components/ui/button";
-import { useContests,useAvailableContests,useUpcomingContests,useJoinedContests } from "@/hooks/useContests";
+import { useCompetitions } from "@/hooks/useCompetitions";
 import { RefreshCw } from "lucide-react";
 import React from "react";
 
 export const CompetitionsPage: React.FC = () => {
-  const { data, isLoading, error, refetch } =  useContests();
-  const { data: availableContests, isLoading: isLoadingAvailable, error: errorAvailable, refetch: refetchAvailable } = useAvailableContests(profileId);
-  const { data: upcomingContests, isLoading: isLoadingUpcoming, error: errorUpcoming, refetch: refetchUpcoming } = useUpcomingContests();
-  const { data: joinedContests, isLoading: isLoadingJoined, error: errorJoined, refetch: refetchJoined } = useJoinedContests(profileId);
+  const { competitions, isLoading, error, refetch, joinedCompetitions, isLoadingJoined, getActiveCompetitions, getComingSoonCompetitions, getCompletedCompetitions } =
+    useCompetitions();
+
   if (isLoading) {
     return <PageLoader title="Loading competitions..." description="Please wait while we get your information from the web" />;
   }
@@ -30,6 +29,9 @@ export const CompetitionsPage: React.FC = () => {
     );
   }
 
+  const activeCompetitions = getActiveCompetitions();
+  const comingSoonCompetitions = getComingSoonCompetitions();
+  const completedCompetitions = getCompletedCompetitions();
 
   return (
     <>
