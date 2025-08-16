@@ -32,11 +32,12 @@ interface SidebarProps {
 }
 
 const sidebarItemsMain = [
-  { id: "competitions" as DashboardSection, label: "Competitions", icon: Trophy },
   { id: "public-profile" as DashboardSection, label: "Public Profile", icon: Users },
+  { id: "competitions" as DashboardSection, label: "Competitions", icon: Trophy },
   { id: "votes" as DashboardSection, label: "Votes", icon: Vote },
-  { id: "prize-history" as DashboardSection, label: "Prize History", icon: Gift },
+  // { id: "prize-history" as DashboardSection, label: "Prize History", icon: Gift },
   { id: "leaderboard" as DashboardSection, label: "Leaderboard", icon: TrendingUp },
+  { id: "notifications" as DashboardSection, label: "Notifications", icon: Bell },
 ];
 
 const sidebarItemsSecondary = [
@@ -157,9 +158,11 @@ export function Sidebar({
         {isExpanded ? (
           <h2 className="text-xl font-bold text-foreground">Dashboard</h2>
         ) : (
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">S</span>
-          </div>
+          <>
+          </>
+          // <div className="w-8 h-8 bg-primary flex-shrink-0 rounded rounded-lg flex items-center justify-center">
+          //   <span className="text-primary-foreground font-bold text-sm">S</span>
+          // </div>
         )}
         <Button
           variant="ghost"

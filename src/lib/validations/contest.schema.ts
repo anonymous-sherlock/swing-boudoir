@@ -53,6 +53,7 @@ export const ContestInsertSchema = ContestSchema.pick({
   slug: z.string().optional(),
   rules: z.string().optional().nullable(),
   requirements: z.string().optional().nullable(),
+  prizePool: z.coerce.number(),
   awards: z.array(
     z.object({
       name: z.string(),

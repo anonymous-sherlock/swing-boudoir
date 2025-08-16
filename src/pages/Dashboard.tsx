@@ -18,7 +18,7 @@ import { DashboardSection } from "@/routes/dashboard/$section";
 import Leaderboard from "@/pages/Leaderboard";
 
 function DashboardLayout({
-  activeSection = "notifications",
+  activeSection = "public-profile",
   setActiveSection,
   children,
 }: {
@@ -54,12 +54,10 @@ function DashboardLayout({
 export default function Dashboard() {
   const router = useRouter();
   const pathname = router.state.location.pathname;
-  const currentSection = pathname.startsWith("/dashboard/")
-    ? (pathname.split("/")[2] as DashboardSection)
-    : undefined;
+  const currentSection = pathname.startsWith("/dashboard/") ? (pathname.split("/")[2] as DashboardSection) : undefined;
 
   const { isAuthenticated, isLoading, checkUserNeedsOnboarding } = useAuth();
-  const [activeSection, setActiveSection] = useState<DashboardSection>(currentSection || "notifications");
+  const [activeSection, setActiveSection] = useState<DashboardSection>(currentSection || "public-profile");
 
   // Auth and onboarding checks
   useEffect(() => {
@@ -101,10 +99,10 @@ export default function Dashboard() {
 
   const renderContent = () => {
     switch (activeSection) {
-      case "notifications":
-        return <DashboardNotifications />;
       case "edit-profile":
         return <EditProfile />;
+      case "notifications":
+        return <DashboardNotifications />;
       case "public-profile":
         return <PublicProfile />;
       case "competitions":
@@ -113,8 +111,8 @@ export default function Dashboard() {
         return <Votes />;
       case "prize-history":
         return <PrizeHistory />;
-        case "leaderboard":
-          return <Leaderboard />;
+      case "leaderboard":
+        return <Leaderboard />;
       case "settings":
         return <Settings />;
       case "support":

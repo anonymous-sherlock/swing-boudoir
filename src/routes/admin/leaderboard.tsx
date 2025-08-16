@@ -291,7 +291,6 @@ function LeaderboardPage() {
                   <TableHead className="w-20 font-semibold text-gray-700">Rank</TableHead>
                   <TableHead className="font-semibold text-gray-700">Profile</TableHead>
                   <TableHead className="font-semibold text-gray-700">Username</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Bio</TableHead>
                   <TableHead className="text-right font-semibold text-gray-700">Total Votes</TableHead>
                   <TableHead className="text-right font-semibold text-gray-700">Free Votes</TableHead>
                   <TableHead className="text-right font-semibold text-gray-700">Paid Votes</TableHead>
@@ -347,7 +346,7 @@ function LeaderboardPage() {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="h-8 w-8 ring-2 ring-gray-200">
-                            <AvatarImage src={entry.avatarUrl ?? ""} />
+                            <AvatarImage src={entry?.coverImage ?? ""} />
                             <AvatarFallback className="bg-gray-200 text-gray-700 font-semibold text-xs">
                               {entry.displayUsername?.[0] || entry.username[0] || "?"}
                             </AvatarFallback>
@@ -360,13 +359,6 @@ function LeaderboardPage() {
                             {entry.displayUsername || entry.username}
                           </span>
                           <span className="text-sm text-gray-500">@{entry.username}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="max-w-xs">
-                          <p className="text-sm text-gray-700 line-clamp-2">
-                            {entry.bio || "No bio available"}
-                          </p>
                         </div>
                       </TableCell>
                       <TableCell className="text-right">

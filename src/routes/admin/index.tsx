@@ -61,7 +61,7 @@ export default function Page() {
     },
     {
       label: 'Total Prize Pool',
-      value: dashboardResponse.totalPrizePool,
+      value: Number(dashboardResponse.totalPrizePool.toFixed(2)),
       subtext: 'Prize money in USD',
       icon: <DollarSign className="h-8 w-8 text-yellow-600" />,
     },

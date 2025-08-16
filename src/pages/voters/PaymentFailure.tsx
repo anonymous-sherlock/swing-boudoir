@@ -13,7 +13,7 @@ import {
   Phone,
   MessageCircle
 } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearch } from '@tanstack/react-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
@@ -27,17 +27,24 @@ interface PaymentError {
 export function PaymentFailure() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [searchParams] = useSearchParams();
+  const searchParams = useSearch({ strict:false,shouldThrow:false}) as {
+    callback?: string;
+    error_code?: string;
+    error_message?: string;
+    decline_code?: string;
+    payment_intent?: string;
+  };
   const [paymentError, setPaymentError] = useState<PaymentError | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const callback = searchParams?.callback;
 
   useEffect(() => {
     const getErrorDetails = () => {
       try {
-        const errorCode = searchParams.get('error_code');
-        const errorMessage = searchParams.get('error_message');
-        const declineCode = searchParams.get('decline_code');
-        const paymentIntentId = searchParams.get('payment_intent');
+        const errorCode = searchParams?.error_code;
+        const errorMessage = searchParams?.error_message;
+        const declineCode = searchParams?.decline_code;
+        const paymentIntentId = searchParams?.payment_intent;
 
         if (errorCode || errorMessage) {
           setPaymentError({
@@ -234,7 +241,7 @@ ${user?.name}
             </Button>
             
             <Button asChild variant="outline" className="flex-1">
-              <Link to="/voters/buy-votes">
+              <Link to={callback } >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Packages
               </Link>
@@ -338,9 +345,9 @@ ${user?.name}
           <CardTitle>What Would You Like to Do?</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Button asChild variant="outline" className="h-auto p-4 flex-col space-y-2">
-              <Link to="/voters">
+              <Link to="/dashboard/$section" params={{ section: "votes" }}>
                 <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
                   <span className="text-blue-600 text-xs font-bold">D</span>
                 </div>
@@ -349,7 +356,7 @@ ${user?.name}
             </Button>
             
             <Button asChild variant="outline" className="h-auto p-4 flex-col space-y-2">
-              <Link to="/voters/browse-contests">
+              <Link to="/dashboard/$section" params={{ section: "competitions" }}>
                 <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
                   <span className="text-green-600 text-xs font-bold">C</span>
                 </div>
@@ -357,17 +364,10 @@ ${user?.name}
               </Link>
             </Button>
             
-            <Button asChild variant="outline" className="h-auto p-4 flex-col space-y-2">
-              <Link to="/voters/favorites">
-                <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
-                  <span className="text-red-600 text-xs font-bold">F</span>
-                </div>
-                <span className="text-sm">View Favorites</span>
-              </Link>
-            </Button>
+          
             
             <Button asChild variant="outline" className="h-auto p-4 flex-col space-y-2">
-              <Link to="/support">
+              <Link to="/dashboard/$section" params={{ section: "support" }}>
                 <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
                   <span className="text-purple-600 text-xs font-bold">S</span>
                 </div>

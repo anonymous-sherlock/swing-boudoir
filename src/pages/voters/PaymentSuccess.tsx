@@ -1,21 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { 
-  CheckCircle, 
-  Heart, 
-  Star, 
-  Trophy, 
-  ArrowRight, 
-  Download,
-  Share2,
-  Home,
-  Users
-} from 'lucide-react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import React, { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle, Heart, Star, Trophy, ArrowRight, Download, Share2, Home, Users } from "lucide-react";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface PaymentDetails {
   packageName: string;
@@ -28,75 +18,32 @@ interface PaymentDetails {
 export function PaymentSuccess() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [searchParams] = useSearchParams();
+  const searchParams = useSearch({ strict: false, shouldThrow: false });
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+
+  const callback = searchParams?.callback;
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchPaymentDetails = async () => {
-      try {
-        const paymentIntentId = searchParams.get('payment_intent');
-        const sessionId = searchParams.get('session_id');
+    console.log(callback);
+    if (callback) {
+      const timeout = setTimeout(() => {
+        navigate({ to: callback, reloadDocument: true, replace: false });
+      }, 6000);
 
-        if (paymentIntentId || sessionId) {
-          // Fetch payment details from your backend
-          const response = await fetch(`/api/v1/payments/verify?payment_intent=${paymentIntentId}&session_id=${sessionId}`, {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-          });
+      return () => clearTimeout(timeout);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [callback]);
 
-          if (response.ok) {
-            const data = await response.json();
-            setPaymentDetails(data);
-          }
-        }
-
-        // Show success toast
-        toast({
-          title: "Payment Successful!",
-          description: "Your premium votes have been added to your account.",
-        });
-      } catch (error) {
-        console.error('Error fetching payment details:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchPaymentDetails();
-  }, [searchParams, toast]);
-
-  const handleDownloadReceipt = () => {
-    // Generate and download receipt
-    const receiptData = {
-      customer: user?.name,
-      email: user?.email,
-      package: paymentDetails?.packageName,
-      votes: paymentDetails?.votes,
-      amount: paymentDetails?.amount,
-      date: paymentDetails?.timestamp,
-      paymentId: paymentDetails?.paymentId
-    };
-
-    const blob = new Blob([JSON.stringify(receiptData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `receipt-${paymentDetails?.paymentId}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
 
   const handleShareSuccess = async () => {
     try {
       const shareText = `Just purchased ${paymentDetails?.votes} premium votes on SWING Boudoir! Ready to support amazing models! 🎉`;
       await navigator.share({
-        title: 'Payment Successful',
+        title: "Payment Successful",
         text: shareText,
-        url: window.location.origin
+        url: window.location.origin,
       });
     } catch (error) {
       // Fallback to clipboard
@@ -109,16 +56,7 @@ export function PaymentSuccess() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="max-w-4xl mx-auto p-6 space-y-6">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto"></div>
-          <p className="text-gray-600">Verifying your payment...</p>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
@@ -128,9 +66,7 @@ export function PaymentSuccess() {
           <CheckCircle className="w-12 h-12 text-green-600" />
         </div>
         <h1 className="text-4xl font-bold text-foreground">Payment Successful!</h1>
-        <p className="text-xl text-muted-foreground">
-          Thank you for your purchase. Your premium votes have been added to your account.
-        </p>
+        <p className="text-xl text-muted-foreground">Thank you for your purchase. Your premium votes have been added to your account.</p>
       </div>
 
       {/* Payment Details */}
@@ -202,24 +138,21 @@ export function PaymentSuccess() {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
             <Button asChild className="flex-1">
-              <Link to="/voters/browse-contests">
+              <Link to="/competition">
                 <Trophy className="w-4 h-4 mr-2" />
                 Browse Contests
               </Link>
             </Button>
-            
+
             <Button asChild variant="outline" className="flex-1">
               <Link to="/voters/favorites">
                 <Heart className="w-4 h-4 mr-2" />
                 View Favorites
               </Link>
             </Button>
-            
-            <Button variant="outline" onClick={handleDownloadReceipt}>
-              <Download className="w-4 h-4 mr-2" />
-              Download Receipt
-            </Button>
-            
+
+
+
             <Button variant="outline" onClick={handleShareSuccess}>
               <Share2 className="w-4 h-4 mr-2" />
               Share
@@ -234,9 +167,7 @@ export function PaymentSuccess() {
           <CardContent className="p-6 text-center">
             <Heart className="w-8 h-8 text-red-500 mx-auto mb-3" />
             <h3 className="font-semibold mb-2">Start Voting</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Use your new premium votes to support your favorite models
-            </p>
+            <p className="text-sm text-muted-foreground mb-4">Use your new premium votes to support your favorite models</p>
             <Button asChild size="sm">
               <Link to="/voters/browse-contests">
                 Vote Now
@@ -250,9 +181,7 @@ export function PaymentSuccess() {
           <CardContent className="p-6 text-center">
             <Users className="w-8 h-8 text-blue-500 mx-auto mb-3" />
             <h3 className="font-semibold mb-2">Discover Models</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Find new models to support and add to your favorites
-            </p>
+            <p className="text-sm text-muted-foreground mb-4">Find new models to support and add to your favorites</p>
             <Button asChild size="sm" variant="outline">
               <Link to="/voters/favorites">
                 Explore
@@ -266,9 +195,7 @@ export function PaymentSuccess() {
           <CardContent className="p-6 text-center">
             <Trophy className="w-8 h-8 text-yellow-500 mx-auto mb-3" />
             <h3 className="font-semibold mb-2">View Dashboard</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Check your voting stats and premium vote balance
-            </p>
+            <p className="text-sm text-muted-foreground mb-4">Check your voting stats and premium vote balance</p>
             <Button asChild size="sm" variant="outline">
               <Link to="/voters">
                 Dashboard
@@ -284,19 +211,13 @@ export function PaymentSuccess() {
         <CardContent className="p-6">
           <div className="text-center space-y-4">
             <h3 className="font-semibold">Need Help?</h3>
-            <p className="text-sm text-muted-foreground">
-              If you have any questions about your purchase or premium votes, our support team is here to help.
-            </p>
+            <p className="text-sm text-muted-foreground">If you have any questions about your purchase or premium votes, our support team is here to help.</p>
             <div className="flex justify-center space-x-4">
               <Button asChild variant="outline" size="sm">
-                <Link to="/support">
-                  Contact Support
-                </Link>
+                <Link to="/dashboard/$section" params={{ section: "support" }}>Contact Support</Link>
               </Button>
               <Button asChild variant="outline" size="sm">
-                <Link to="/voters/vote-history">
-                  View Vote History
-                </Link>
+                <Link to="/dashboard/$section" params={{ section: "votes" }}>View Vote History</Link>
               </Button>
             </div>
           </div>

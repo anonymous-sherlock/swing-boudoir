@@ -221,3 +221,15 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Apple Emoji Font for consistent emoji rendering */
+.apple-emoji-font {
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiSymbols", "EmojiOne Mozilla", "Twemoji Mozilla", "Segoe UI Symbol", "Arial Unicode MS", "Code2000", "Everson Mono", "Symbola", "Symbol", "Wingdings", "Webdings", "Zapf Dingbats", "Code2001", "Code2002", "Arial Unicode MS", "Lucida Sans Unicode", "Lucida Grande", "Tahoma", "Geneva", "Verdana", "Helvetica", "Arial", sans-serif;
+}
+
+/* Force Apple emoji style in input fields */
+input[type="text"], 
+input[type="search"], 
+textarea {
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiSymbols", "EmojiOne Mozilla", "Twemoji Mozilla", "Segoe UI Symbol", "Arial Unicode MS", "Code2000", "Everson Mono", "Symbola", "Symbol", "Wingdings", "Webdings", "Zapf Dingbats", "Code2001", "Code2002", "Arial Unicode MS", "Lucida Sans Unicode", "Lucida Grande", "Tahoma", "Geneva", "Verdana", "Helvetica", "Arial", sans-serif;
+}

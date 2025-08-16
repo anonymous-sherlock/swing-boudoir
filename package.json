@@ -58,6 +58,7 @@
     "date-fns": "^3.6.0",
     "date-fns-tz": "^3.2.0",
     "embla-carousel-react": "^8.3.0",
+    "emoji-picker-react": "^4.13.2",
     "framer-motion": "^12.23.12",
     "gapi": "^0.0.3",
     "gapi-script": "^1.2.0",
