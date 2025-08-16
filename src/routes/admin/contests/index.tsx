@@ -400,9 +400,11 @@ function ContestsPage() {
                     </TableCell>
                     <TableCell className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                          <Eye className="w-3 h-3" />
-                        </Button>
+                        <Link to={`/admin/contests/${contest.id}/leaderboard`}>
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                            <Eye className="w-3 h-3" />
+                          </Button>
+                        </Link>
                         <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
                           <Edit className="w-3 h-3" />
                         </Button>

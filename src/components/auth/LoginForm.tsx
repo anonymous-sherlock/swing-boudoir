@@ -18,6 +18,10 @@ export function LoginForm() {
   // Get search params for callback URL
   const search = useSearch({ from: "/auth/$id" });
   const callbackURL = search.callback || "/dashboard";
+  
+  // Debug: Log the callback URL
+  console.log("LoginForm - Search params:", search);
+  console.log("LoginForm - Callback URL:", callbackURL);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -36,6 +40,7 @@ export function LoginForm() {
         await handleLoginWithEmail({
           email: data.emailOrUsername,
           password: data.password,
+          callbackURL,
         });
       } else {
         await handleLoginWithUsername({

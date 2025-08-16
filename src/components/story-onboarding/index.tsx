@@ -18,6 +18,8 @@ export interface FormData {
   country: string;
   city: string;
   address?: string;
+  zipcode: string;
+  hobbiesAndPassions: string;
 
   // Measurements
   height: string;
@@ -32,6 +34,7 @@ export interface FormData {
   // Portfolio
   photos: File[];
   profileAvatar: File | null;
+  bannerImage: File | null;
   bio: string;
   experienceLevel: string;
   categories: string[];
@@ -51,6 +54,9 @@ const initialFormData: FormData = {
   phone: "",
   country: "",
   city: "",
+  address: "",
+  zipcode: "",
+  hobbiesAndPassions: "",
   height: "",
   weight: "",
   bust: "",
@@ -61,6 +67,7 @@ const initialFormData: FormData = {
   skinTone: "",
   photos: [],
   profileAvatar: null,
+  bannerImage: null,
   bio: "",
   experienceLevel: "",
   categories: [],
@@ -95,14 +102,14 @@ function App() {
           formData.gender &&
           formData.country &&
           formData.city &&
-          formData.bio &&
-          formData.bio.length >= 50
+          formData.address &&
+          formData.zipcode &&
+          formData.experienceLevel
         );
       case 2: // Portfolio scene
         return !!(
           formData.bio &&
           formData.bio.length >= 50 &&
-          formData.experienceLevel &&
           formData.categories.length > 0
         );
       case 3: // Final scene - always valid
@@ -178,7 +185,7 @@ function App() {
   }, []);
 
   return (
-    <>
+    <div className="onboarding-app">
       <ProgressIndicator 
         scenes={scenes} 
         currentScene={currentScene} 
@@ -190,7 +197,7 @@ function App() {
       <main className={`scene-container ${isTransitioning ? "transitioning" : ""}`}>
         {renderCurrentScene()}
       </main>
-    </>
+    </div>
   );
 }
 

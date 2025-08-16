@@ -72,6 +72,7 @@ export interface ApiRequestOptions extends Omit<RequestInit, 'body'> {
 export interface LoginCredentials {
   email: string;
   password: string;
+  callbackURL?: string;
 }
 
 export interface RegisterCredentials {

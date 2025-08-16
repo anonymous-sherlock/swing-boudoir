@@ -163,6 +163,17 @@ const profileApi = {
     return response.data;
   },
 
+  // Upload banner image
+  uploadBannerImage: async (id: string, file: File): Promise<Profile> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await api.post(`/api/v1/profile/${id}/upload/banner`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
   // Upload profile photos
   uploadProfilePhotos: async (id: string, files: File[]): Promise<Profile> => {
     const formData = new FormData();
@@ -230,6 +241,8 @@ export const useProfile = () => {
     mutationFn: profileApi.createProfile,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: profileKeys.lists() });
+      // Invalidate session query to refresh user data with new profileId
+      queryClient.invalidateQueries({ queryKey: ["session"] });
     },
   });
 
@@ -251,6 +264,13 @@ export const useProfile = () => {
 
   const uploadCoverImage = useMutation({
     mutationFn: ({ id, file }: { id: string; file: File }) => profileApi.uploadCoverImage(id, file),
+    onSuccess: data => {
+      queryClient.invalidateQueries({ queryKey: profileKeys.detail(data.id) });
+    },
+  });
+
+  const uploadBannerImage = useMutation({
+    mutationFn: ({ id, file }: { id: string; file: File }) => profileApi.uploadBannerImage(id, file),
     onSuccess: data => {
       queryClient.invalidateQueries({ queryKey: profileKeys.detail(data.id) });
     },
@@ -291,6 +311,7 @@ export const useProfile = () => {
     updateProfile,
     deleteProfile,
     uploadCoverImage,
+    uploadBannerImage,
     uploadProfilePhotos,
     removeProfilePhoto,
     removeCoverImage,

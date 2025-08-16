@@ -12,10 +12,9 @@ import { Calendar } from "../ui/calendar";
 import { CountryDropdown } from "../ui/country-dropdown";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
 import { Input } from "../ui/input";
+import { Textarea } from "../ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { Textarea } from "../ui/textarea";
-import CharacterCounter from "./CharacterCounter";
 import { FormData } from "./index";
 
 interface IdentitySceneProps {
@@ -26,31 +25,56 @@ interface IdentitySceneProps {
 }
 
 const FormSchema = z.object({
-  dateOfBirth: z.string({
-    required_error: "Date of birth is required",
-  }).min(1, "Date of birth is required").refine((date) => {
-    const today = new Date();
-    const birthDate = new Date(date);
-    const age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      return age - 1 >= 18;
-    }
-    return age >= 18;
-  }, "You must be 18 or older to register"),
-  gender: z.string({
-    required_error: "Gender selection is required",
-  }).min(1, "Gender selection is required"),
-  country: z.string({
-    required_error: "Country is required",
-  }).min(1, "Country selection is required"),
+  dateOfBirth: z
+    .string({
+      required_error: "Date of birth is required",
+    })
+    .min(1, "Date of birth is required")
+    .refine((date) => {
+      const today = new Date();
+      const birthDate = new Date(date);
+      const age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        return age - 1 >= 18;
+      }
+      return age >= 18;
+    }, "You must be 18 or older to register"),
+  gender: z
+    .string({
+      required_error: "Gender selection is required",
+    })
+    .min(1, "Gender selection is required"),
+  country: z
+    .string({
+      required_error: "Country is required",
+    })
+    .min(1, "Country selection is required"),
   city: z
     .string({
       required_error: "City is required",
     })
     .min(2, "City must be at least 2 characters"),
-  bio: z.string().min(50, "Bio must be at least 50 characters").max(500, "Bio must be at most 500 characters"),
+  address: z
+    .string({
+      required_error: "Address is required",
+    })
+    .min(5, "Address must be at least 5 characters"),
+  zipcode: z
+    .string({
+      required_error: "Zipcode is required",
+    })
+    .min(3, "Zipcode must be at least 3 characters"),
+  hobbiesAndPassions: z
+    .string()
+    .max(300, "Hobbies and passions must be at most 300 characters")
+    .optional(),
+  experienceLevel: z
+    .string({
+      required_error: "Experience level is required",
+    })
+    .min(1, "Experience level is required"),
 });
 
 const IdentityScene: React.FC<IdentitySceneProps> = ({ formData, updateFormData, onNext }) => {
@@ -64,21 +88,25 @@ const IdentityScene: React.FC<IdentitySceneProps> = ({ formData, updateFormData,
       gender: formData.gender || "",
       country: formData.country || "",
       city: formData.city || "",
-      bio: formData.bio || "",
+      address: formData.address || "",
+      zipcode: formData.zipcode || "",
+      hobbiesAndPassions: formData.hobbiesAndPassions || "",
+      experienceLevel: formData.experienceLevel || "",
     },
   });
 
-
-
   function onSubmit(data: z.infer<typeof FormSchema>) {
-    console.log(data)
+    console.log(data);
     // Update form data with validated values
     updateFormData({
       dateOfBirth: data.dateOfBirth,
       gender: data.gender,
       country: data.country,
       city: data.city,
-      bio: data.bio,
+      address: data.address,
+      zipcode: data.zipcode,
+      hobbiesAndPassions: data.hobbiesAndPassions,
+      experienceLevel: data.experienceLevel,
     });
 
     toast.success("About information saved successfully!");
@@ -106,32 +134,29 @@ const IdentityScene: React.FC<IdentitySceneProps> = ({ formData, updateFormData,
                   <p className="text-gray-300">Let's capture your essence</p>
                 </div>
 
-                {/* Bio Section */}
+                {/* Experience Level Section */}
                 <FormField
                   control={form.control}
-                  name="bio"
+                  name="experienceLevel"
                   render={({ field }) => (
                     <FormItem className="mb-8">
-                      <FormLabel className="flex gap-2 items-center justify-start text-sm font-medium  mb-2">
-                        <User2 className="w-4 h-4"  />
-                        Bio
+                      <FormLabel className="flex gap-2 items-center justify-start text-sm font-medium mb-2">
+                        <User2 className="w-4 h-4" />
+                        Experience Level
                       </FormLabel>
-                      <div className="relative">
-                        <FormControl>
-                          <Textarea
-                            placeholder="Tell your audience about yourself, your interests, and what kind of stories you love to share. Be authentic and engaging!"
-                            className="w-full focus:!ring-[#D4AF37] focus:ring-1 focus:ring-offset-1 focus:ring-offset-transparent focus-visible:!ring-[#D4AF37] focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent p-4 rounded-lg resize-none h-32 bg-black/50 border border-gray-800  text-white/80 placeholder:text-muted-foreground transition-colors"
-                            {...field}
-                            maxLength={500}
-                          />
-                        </FormControl>
-                        <CharacterCounter
-                          current={field.value?.length || 0}
-                          min={50}
-                          max={500}
-                          className="absolute bottom-3 right-3 border border-black/60 backdrop-blur-xl"
-                        />
-                      </div>
+                      <FormControl>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <SelectTrigger className="w-full bg-black/50 border border-gray-800 text-white/80 placeholder:text-muted-foreground focus:ring-[#D4AF37] focus:ring-1 focus:ring-offset-1 focus:ring-offset-transparent focus-visible:ring-[#D4AF37] focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent">
+                            <SelectValue placeholder="Select experience level" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="beginner">Beginner (0-1 years)</SelectItem>
+                            <SelectItem value="intermediate">Intermediate (2-4 years)</SelectItem>
+                            <SelectItem value="experienced">Experienced (5-9 years)</SelectItem>
+                            <SelectItem value="professional">Professional (10+ years)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -284,7 +309,116 @@ const IdentityScene: React.FC<IdentitySceneProps> = ({ formData, updateFormData,
                       )}
                     />
                   </div>
+
+                  <div className="form-grid-2">
+                    <FormField
+                      control={form.control}
+                      name="address"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex gap-2 items-center justify-start mb-2">
+                            <MapPin className="w-4 h-4" />
+                            Address
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="text"
+                              className={cn(
+                                "shadow-glow bg-black/50 border border-gray-800 outline-none placeholder:text-muted-foreground focus:!ring-[#D4AF37] focus:ring-1 focus:ring-offset-1 focus:ring-offset-transparent focus-visible:!ring-[#D4AF37] focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent",
+                                field.value ? "text-white/80" : "text-muted-foreground"
+                              )}
+                              placeholder="123 Main Street"
+                              {...field}
+                              onChange={(e) => {
+                                field.onChange(e.target.value);
+                                updateFormData({ address: e.target.value });
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="zipcode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex gap-2 items-center justify-start mb-2">
+                            <MapPin className="w-4 h-4" />
+                            Zipcode
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="text"
+                              className={cn(
+                                "shadow-glow bg-black/50 border border-gray-800 outline-none placeholder:text-muted-foreground focus:!ring-[#D4AF37] focus:ring-1 focus:ring-offset-1 focus:ring-offset-transparent focus-visible:!ring-[#D4AF37] focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent",
+                                field.value ? "text-white/80" : "text-muted-foreground"
+                              )}
+                              placeholder="10001"
+                              {...field}
+                              onChange={(e) => {
+                                // Only allow numbers
+                                const numericValue = e.target.value.replace(/\D/g, "");
+                                field.onChange(numericValue);
+                                updateFormData({ zipcode: numericValue });
+                              }}
+                              onKeyDown={(e) => {
+                                // Allow: backspace, delete, tab, escape, enter, and navigation keys
+                                if (
+                                  [8, 9, 27, 13, 46, 37, 38, 39, 40].includes(e.keyCode) ||
+                                  // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                                  (e.keyCode === 65 && e.ctrlKey === true) ||
+                                  (e.keyCode === 67 && e.ctrlKey === true) ||
+                                  (e.keyCode === 86 && e.ctrlKey === true) ||
+                                  (e.keyCode === 88 && e.ctrlKey === true)
+                                ) {
+                                  return;
+                                }
+                                // Ensure that it is a number and stop the keypress if not
+                                if ((e.shiftKey || e.keyCode < 48 || e.keyCode > 57) && (e.keyCode < 96 || e.keyCode > 105)) {
+                                  e.preventDefault();
+                                }
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
+
+                {/* Hobbies and Passions Section */}
+                <FormField
+                  control={form.control}
+                  name="hobbiesAndPassions"
+                  render={({ field }) => (
+                    <FormItem className="mt-6">
+                      <FormLabel className="flex gap-2 items-center justify-start text-sm font-medium mb-2">
+                        <User2 className="w-4 h-4" />
+                        Hobbies & Passions
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Textarea
+                            placeholder="Tell us about your hobbies, interests, and what you're passionate about. What do you love to do in your free time?"
+                            className="w-full resize-none h-24 bg-black/50 border border-gray-800 text-white/80 placeholder:text-gray-500 focus:!ring-[#D4AF37] focus:ring-1 focus:ring-offset-1 focus:ring-offset-transparent focus-visible:!ring-[#D4AF37] focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent outline-none"
+                            {...field}
+                            onChange={(e) => {
+                              field.onChange(e);
+                              updateFormData({ hobbiesAndPassions: e.target.value });
+                            }}
+                            maxLength={300}
+                          />
+                          <div className="absolute bottom-3 right-3 text-xs text-gray-400">{field.value?.length || 0}/300</div>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <div className="flex justify-center mt-8">
                   <Button type="submit" className="btn-primary flash-effect group">
