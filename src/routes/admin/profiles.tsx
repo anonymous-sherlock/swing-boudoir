@@ -1,61 +1,71 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
-import { useProfiles, useDeleteProfile } from '@/hooks/useProfiles'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { 
-  Search, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Eye,
-  ChevronLeft,
-  ChevronRight,
-  Filter
-} from 'lucide-react'
-import { format } from 'date-fns'
+import { createFileRoute } from '@tanstack/react-router';
+import { useState } from 'react';
+import { Profile, useProfiles, useDeleteProfile } from '@/hooks/useProfiles';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Search, Plus, Edit, Trash2, Eye, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
+import { format } from 'date-fns';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Link } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/admin/profiles')({
   component: () => <ProfilesPage />,
-})
+});
 
 function ProfilesPage() {
-  const [page, setPage] = useState(1)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [limit] = useState(20)
-  
-  const { data: profilesData, isLoading, error } = useProfiles(page, limit)
-  const deleteProfile = useDeleteProfile()
+  const [page, setPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [limit] = useState(20);
+  const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
+  const [profileToDelete, setProfileToDelete] = useState<Profile | null>(null);
 
-  const handleDeleteProfile = async (id: string) => {
-    if (confirm('Are you sure you want to delete this profile?')) {
-      try {
-        await deleteProfile.mutateAsync(id)
-      } catch (error) {
-        console.error('Failed to delete profile:', error)
-      }
+  const {
+    data: profilesData,
+    isLoading: useProfilesIsLoading,
+    error: useProfilesError,
+  } = useProfiles(page, limit);
+  const { mutateAsync: deleteProfileMutateAsync, isPending: deleteProfileIsPending } =
+    useDeleteProfile();
+
+  const handleDeleteProfile = async () => {
+    if (!profileToDelete) return;
+    try {
+      await deleteProfileMutateAsync(profileToDelete.id);
+      setIsDeleteOpen(false);
+      setProfileToDelete(null);
+    } catch (error) {
+      console.error('Failed to delete profile:', error);
     }
-  }
+  };
 
-  const filteredProfiles = profilesData?.data.filter(profile => 
-    profile.bio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    profile.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    profile.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    profile.country?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || []
+  const filteredProfiles =
+    profilesData?.data.filter(
+      profile =>
+        profile.bio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        profile.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        profile.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        profile.country?.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
 
-  if (isLoading) {
+  if (useProfilesIsLoading) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Profiles</h1>
-            <p className="text-muted-foreground">
-              Manage all user profiles in the system.
-            </p>
+            <p className="text-muted-foreground">Manage all user profiles in the system.</p>
           </div>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -76,17 +86,15 @@ function ProfilesPage() {
           ))}
         </div>
       </div>
-    )
+    );
   }
 
-  if (error) {
+  if (useProfilesError) {
     return (
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Profiles</h1>
-          <p className="text-muted-foreground">
-            Manage all user profiles in the system.
-          </p>
+          <p className="text-muted-foreground">Manage all user profiles in the system.</p>
         </div>
         <Card>
           <CardContent className="pt-6">
@@ -96,7 +104,7 @@ function ProfilesPage() {
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
@@ -121,7 +129,7 @@ function ProfilesPage() {
           <Input
             placeholder="Search profiles..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={e => setSearchTerm(e.target.value)}
             className="pl-10"
           />
         </div>
@@ -133,94 +141,104 @@ function ProfilesPage() {
 
       {/* Profiles Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filteredProfiles.map((profile) => (
-          <Card key={profile.id} className="hover:shadow-md transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <Avatar className="w-12 h-12">
-                    <AvatarImage src={profile.avatarUrl || undefined} />
-                    <AvatarFallback>
-                      {profile.bio?.charAt(0)?.toUpperCase() || 'P'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <CardTitle className="text-lg">
-                      {profile.bio?.substring(0, 20) || 'No Bio'}
-                      {profile.bio && profile.bio.length > 20 && '...'}
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      ID: {profile.userId.substring(0, 8)}...
-                    </p>
+        {filteredProfiles.map(profile => {
+          return (
+            <Card key={profile.id} className="hover:shadow-md transition-shadow duration-300">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-12 h-12">
+                      <AvatarImage
+                        src={profile.coverImage?.url || undefined}
+                        className="object-cover w-full h-full"
+                      />
+                      <AvatarFallback>
+                        {profile.user.username.charAt(0)?.toUpperCase() || 'P'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <CardTitle className="text-lg">
+                        {profile.user.username.substring(0, 20) || 'No Bio'}
+                        {profile.user.username && profile.user.username.length > 20 && '...'}
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        ID: {profile.userId.substring(0, 8)}...
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-1">
+                    <Link to={'/profile/$id'} params={{ id: profile.user.username }}>
+                      <Button size="sm" variant="ghost">
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </Link>
+                    <Button size="sm" variant="ghost">
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setProfileToDelete(profile);
+                        setIsDeleteOpen(true);
+                      }}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex gap-1">
-                  <Button size="sm" variant="ghost">
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                  <Button size="sm" variant="ghost">
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    onClick={() => handleDeleteProfile(profile.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="space-y-3">
-                {profile.coverImage && (
-                  <div className="aspect-video bg-muted rounded-lg overflow-hidden">
-                    <img 
-                      src={profile.coverImage.url} 
-                      alt="Cover" 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-                
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="text-xs">
-                      {profile.city || 'No City'}
-                    </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      {profile.country || 'No Country'}
-                    </Badge>
-                  </div>
-                  
-                  {profile.phone && (
-                    <p className="text-sm text-muted-foreground">
-                      📞 {profile.phone}
-                    </p>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-3">
+                  {/*
+                  {profile.coverImage && (
+                    <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+                      <img
+                        src={profile.coverImage.url}
+                        alt="Cover"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
                   )}
-                  
-                  {profile.gender && (
-                    <p className="text-sm text-muted-foreground">
-                      👤 {profile.gender}
+                  */}
+
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="text-xs">
+                        {profile.city || 'No City'}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {profile.country || 'No Country'}
+                      </Badge>
+                    </div>
+
+                    {profile.phone && (
+                      <p className="text-sm text-muted-foreground">📞 {profile.phone}</p>
+                    )}
+
+                    {profile.gender && (
+                      <p className="text-sm text-muted-foreground">👤 {profile.gender}</p>
+                    )}
+
+                    <p className="text-xs text-muted-foreground">
+                      Created: {format(new Date(profile.createdAt), 'MMM dd, yyyy')}
                     </p>
-                  )}
-                  
-                  <p className="text-xs text-muted-foreground">
-                    Created: {format(new Date(profile.createdAt), 'MMM dd, yyyy')}
-                  </p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Pagination */}
       {profilesData && profilesData.pagination.totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, profilesData.pagination.total)} of {profilesData.pagination.total} results
+            Showing {(page - 1) * limit + 1} to{' '}
+            {Math.min(page * limit, profilesData.pagination.total)} of{' '}
+            {profilesData.pagination.total} results
           </p>
           <div className="flex items-center gap-2">
             <Button
@@ -247,6 +265,29 @@ function ProfilesPage() {
           </div>
         </div>
       )}
+
+      <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Profile</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete{' '}
+              <strong>{profileToDelete?.id ?? 'this profile'}</strong>? This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteProfileIsPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteProfile}
+              disabled={deleteProfileIsPending}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              {deleteProfileIsPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
-  )
+  );
 }
