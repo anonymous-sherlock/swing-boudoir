@@ -308,10 +308,15 @@ export function useDeleteContest() {
       const response = await api.delete(`/api/v1/contest/${id}`)
       return response.data
     },
-    onSuccess: () => {
-      // Invalidate and refetch contests list
+    onSuccess: (_, variables) => {
+      // Invalidate and refetch contests list - invalidate all contests queries
       queryClient.invalidateQueries({ queryKey: ['contests'] })
       queryClient.invalidateQueries({ queryKey: ['contests', 'upcoming'] })
+      queryClient.invalidateQueries({ queryKey: ['contest'] })
+      // Also remove the specific contest from cache
+      queryClient.removeQueries({ queryKey: ['contest', variables] })
+      // Force refetch the current contests list
+      queryClient.refetchQueries({ queryKey: ['contests'] })
     },
   })
 }

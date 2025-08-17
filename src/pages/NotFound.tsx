@@ -1,7 +1,7 @@
 import { useRouter } from "@tanstack/react-router";
 import { useEffect } from "react";
 import Header from "@/components/layout/Header";
-import Footer from "@/components/Footer";
+import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Home, Search, ArrowLeft } from "lucide-react";
 

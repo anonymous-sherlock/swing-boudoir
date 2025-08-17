@@ -11,7 +11,6 @@ export interface Profile {
   id: string;
   userId: string;
   bio: string | null;
-  avatarUrl: string | null;
   phone: string | null;
   address: string;
   city: string | null;
@@ -26,7 +25,24 @@ export interface Profile {
   updatedAt: string;
   lastFreeVoteAt: string | null;
   coverImageId: string | null;
+  bannerImageId: string | null;
+  // Social media links
+  instagram: string | null;
+  tiktok: string | null;
+  youtube: string | null;
+  facebook: string | null;
+  twitter: string | null;
+  linkedin: string | null;
+  website: string | null;
+  other: string | null;
+  // Image objects
   coverImage?: {
+    id: string;
+    key: string;
+    caption: string | null;
+    url: string;
+  } | null;
+  bannerImage?: {
     id: string;
     key: string;
     caption: string | null;

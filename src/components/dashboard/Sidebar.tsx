@@ -32,7 +32,7 @@ interface SidebarProps {
 }
 
 const sidebarItemsMain = [
-  { id: "public-profile" as DashboardSection, label: "Public Profile", icon: Users },
+  { id: "profile" as DashboardSection, label: "Profile", icon: Users },
   { id: "competitions" as DashboardSection, label: "Competitions", icon: Trophy },
   { id: "votes" as DashboardSection, label: "Votes", icon: Vote },
   // { id: "prize-history" as DashboardSection, label: "Prize History", icon: Gift },

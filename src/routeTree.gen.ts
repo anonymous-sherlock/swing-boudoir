@@ -19,7 +19,6 @@ import { Route as OnboardingIndexRouteImport } from './routes/onboarding/index'
 import { Route as LeaderboardIndexRouteImport } from './routes/leaderboard/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
-import { Route as ProfileIdRouteImport } from './routes/profile.$id'
 import { Route as PaymentsSuccessRouteImport } from './routes/payments/success'
 import { Route as PaymentsFailureRouteImport } from './routes/payments/failure'
 import { Route as DashboardSectionRouteImport } from './routes/dashboard/$section'
@@ -38,6 +37,7 @@ import { Route as AdminContestsIndexRouteImport } from './routes/admin/contests/
 import { Route as PublicCompetitionsIndexRouteImport } from './routes/_public/competitions/index'
 import { Route as DashboardCompetitionsSlugRouteImport } from './routes/dashboard/competitions.$slug'
 import { Route as AdminContestsCreateRouteImport } from './routes/admin/contests/create'
+import { Route as PublicProfileUsernameRouteImport } from './routes/_public/profile.$username'
 import { Route as PublicCompetitionsSlugRouteImport } from './routes/_public/competitions/$slug'
 import { Route as AdminContestsIdLeaderboardRouteImport } from './routes/admin/contests/$id.leaderboard'
 import { Route as AdminContestsIdEditRouteImport } from './routes/admin/contests/$id.edit'
@@ -90,11 +90,6 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
-} as any)
-const ProfileIdRoute = ProfileIdRouteImport.update({
-  id: '/profile/$id',
-  path: '/profile/$id',
-  getParentRoute: () => rootRouteImport,
 } as any)
 const PaymentsSuccessRoute = PaymentsSuccessRouteImport.update({
   id: '/payments/success',
@@ -187,6 +182,11 @@ const AdminContestsCreateRoute = AdminContestsCreateRouteImport.update({
   path: '/contests/create',
   getParentRoute: () => AdminRoute,
 } as any)
+const PublicProfileUsernameRoute = PublicProfileUsernameRouteImport.update({
+  id: '/profile/$username',
+  path: '/profile/$username',
+  getParentRoute: () => PublicRouteRoute,
+} as any)
 const PublicCompetitionsSlugRoute = PublicCompetitionsSlugRouteImport.update({
   id: '/competitions/$slug',
   path: '/competitions/$slug',
@@ -222,13 +222,13 @@ export interface FileRoutesByFullPath {
   '/dashboard/$section': typeof DashboardSectionRoute
   '/payments/failure': typeof PaymentsFailureRoute
   '/payments/success': typeof PaymentsSuccessRoute
-  '/profile/$id': typeof ProfileIdRoute
   '/admin/': typeof AdminIndexRoute
   '/dashboard': typeof DashboardIndexRoute
   '/leaderboard': typeof LeaderboardIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
   '/voters': typeof VotersIndexRoute
   '/competitions/$slug': typeof PublicCompetitionsSlugRoute
+  '/profile/$username': typeof PublicProfileUsernameRoute
   '/admin/contests/create': typeof AdminContestsCreateRoute
   '/dashboard/competitions/$slug': typeof DashboardCompetitionsSlugRoute
   '/competitions': typeof PublicCompetitionsIndexRoute
@@ -254,13 +254,13 @@ export interface FileRoutesByTo {
   '/dashboard/$section': typeof DashboardSectionRoute
   '/payments/failure': typeof PaymentsFailureRoute
   '/payments/success': typeof PaymentsSuccessRoute
-  '/profile/$id': typeof ProfileIdRoute
   '/admin': typeof AdminIndexRoute
   '/dashboard': typeof DashboardIndexRoute
   '/leaderboard': typeof LeaderboardIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
   '/voters': typeof VotersIndexRoute
   '/competitions/$slug': typeof PublicCompetitionsSlugRoute
+  '/profile/$username': typeof PublicProfileUsernameRoute
   '/admin/contests/create': typeof AdminContestsCreateRoute
   '/dashboard/competitions/$slug': typeof DashboardCompetitionsSlugRoute
   '/competitions': typeof PublicCompetitionsIndexRoute
@@ -289,13 +289,13 @@ export interface FileRoutesById {
   '/dashboard/$section': typeof DashboardSectionRoute
   '/payments/failure': typeof PaymentsFailureRoute
   '/payments/success': typeof PaymentsSuccessRoute
-  '/profile/$id': typeof ProfileIdRoute
   '/admin/': typeof AdminIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/leaderboard/': typeof LeaderboardIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
   '/voters/': typeof VotersIndexRoute
   '/_public/competitions/$slug': typeof PublicCompetitionsSlugRoute
+  '/_public/profile/$username': typeof PublicProfileUsernameRoute
   '/admin/contests/create': typeof AdminContestsCreateRoute
   '/dashboard/competitions/$slug': typeof DashboardCompetitionsSlugRoute
   '/_public/competitions/': typeof PublicCompetitionsIndexRoute
@@ -324,13 +324,13 @@ export interface FileRouteTypes {
     | '/dashboard/$section'
     | '/payments/failure'
     | '/payments/success'
-    | '/profile/$id'
     | '/admin/'
     | '/dashboard'
     | '/leaderboard'
     | '/onboarding'
     | '/voters'
     | '/competitions/$slug'
+    | '/profile/$username'
     | '/admin/contests/create'
     | '/dashboard/competitions/$slug'
     | '/competitions'
@@ -356,13 +356,13 @@ export interface FileRouteTypes {
     | '/dashboard/$section'
     | '/payments/failure'
     | '/payments/success'
-    | '/profile/$id'
     | '/admin'
     | '/dashboard'
     | '/leaderboard'
     | '/onboarding'
     | '/voters'
     | '/competitions/$slug'
+    | '/profile/$username'
     | '/admin/contests/create'
     | '/dashboard/competitions/$slug'
     | '/competitions'
@@ -390,13 +390,13 @@ export interface FileRouteTypes {
     | '/dashboard/$section'
     | '/payments/failure'
     | '/payments/success'
-    | '/profile/$id'
     | '/admin/'
     | '/dashboard/'
     | '/leaderboard/'
     | '/onboarding/'
     | '/voters/'
     | '/_public/competitions/$slug'
+    | '/_public/profile/$username'
     | '/admin/contests/create'
     | '/dashboard/competitions/$slug'
     | '/_public/competitions/'
@@ -416,7 +416,6 @@ export interface RootRouteChildren {
   DashboardSectionRoute: typeof DashboardSectionRoute
   PaymentsFailureRoute: typeof PaymentsFailureRoute
   PaymentsSuccessRoute: typeof PaymentsSuccessRoute
-  ProfileIdRoute: typeof ProfileIdRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
   LeaderboardIndexRoute: typeof LeaderboardIndexRoute
   OnboardingIndexRoute: typeof OnboardingIndexRoute
@@ -495,13 +494,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
-    }
-    '/profile/$id': {
-      id: '/profile/$id'
-      path: '/profile/$id'
-      fullPath: '/profile/$id'
-      preLoaderRoute: typeof ProfileIdRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/payments/success': {
       id: '/payments/success'
@@ -629,6 +621,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminContestsCreateRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_public/profile/$username': {
+      id: '/_public/profile/$username'
+      path: '/profile/$username'
+      fullPath: '/profile/$username'
+      preLoaderRoute: typeof PublicProfileUsernameRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
     '/_public/competitions/$slug': {
       id: '/_public/competitions/$slug'
       path: '/competitions/$slug'
@@ -658,6 +657,7 @@ interface PublicRouteRouteChildren {
   PublicFaqRoute: typeof PublicFaqRoute
   PublicRulesRoute: typeof PublicRulesRoute
   PublicCompetitionsSlugRoute: typeof PublicCompetitionsSlugRoute
+  PublicProfileUsernameRoute: typeof PublicProfileUsernameRoute
   PublicCompetitionsIndexRoute: typeof PublicCompetitionsIndexRoute
 }
 
@@ -666,6 +666,7 @@ const PublicRouteRouteChildren: PublicRouteRouteChildren = {
   PublicFaqRoute: PublicFaqRoute,
   PublicRulesRoute: PublicRulesRoute,
   PublicCompetitionsSlugRoute: PublicCompetitionsSlugRoute,
+  PublicProfileUsernameRoute: PublicProfileUsernameRoute,
   PublicCompetitionsIndexRoute: PublicCompetitionsIndexRoute,
 }
 
@@ -715,7 +716,6 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardSectionRoute: DashboardSectionRoute,
   PaymentsFailureRoute: PaymentsFailureRoute,
   PaymentsSuccessRoute: PaymentsSuccessRoute,
-  ProfileIdRoute: ProfileIdRoute,
   DashboardIndexRoute: DashboardIndexRoute,
   LeaderboardIndexRoute: LeaderboardIndexRoute,
   OnboardingIndexRoute: OnboardingIndexRoute,

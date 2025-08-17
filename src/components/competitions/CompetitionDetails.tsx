@@ -1,33 +1,109 @@
+import defaultImage from "@/assets/hot-girl-summer.jpg";
+import { Contest, useCheckContestParticipation, useJoinContest, useLeaveContest } from "@/hooks/api/useContests";
 import { api } from "@/lib/api";
 import { Contest_Status } from "@/lib/validations/contest.schema";
-import { Competition } from "@/types";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { useParams } from "@tanstack/react-router";
-import {  Share2, Trophy, DollarSign, Calendar, Clock, Users } from "lucide-react";
-import { format } from "date-fns";
-import { Button } from "../ui/button";
-import { toast } from "sonner";
-import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
 import { Route } from "@/routes/_public/competitions/$slug";
-import defaultImage from "@/assets/hot-girl-summer.jpg";
+import { useQuery } from "@tanstack/react-query";
+import { useParams } from "@tanstack/react-router";
+import { format } from "date-fns";
+import { Calendar, Clock, DollarSign, Share2, Trophy, Users } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { useAuth } from "@/contexts/AuthContext";
+import { AuthModal } from "@/components/auth/AuthModal";
+import { useState } from "react";
+
+const formatDate = (date: string | Date) => {
+  return format(new Date(date), "MMM dd, yyyy");
+};
 
 export function CompetitionDetails() {
   const { slug } = useParams({ from: "/_public/competitions/$slug" });
   const initialData = Route.useLoaderData();
+  const { isAuthenticated, user, checkUserNeedsOnboarding } = useAuth();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   const {
     data: competition,
     isLoading,
     error,
-  } = useSuspenseQuery({
+  } = useQuery({
     queryKey: ["competition", slug],
-    queryFn: async (): Promise<Competition> => {
-      const response = await api.get(`/api/v1/contest/slug/${slug}`);
+    queryFn: async (): Promise<Contest> => {
+      const response = await api.get<Contest>(`/api/v1/contest/slug/${slug}`);
       return response.data;
     },
     initialData,
   });
+
+  const profileId = user?.profileId;
+
+  // Check participation status
+  const { data: participation, isLoading: isChecking } = useCheckContestParticipation(competition?.id, profileId || "");
+  const showLeave = participation?.hasJoined === true;
+
+  // Mutations
+  const joinContestMutation = useJoinContest();
+  const leaveContestMutation = useLeaveContest();
+
+  const isJoining = joinContestMutation.isPending;
+  const isLeaving = leaveContestMutation.isPending;
+  const joinError = joinContestMutation.error as Error | null;
+  const leaveError = leaveContestMutation.error as Error | null;
+
+  const needsProfileSetup = isAuthenticated && checkUserNeedsOnboarding();
+
+
+  const handleJoinContest = async () => {
+    if (!isAuthenticated) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    if (!profileId) {
+      toast.error("Profile Required", {
+        description: "Please complete your profile before joining contests",
+      });
+      return;
+    }
+    try {
+      await joinContestMutation.mutateAsync({ profileId, contestId: competition.id, coverImage: null });
+      toast.success("Success!", {
+        description: `You have joined ${competition.name}`,
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to join contest. Please try again.";
+      toast.error("Error", {
+        description: errorMessage,
+      });
+    }
+  };
+
+  const handleLeaveContest = async () => {
+    if (!isAuthenticated || !profileId) {
+      toast.error("Authentication Required", {
+        description: "Please log in to leave contests",
+      });
+      return;
+    }
+    try {
+      await leaveContestMutation.mutateAsync({ contestId: competition.id, profileId });
+      toast.success("Success!", {
+        description: `You have left ${competition.name}`,
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to leave contest. Please try again.";
+      toast.error("Error", {
+        description: errorMessage,
+      });
+    }
+  };
+
+  const handleAuthSuccess = () => {
+    setIsAuthModalOpen(false);
+    window.location.reload();
+  };
 
   if (isLoading) {
     return (
@@ -63,14 +139,6 @@ export function CompetitionDetails() {
     return defaultImage;
   };
 
-  const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), "MMM dd, yyyy");
-    } catch {
-      return "Invalid date";
-    }
-  };
-
   const getStatusBadge = (status: keyof typeof Contest_Status) => {
     switch (status) {
       case "PUBLISHED":
@@ -100,11 +168,12 @@ export function CompetitionDetails() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 pt-20">
+    <>
+      <div className="container mx-auto px-4 py-8 pt-20">
       {/* Hero Section with Image and Title */}
       <div className="relative">
         <div className="relative h-[420px] rounded-2xl overflow-hidden mb-6">
-          <img src={getImageUrl(competition.images)} alt={competition.name} className="w-full h-full object-cover" />
+          <img src={getImageUrl(competition?.images ?? [])} alt={competition.name} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
           <div className="absolute top-0 right-0 py-6 px-8">
             <div className="flex items-center space-x-3 mb-4">{getStatusBadge(competition.status)}</div>
@@ -246,25 +315,59 @@ export function CompetitionDetails() {
             </CardContent>
           </Card>
 
-          {/* Action Buttons */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Get Involved</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button className="w-full" size="lg">
-                Join Competition
-              </Button>
-              <Button variant="outline" className="w-full" size="lg">
-                View Participants
-              </Button>
-              <Button variant="outline" className="w-full" size="lg" onClick={shareCompetition}>
-                Share Competition
-              </Button>
-            </CardContent>
-          </Card>
+                     {/* Action Buttons */}
+           <Card>
+             <CardHeader>
+               <CardTitle>Get Involved</CardTitle>
+             </CardHeader>
+             <CardContent className="space-y-3">
+               {showLeave ? (
+                 <Button variant="outline" onClick={handleLeaveContest} disabled={isLeaving} className="w-full" size="lg">
+                   {isLeaving ? "Leaving..." : "Leave Contest"}
+                 </Button>
+               ) : (
+                 <div className="space-y-2">
+                   {!isAuthenticated ? (
+                     <Button onClick={() => setIsAuthModalOpen(true)} className="w-full" size="lg">
+                       Register to Join
+                     </Button>
+                   ) : needsProfileSetup ? (
+                     <div className="space-y-2">
+                       <Button disabled className="w-full" variant="outline" size="lg">
+                         Complete Profile to Join
+                       </Button>
+                       <p className="text-xs text-muted-foreground text-center">You need to create a profile before joining contests. Go to your dashboard to set up your profile.</p>
+                     </div>
+                   ) : (
+                     <Button onClick={handleJoinContest} disabled={isJoining || isChecking} className="w-full" size="lg">
+                       {isJoining ? "Joining..." : "Join Contest"}
+                     </Button>
+                   )}
+                 </div>
+               )}
+               <Button variant="outline" className="w-full" size="lg">
+                 View Participants
+               </Button>
+               <Button variant="outline" className="w-full" size="lg" onClick={shareCompetition}>
+                 Share Competition
+               </Button>
+             </CardContent>
+           </Card>
+
+           {/* Error display */}
+           {(joinError || leaveError) && (
+             <Card>
+               <CardContent className="pt-6">
+               <p className="text-sm text-red-600">{joinError ? "Failed to join contest" : "Failed to leave contest"}</p>
+               </CardContent>
+             </Card>
+           )}
         </div>
       </div>
     </div>
-  );
+
+    {/* Auth Modal */}
+    <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} onSuccess={handleAuthSuccess} />
+  </>
+);
 }

@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { DashboardNotifications } from "@/components/dashboard/DashboardNotifications";
 import { EditProfile } from "@/components/dashboard/EditProfile";
-import { PublicProfile } from "@/components/dashboard/PublicProfile";
+import { PublicProfile } from "@/components/dashboard/profile";
 import { DashboardCompetitions } from "@/components/dashboard/DashboardCompetitions";
 import { Votes } from "@/components/dashboard/Votes";
 import { PrizeHistory } from "@/components/dashboard/PrizeHistory";
@@ -18,7 +18,7 @@ import { DashboardSection } from "@/routes/dashboard/$section";
 import Leaderboard from "@/pages/Leaderboard";
 
 function DashboardLayout({
-  activeSection = "public-profile",
+  activeSection = "profile",
   setActiveSection,
   children,
 }: {
@@ -57,7 +57,7 @@ export default function Dashboard() {
   const currentSection = pathname.startsWith("/dashboard/") ? (pathname.split("/")[2] as DashboardSection) : undefined;
 
   const { isAuthenticated, isLoading, checkUserNeedsOnboarding } = useAuth();
-  const [activeSection, setActiveSection] = useState<DashboardSection>(currentSection || "public-profile");
+  const [activeSection, setActiveSection] = useState<DashboardSection>(currentSection || "profile");
 
   // Auth and onboarding checks
   useEffect(() => {
@@ -103,7 +103,7 @@ export default function Dashboard() {
         return <EditProfile />;
       case "notifications":
         return <DashboardNotifications />;
-      case "public-profile":
+      case "profile":
         return <PublicProfile />;
       case "competitions":
         return <DashboardCompetitions />;

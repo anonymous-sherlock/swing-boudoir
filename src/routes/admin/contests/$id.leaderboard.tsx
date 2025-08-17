@@ -190,8 +190,8 @@ function RouteComponent() {
             <Crown className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {sortedData[0].totalVotes > 0 ? (
-              <Link to={`/profile/$id`} params={{ id: sortedData[0]?.username ?? '' }}>
+            {sortedData && sortedData[0] && sortedData[0].totalVotes && sortedData[0].totalVotes > 0 ? (
+              <Link to={`/profile/$username`} params={{ username: sortedData[0]?.username ?? '' }}>
                 {sortedData[0]?.username ? '@' + sortedData[0].username : ''}
               </Link>
             ) : (
@@ -205,7 +205,7 @@ function RouteComponent() {
             <Award className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{contestStats?.totalVotes! / 2}</div>
+            <div className="text-2xl font-bold">{contestStats?.totalVotes ? contestStats.totalVotes / 2 : 0}</div>
           </CardContent>
         </Card>
         <Card>
@@ -364,7 +364,7 @@ function RouteComponent() {
                       </TableCell>
                       <TableCell>
                         <span className="text-sm text-muted-foreground">
-                          {format(new Date(contestStats?.startDate!), 'MMM dd, yyyy')}
+                          {contestStats?.startDate ? format(new Date(contestStats.startDate), 'MMM dd, yyyy') : 'N/A'}
                         </span>
                       </TableCell>
                     </TableRow>

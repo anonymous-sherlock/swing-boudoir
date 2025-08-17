@@ -1,48 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Trophy, 
-  Users, 
-  TrendingUp, 
-  Calendar, 
-  MapPin, 
-  Share2,
-  AlertCircle,
-  Eye,
-  Clock,
-  RefreshCw,
-  Gift,
-  User,
-  Edit,
-  Image,
-  Camera
-} from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks/api/useProfile";
 import { useToast } from "@/hooks/use-toast";
+import { useCompetitions } from "@/hooks/useCompetitions";
+import { formatUsdAbbrev } from "@/lib/utils";
+import { Award, Competition as CompetitionType } from "@/types/competitions.types";
 import { Link } from "@tanstack/react-router";
-import { apiRequest } from '@/lib/api';
-import { useCompetitions } from '@/hooks/useCompetitions';
-import { Competition as CompetitionType, Award } from '@/types/competitions.types';
-import { formatUsdAbbrev } from '@/lib/utils';
-import { formatDistanceToNow } from 'date-fns';
-
-interface UserProfile {
-  id: string;
-  name: string;
-  bio: string;
-  modelId: string;
-  profileImage?: string;
-  votingImage?: string;
-  hobbies?: string;
-  paidVoterMessage?: string;
-  freeVoterMessage?: string;
-  portfolioPhotos?: string[];
-  createdAt: string;
-  updatedAt: string;
-}
+import { formatDistanceToNow } from "date-fns";
+import { AlertCircle, Camera, Clock, Edit, Eye, Facebook, Gift, Globe, Instagram, MapPin, RefreshCw, Share2, TrendingUp, Trophy, Twitter, Users, Youtube } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 
 interface UserStats {
   totalVotes: number;
@@ -58,87 +27,53 @@ interface UserStats {
 export function PublicProfile() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [timeLeft, setTimeLeft] = useState<{ [key: string]: string }>({});
   const [error, setError] = useState<string | null>(null);
-  const [profilePhotos, setProfilePhotos] = useState<string[]>([]);
-  const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
+
+  // Use the useProfile hook to fetch profile data by username
+  const { useProfileByUsername } = useProfile();
+  const { data: userProfile, isLoading: isLoadingProfile, error: profileError, refetch: refetchProfile } = useProfileByUsername(user?.username || "");
+
   const { joinedCompetitions, isLoadingJoined } = useCompetitions();
 
-  const fetchUserData = useCallback(async () => {
+  // Fetch user stats
+  const fetchUserStats = useCallback(async () => {
+    if (!user?.id) return;
+
     try {
       setError(null);
-
-      const token = localStorage.getItem('token');
-      
-      // Fetch user profile
-      const profileResponse = await apiRequest(`/api/v1/users/${user?.id}/profile`, {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`/api/v1/users/${user.id}/stats`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
 
-      if (profileResponse.success) {
-        const profileData = profileResponse.data;
-        setUserProfile(profileData);
-      }
-
-      // Fetch user stats
-      const statsResponse = await apiRequest(`/api/v1/users/${user?.id}/stats`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (statsResponse.success) {
-        const statsData = statsResponse.data;
+      if (response.ok) {
+        const statsData = await response.json();
         setUserStats(statsData);
-      }
-
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-      setError('Failed to load profile data');
-    }
-  }, [user?.id]);
-
-  const fetchProfilePhotos = useCallback(async () => {
-    if (!user?.id) return;
-    
-    setIsLoadingPhotos(true);
-    try {
-      const token = localStorage.getItem('token');
-      const response = await apiRequest(`/api/v1/users/${user.id}/profile/photos`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.success && response.data) {
-        setProfilePhotos(response.data.map((photo: { url: string }) => photo.url));
+      } else {
+        throw new Error("Failed to fetch user stats");
       }
     } catch (error) {
-      console.error('Error fetching profile photos:', error);
-    } finally {
-      setIsLoadingPhotos(false);
+      console.error("Error fetching user stats:", error);
+      // setError('Failed to load user statistics');
     }
   }, [user?.id]);
 
   useEffect(() => {
-    if (user?.username) {
-      fetchUserData();
-      fetchProfilePhotos();
+    if (user?.id) {
+      fetchUserStats();
     }
-  }, [user?.username, fetchUserData, fetchProfilePhotos]);
+  }, [user?.id, fetchUserStats]);
 
   // Countdown timer for joined contests
   useEffect(() => {
     const timer = setInterval(() => {
       const newTimeLeft: { [key: string]: string } = {};
-      
+
       (joinedCompetitions || []).forEach((competition: CompetitionType) => {
         const now = new Date().getTime();
         const end = new Date(competition.endDate).getTime();
@@ -149,8 +84,9 @@ export function PublicProfile() {
           const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
           const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
           const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-          
-          newTimeLeft[competition.id] = `${days.toString().padStart(2, '0')} : ${hours.toString().padStart(2, '0')} : ${minutes.toString().padStart(2, '0')} : ${seconds.toString().padStart(2, '0')}`;
+
+          newTimeLeft[competition.id] =
+            `${days.toString().padStart(2, "0")} : ${hours.toString().padStart(2, "0")} : ${minutes.toString().padStart(2, "0")} : ${seconds.toString().padStart(2, "0")}`;
         } else {
           newTimeLeft[competition.id] = "Ended";
         }
@@ -170,30 +106,30 @@ export function PublicProfile() {
         description: "Share this link with your supporters to get more votes.",
       });
     } catch (error) {
-      console.error('Error sharing profile:', error);
+      console.error("Error sharing profile:", error);
       toast({
         title: "Error sharing profile",
         description: "Failed to copy profile link to clipboard.",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
-  const computeStatusForContest = (contest: CompetitionType): 'active' | 'coming-soon' | 'ended' => {
+  const computeStatusForContest = (contest: CompetitionType): "active" | "coming-soon" | "ended" => {
     const now = new Date();
     const start = new Date(contest.startDate);
     const end = new Date(contest.endDate);
-    if (now < start) return 'coming-soon';
-    if (now > end) return 'ended';
-    return 'active';
+    if (now < start) return "coming-soon";
+    if (now > end) return "ended";
+    return "active";
   };
 
   const getStatusBadge = (status: "active" | "coming-soon" | "ended") => {
@@ -201,22 +137,53 @@ export function PublicProfile() {
       case "active":
         return <Badge className="bg-green-100 text-green-800 text-xs px-2 py-1 font-medium">Live</Badge>;
       case "ended":
-        return <Badge variant="secondary" className="text-xs px-2 py-1 font-medium">Completed</Badge>;
+        return (
+          <Badge variant="secondary" className="text-xs px-2 py-1 font-medium">
+            Completed
+          </Badge>
+        );
       case "coming-soon":
-        return <Badge variant="outline" className="text-xs px-2 py-1 font-medium border-gray-300 text-gray-600">Upcoming</Badge>;
+        return (
+          <Badge variant="outline" className="text-xs px-2 py-1 font-medium border-gray-300 text-gray-600">
+            Upcoming
+          </Badge>
+        );
       default:
-        return <Badge variant="secondary" className="text-xs px-2 py-1 font-medium">{status}</Badge>;
+        return (
+          <Badge variant="secondary" className="text-xs px-2 py-1 font-medium">
+            {status}
+          </Badge>
+        );
     }
   };
 
-  const activeCompetitions = (joinedCompetitions || []).filter(comp => computeStatusForContest(comp) === 'active');
-  const comingSoonCompetitions = (joinedCompetitions || []).filter(comp => computeStatusForContest(comp) === 'coming-soon');
-  const endedCompetitions = (joinedCompetitions || []).filter(comp => computeStatusForContest(comp) === 'ended');
+  const activeCompetitions = (joinedCompetitions || []).filter((comp) => computeStatusForContest(comp) === "active");
+  const comingSoonCompetitions = (joinedCompetitions || []).filter((comp) => computeStatusForContest(comp) === "coming-soon");
+  const endedCompetitions = (joinedCompetitions || []).filter((comp) => computeStatusForContest(comp) === "ended");
+
+  // Show loading state
+  if (isLoadingProfile) {
+    return (
+      <div className="max-w-6xl mx-auto space-y-6 p-4 sm:p-1">
+        <Card className="border-0 shadow-lg">
+          <CardContent className="p-6 sm:p-8">
+            <div className="text-center space-y-4">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto">
+                <RefreshCw className="h-6 w-6 sm:h-8 sm:w-8 text-gray-600 animate-spin" />
+              </div>
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Loading profile</h3>
+              <p className="text-sm sm:text-base text-gray-600">Getting your profile ready...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Show error state
-  if (error) {
+  if (profileError || error) {
     return (
-      <div className="max-w-4xl mx-auto space-y-6 p-4 sm:p-1">
+      <div className="max-w-6xl mx-auto space-y-6 p-4 sm:p-1">
         <Card className="border-0 shadow-lg">
           <CardContent className="p-6 sm:p-8">
             <div className="text-center space-y-4">
@@ -224,8 +191,8 @@ export function PublicProfile() {
                 <AlertCircle className="h-6 w-6 sm:h-8 sm:w-8 text-red-500" />
               </div>
               <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Error loading profile</h3>
-              <p className="text-sm sm:text-base text-gray-600 mb-4">{error}</p>
-              <Button onClick={fetchUserData} variant="outline" size="sm">
+              <p className="text-sm sm:text-base text-gray-600 mb-4">{profileError?.message || error}</p>
+              <Button onClick={() => refetchProfile()} variant="outline" size="sm">
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Try Again
               </Button>
@@ -238,60 +205,157 @@ export function PublicProfile() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 sm:p-4">
-      {/* Header Section with Profile Card */}
-      <Card className="border-0 shadow-lg">
-        <CardContent className="p-6 sm:p-8">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between space-y-6 lg:space-y-0">
-            {/* Profile Info */}
-            <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 border-2 border-gray-200">
-                {userProfile?.profileImage ? (
-                  <img 
-                    src={userProfile.profileImage} 
-                    alt="Profile" 
-                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-2 border-gray-200"
-                  />
+      {/* Banner and Profile Header Section */}
+      <Card className="border-0 shadow-lg overflow-hidden">
+        {/* Banner Image */}
+        <div className="relative h-48 sm:h-72 bg-gradient-to-r from-blue-500 to-purple-600">
+          {userProfile?.bannerImage?.url ? (
+            <img src={userProfile.bannerImage.url} alt="Profile Banner" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+              <Camera className="h-16 w-16 text-white opacity-50" />
+            </div>
+          )}
+
+          {/* Banner Overlay */}
+          <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+
+          {/* Action Buttons on Banner */}
+          <div className="absolute top-4 right-4 flex space-x-2">
+            <Button onClick={shareProfile} variant="outline" size="sm" className="bg-white/90 hover:bg-white text-gray-700">
+              <Share2 className="mr-2 h-4 w-4" />
+              Share
+            </Button>
+            <Link
+              to="/dashboard/$section"
+              params={{ section: "edit-profile" }}
+              className="inline-flex items-center px-3 py-2 text-sm bg-white/90 hover:bg-white text-gray-700 rounded-md border border-gray-200 transition-colors"
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </Link>
+          </div>
+        </div>
+
+        {/* Profile Info Section */}
+        <div className="relative px-6 pb-6">
+          {/* Avatar overlapping banner */}
+          <div className="absolute -top-40 left-6">
+            <div className="w-32 h-32 rounded-full border-none p-[6px] shadow-lg bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500">
+              <div className="w-full h-full bg-white rounded-full p-1">
+                {userProfile?.coverImage?.url ? (
+                  <img src={userProfile.coverImage.url} alt="Profile" className="w-full h-full rounded-full object-cover" />
                 ) : (
-                  <span className="text-2xl sm:text-3xl font-bold text-gray-600">
-                    {user?.name?.charAt(0) || 'U'}
-                  </span>
+                  <div className="w-full h-full bg-gray-100 rounded-full flex items-center justify-center">
+                    <span className="text-4xl font-bold text-gray-600">{user?.name?.charAt(0) || "U"}</span>
+                  </div>
                 )}
               </div>
-              <div className="text-center sm:text-left space-y-2">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{user?.name || 'User'}</h1>
-                <p className="text-gray-600 text-sm sm:text-base max-w-md leading-relaxed">{userProfile?.bio || 'Welcome to my profile'}</p>
-                {userProfile?.hobbies && (
-                  <p className="text-gray-500 text-sm">{userProfile.hobbies}</p>
-                )}
-                <div className="flex items-center justify-center sm:justify-start space-x-4 text-sm text-gray-500">
-                  <span>Member since {formatDate(userProfile?.createdAt || '')}</span>
-                </div>
+            </div>
+          </div>
+
+          {/* View Public Profile Button - Right side below banner */}
+          <div className="absolute -top-8 right-6">
+            <Link
+              to="/profile/$username"
+              params={{ username: user?.username || "" }}
+              className="inline-flex items-center px-4 py-2 bg-black text-white text-sm rounded-lg hover:bg-gray-800 transition-colors shadow-lg"
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              View Public Profile
+            </Link>
+          </div>
+
+          {/* Profile Content */}
+          <div className="mt-20 sm:mt-24 space-y-4">
+            {/* Name and Basic Info */}
+            <div className="space-y-2">
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">{user?.name || "User"}</h1>
+              <p className="text-gray-600 text-lg">{user?.email}</p>
+              <div className="flex items-center text-sm text-gray-500">
+                <MapPin className="mr-1 h-4 w-4" />
+                <span>{userProfile?.city && userProfile?.country ? `${userProfile.city}, ${userProfile.country}` : "Location not set"}</span>
+                <span className="mx-2">•</span>
+                <span>Member since {formatDate(userProfile?.createdAt || "")}</span>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-3">
-              <Link 
-                to="/dashboard/edit-profile"
-                className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 text-gray-700 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 transition-all duration-200"
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Profile
-              </Link>
-              <Button onClick={shareProfile} variant="outline" size="sm" className="w-full sm:w-auto">
-                <Share2 className="mr-2 h-4 w-4" />
-                Share Profile
-              </Button>
-              <Link 
-                to={`/profile/${user?.username}`}
-                className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-black text-white text-sm rounded-lg hover:bg-gray-800 transition-all duration-200"
-              >
-                <Eye className="mr-2 h-4 w-4" />
-                View Public
-              </Link>
+            {/* Bio */}
+            <div className="max-w-2xl">
+              <p className="text-gray-700 text-base leading-relaxed">
+                {userProfile?.bio || "Welcome to my profile! I love participating in competitions and showcasing my talents."}
+              </p>
+              {userProfile?.hobbiesAndPassions && (
+                <p className="text-gray-600 text-sm mt-2">
+                  <span className="font-medium">Passions:</span> {userProfile.hobbiesAndPassions}
+                </p>
+              )}
+            </div>
+
+            {/* Social Links */}
+            <div className="flex items-center space-x-4 pt-2">
+              <span className="text-sm font-medium text-gray-700">Connect:</span>
+              <div className="flex space-x-3">
+                <Link
+                  to={userProfile?.instagram || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`inline-flex items-center justify-center h-8 w-8 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors ${!userProfile?.instagram ? "opacity-50 cursor-not-allowed" : "hover:border-gray-300"}`}
+                  onClick={(e) => !userProfile?.instagram && e.preventDefault()}
+                >
+                  <Instagram className="h-4 w-4" />
+                </Link>
+                <Link
+                  to={userProfile?.twitter || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`inline-flex items-center justify-center h-8 w-8 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors ${!userProfile?.twitter ? "opacity-50 cursor-not-allowed" : "hover:border-gray-300"}`}
+                  onClick={(e) => !userProfile?.twitter && e.preventDefault()}
+                >
+                  <Twitter className="h-4 w-4" />
+                </Link>
+                <Link
+                  to={userProfile?.facebook || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`inline-flex items-center justify-center h-8 w-8 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors ${!userProfile?.facebook ? "opacity-50 cursor-not-allowed" : "hover:border-gray-300"}`}
+                  onClick={(e) => !userProfile?.facebook && e.preventDefault()}
+                >
+                  <Facebook className="h-4 w-4" />
+                </Link>
+                <a
+                  href={userProfile?.tiktok || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`inline-flex items-center justify-center h-8 w-8 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors ${!userProfile?.tiktok ? "opacity-50 cursor-not-allowed" : "hover:border-gray-300"}`}
+                  onClick={(e) => !userProfile?.tiktok && e.preventDefault()}
+                >
+                  <svg className="w-4 h-4 text-black" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" />
+                  </svg>
+                </a>
+                <Link
+                  to={userProfile?.youtube || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`inline-flex items-center justify-center h-8 w-8 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors ${!userProfile?.youtube ? "opacity-50 cursor-not-allowed" : "hover:border-gray-300"}`}
+                  onClick={(e) => !userProfile?.youtube && e.preventDefault()}
+                >
+                  <Youtube className="h-4 w-4" />
+                </Link>
+                <Link
+                  to={userProfile?.website || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`inline-flex items-center justify-center h-8 w-8 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors ${!userProfile?.website ? "opacity-50 cursor-not-allowed" : "hover:border-gray-300"}`}
+                  onClick={(e) => !userProfile?.website && e.preventDefault()}
+                >
+                  <Globe className="h-4 w-4" />
+                </Link>
+              </div>
             </div>
           </div>
-        </CardContent>
+        </div>
       </Card>
 
       {/* Stats Overview Section */}
@@ -317,7 +381,7 @@ export function PublicProfile() {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
@@ -329,7 +393,7 @@ export function PublicProfile() {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
@@ -391,12 +455,8 @@ export function PublicProfile() {
                   <Users className="h-10 w-10 text-gray-400" />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">Ready to Compete?</h3>
-                <p className="text-gray-600 mb-6 max-w-md mx-auto leading-relaxed">
-                  You haven't joined any competitions yet. Start your journey and showcase your talents!
-                </p>
-                <Button className="bg-black hover:bg-gray-800 text-white px-8 py-3 font-medium rounded-lg">
-                  Explore Competitions
-                </Button>
+                <p className="text-gray-600 mb-6 max-w-md mx-auto leading-relaxed">You haven't joined any competitions yet. Start your journey and showcase your talents!</p>
+                <Button className="bg-black hover:bg-gray-800 text-white px-8 py-3 font-medium rounded-lg">Explore Competitions</Button>
               </CardContent>
             </Card>
           ) : (
@@ -410,9 +470,7 @@ export function PublicProfile() {
                         <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                         <span className="text-xl font-bold text-gray-800">Active Competitions</span>
                       </CardTitle>
-                      <Badge className="bg-gray-100 text-gray-700 text-sm px-3 py-1 w-fit">
-                        {activeCompetitions.length} Live Now
-                      </Badge>
+                      <Badge className="bg-gray-100 text-gray-700 text-sm px-3 py-1 w-fit">{activeCompetitions.length} Live Now</Badge>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -427,29 +485,28 @@ export function PublicProfile() {
                                     <Trophy className="mr-2 h-5 w-5 text-gray-600" />
                                     {competition.name}
                                   </h3>
-                                  {getStatusBadge('active')}
+                                  {getStatusBadge("active")}
                                 </div>
-                                
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <div className="space-y-2">
                                     <p className="text-gray-900 font-semibold">{formatUsdAbbrev(competition.prizePool)} Prize Pool</p>
                                     <div className="flex items-center text-sm text-gray-600">
                                       <Clock className="mr-1 h-4 w-4" />
-                                      <span className="font-mono font-bold">
-                                        {timeLeft[competition.id] || "Loading..."}
-                                      </span>
+                                      <span className="font-mono font-bold">{timeLeft[competition.id] || "Loading..."}</span>
                                     </div>
                                   </div>
-                                  
+
                                   <div className="space-y-2">
                                     <div className="text-sm">
                                       <span className="font-medium text-gray-700">Awards Available:</span>
                                       <div className="mt-1 flex flex-wrap gap-1">
-                                        {competition.awards && competition.awards.slice(0, 2).map((award: Award) => (
-                                          <Badge key={award.id} variant="outline" className="text-xs">
-                                            {award.icon} {award.name}
-                                          </Badge>
-                                        ))}
+                                        {competition.awards &&
+                                          competition.awards.slice(0, 2).map((award: Award) => (
+                                            <Badge key={award.id} variant="outline" className="text-xs">
+                                              {award.icon} {award.name}
+                                            </Badge>
+                                          ))}
                                         {competition.awards && competition.awards.length > 2 && (
                                           <Badge variant="outline" className="text-xs">
                                             +{competition.awards.length - 2} more
@@ -459,24 +516,26 @@ export function PublicProfile() {
                                     </div>
                                   </div>
                                 </div>
-                                
+
                                 <div className="flex flex-wrap gap-2">
                                   <Button variant="outline" onClick={shareProfile}>
                                     <Share2 className="mr-2 h-4 w-4" />
                                     Share Profile
                                   </Button>
                                   <Button variant="outline" asChild>
-                                    <Link to={`/competition/${competition.id}`}>View Competition</Link>
+                                    <Link to={`/dashboard/competitions/$slug`} params={{ slug: competition.slug }}>
+                                      View Competition
+                                    </Link>
                                   </Button>
                                 </div>
                               </div>
-                              
+
                               <div className="w-full lg:w-80">
                                 {competition.images && competition.images[0] ? (
-                                  <img 
-                                    src={competition.images[0].url} 
-                                    alt={competition.name} 
-                                    className="w-full aspect-video object-cover rounded-lg shadow-sm border border-gray-200" 
+                                  <img
+                                    src={competition.images[0].url}
+                                    alt={competition.name}
+                                    className="w-full aspect-video object-cover rounded-lg shadow-sm border border-gray-200"
                                   />
                                 ) : (
                                   <div className="w-full aspect-video bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
@@ -512,12 +571,10 @@ export function PublicProfile() {
                         <div key={competition.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                           <div className="flex items-center justify-between mb-2">
                             <h4 className="font-semibold text-gray-900 text-sm">{competition.name}</h4>
-                            {getStatusBadge('coming-soon')}
+                            {getStatusBadge("coming-soon")}
                           </div>
                           <p className="text-xs text-gray-600 mb-2">{formatUsdAbbrev(competition.prizePool)} Prize</p>
-                          <p className="text-xs text-gray-600 font-medium">
-                            Starts {formatDistanceToNow(new Date(competition.startDate), { addSuffix: true })}
-                          </p>
+                          <p className="text-xs text-gray-600 font-medium">Starts {formatDistanceToNow(new Date(competition.startDate), { addSuffix: true })}</p>
                         </div>
                       ))}
                     </CardContent>
@@ -541,12 +598,10 @@ export function PublicProfile() {
                         <div key={competition.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                           <div className="flex items-center justify-between mb-2">
                             <h4 className="font-semibold text-gray-900 text-sm">{competition.name}</h4>
-                            {getStatusBadge('ended')}
+                            {getStatusBadge("ended")}
                           </div>
                           <p className="text-xs text-gray-600 mb-2">{formatUsdAbbrev(competition.prizePool)} Prize</p>
-                          <p className="text-xs text-gray-600">
-                            Ended {formatDistanceToNow(new Date(competition.endDate), { addSuffix: true })}
-                          </p>
+                          <p className="text-xs text-gray-600">Ended {formatDistanceToNow(new Date(competition.endDate), { addSuffix: true })}</p>
                         </div>
                       ))}
                     </CardContent>
@@ -568,17 +623,14 @@ export function PublicProfile() {
                   </div>
                   <span className="text-xl font-bold text-gray-800">Photo Gallery</span>
                 </div>
-                <Link 
-                  to="/dashboard/edit-profile"
-                  className="text-sm text-gray-600 hover:text-gray-700 flex items-center"
-                >
+                <Link to="/dashboard/$section" params={{ section: "edit-profile" }} className="text-sm text-gray-600 hover:text-gray-700 flex items-center">
                   <Edit className="mr-1 h-4 w-4" />
                   Manage Photos
                 </Link>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {isLoadingPhotos ? (
+              {isLoadingProfile ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="text-center space-y-4">
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
@@ -590,17 +642,17 @@ export function PublicProfile() {
                     </div>
                   </div>
                 </div>
-              ) : profilePhotos.length > 0 ? (
+              ) : userProfile?.profilePhotos && userProfile.profilePhotos.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                  {profilePhotos.map((photo, index) => (
-                    <div key={index} className="relative group aspect-square">
+                  {userProfile.profilePhotos.map((photo, index) => (
+                    <div key={photo.id} className="relative group aspect-square">
                       <img
-                        src={photo}
-                        alt={`Portfolio photo ${index + 1}`}
+                        src={photo.url}
+                        alt={photo.caption || `Portfolio photo ${index + 1}`}
                         className="w-full h-full object-cover rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200"
                         onError={(e) => {
-                          console.error('Failed to load photo:', e);
-                          e.currentTarget.style.display = 'none';
+                          console.error("Failed to load photo:", e);
+                          e.currentTarget.style.display = "none";
                         }}
                       />
                       <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-lg flex items-center justify-center">
@@ -620,11 +672,10 @@ export function PublicProfile() {
                     <Camera className="h-10 w-10 text-gray-400" />
                   </div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-3">No Photos Yet</h3>
-                  <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                    Upload some photos to showcase your portfolio and attract more votes in competitions.
-                  </p>
-                  <Link 
-                    to="/dashboard/edit-profile"
+                  <p className="text-gray-600 mb-6 max-w-md mx-auto">Upload some photos to showcase your portfolio and attract more votes in competitions.</p>
+                  <Link
+                    to="/dashboard/$section"
+                    params={{ section: "edit-profile" }}
                     className="inline-flex items-center px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
                   >
                     <Camera className="mr-2 h-5 w-5" />

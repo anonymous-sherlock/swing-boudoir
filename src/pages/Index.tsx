@@ -1,7 +1,7 @@
 import Header from "@/components/layout/Header";
 import HeroSection from "@/components/home/HeroSection";
 import CompetitionsSection from "@/components/CompetitionsSection";
-import Footer from "@/components/Footer";
+import Footer from "@/components/layout/Footer";
 
 const Index = () => {
   return (

@@ -5,7 +5,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 export const dashboardSections = [
   "edit-profile",
   "notifications",
-  "public-profile",
+  "profile",
   "competitions",
   "votes",
   "prize-history",
