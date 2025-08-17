@@ -14,6 +14,16 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -36,6 +46,12 @@ import {
   SortDesc,
   MoreHorizontal,
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { format } from 'date-fns';
 import { Link } from '@tanstack/react-router';
 import { api } from '@/lib/api';
@@ -66,19 +82,22 @@ function ContestsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortField, setSortField] = useState<SortField>('createdAt');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [contestToDelete, setContestToDelete] = useState<Contest | null>(null);
 
   const contestResponse = Route.useLoaderData();
 
   const { data: contestsData, isLoading, error } = useContests(page, limit);
-  const deleteContest = useDeleteContest();
+  const { mutateAsync: deleteContestMutateAsync, isPending: isDeleting } = useDeleteContest();
 
-  const handleDeleteContest = async (id: string) => {
-    if (confirm('Are you sure you want to delete this contest? This action cannot be undone.')) {
-      try {
-        await deleteContest.mutateAsync(id);
-      } catch (error) {
-        console.error('Failed to delete contest:', error);
-      }
+  const handleDeleteContest = async () => {
+    if (!contestToDelete) return;
+    try {
+      await deleteContestMutateAsync(contestToDelete.id);
+      setIsDeleteOpen(false);
+      setContestToDelete(null);
+    } catch (error) {
+      console.error('Failed to delete contest:', error);
     }
   };
 
@@ -400,23 +419,52 @@ function ContestsPage() {
                     </TableCell>
                     <TableCell className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                          <Eye className="w-3 h-3" />
-                        </Button>
-                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                          <Edit className="w-3 h-3" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDeleteContest(contest.id)}
-                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="w-3 h-3" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="rounded-full shadow-none"
+                              aria-label="Open edit menu"
+                            >
+                              <MoreHorizontal size={16} aria-hidden="true" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            side="left"
+                            align="start"
+                            className="flex flex-col items-start gap-2 w-full"
+                          >
+                            <DropdownMenuItem asChild className="w-full">
+                              <Link
+                                to={`/admin/contests/$id/leaderboard`}
+                                params={{ id: contest.id }}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <Eye className="w-3 h-3" />
+                                  <p>View</p>
+                                </div>
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild className="flex items-center gap-2 w-full">
+                              <Link to={`/admin/contests/$id/edit`} params={{ id: contest.id }}>
+                                <div className="flex items-center gap-2 w-full">
+                                  <Edit className="w-3 h-3" />
+                                  <p>Edit</p>
+                                </div>
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-red-600 w-full"
+                              onClick={() => {
+                                setContestToDelete(contest);
+                                setIsDeleteOpen(true);
+                              }}
+                            >
+                              <Trash2 className="w-3 h-3 mr-2" /> Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -426,6 +474,28 @@ function ContestsPage() {
           </div>
         </CardContent>
       </Card>
+      <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Contest</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete{' '}
+              <strong>{contestToDelete?.name ?? 'this contest'}</strong>? This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteContest}
+              disabled={isDeleting}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Pagination */}
       {contestsData && contestsData.pagination.totalPages > 1 && (
