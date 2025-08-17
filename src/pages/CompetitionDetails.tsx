@@ -32,13 +32,13 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { apiRequest } from "@/lib/api";
+import { api, apiRequest } from "@/lib/api";
 import { formatUsdAbbrev } from "@/lib/utils";
 import { formatDistanceToNow, isAfter, isBefore, startOfDay } from "date-fns";
 import { Competition, Award as AwardType } from "@/types/competitions.types";
 import CompetitionDetailsHeader from "@/components/CompetitionDetailsHeader";
 import { Sidebar } from "@/components/dashboard/Sidebar";
-import { DashboardSection } from "@/pages/Dashboard";
+import { DashboardSection } from "@/routes/dashboard/$section";
 
 interface CompetitionDetails extends Competition {
   rules?: string[];
@@ -74,7 +74,7 @@ interface CompetitionDetails extends Competition {
 }
 
 export default function CompetitionDetails() {
-  const { id } = useParams({ from: "/competition/$id" });
+  const { slug } = useParams({ from: "/dashboard/competitions/$slug" });
 
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuth();
@@ -92,17 +92,15 @@ export default function CompetitionDetails() {
   // Fetch competition details
   useEffect(() => {
     const fetchCompetitionDetails = async () => {
-      if (!id) return;
+      if (!slug) return;
       
       try {
         setIsLoading(true);
         setError(null);
         
-        const response = await apiRequest(`/api/v1/contest/${id}`, {
-          method: "GET",
-        });
+        const response = await api.get(`/api/v1/contest/slug/${slug}`);
 
-        if (response.success) {
+        if (response.data) {
           setCompetition(response.data);
           
           // Check if user is already joined
@@ -128,7 +126,7 @@ export default function CompetitionDetails() {
     };
 
     fetchCompetitionDetails();
-  }, [id, isAuthenticated, user?.profileId]);
+  }, [slug, isAuthenticated, user?.profileId]);
 
   // Countdown timer
   useEffect(() => {

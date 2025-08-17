@@ -5,7 +5,7 @@ import "./index.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-import {getContext, Provider as TanStackQueryProvider} from "@/integrations/tanstack-query/root-provider.tsx";
+import { getContext, Provider as TanStackQueryProvider } from "@/integrations/tanstack-query/root-provider.tsx";
 
 const TanStackQueryProviderContext = getContext();
 

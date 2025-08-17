@@ -15,45 +15,47 @@ import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmojiPicker } from "@/components/ui/emoji-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { EmojiPicker } from "@/components/ui/emoji-picker";
 
 import { DateTimePicker } from "@/components/lingua-time/datetime-picker";
 import { Badge } from "@/components/ui/badge";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormLabel as ShadFormLabel } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateContest, useUploadContestImages } from "@/hooks/api/useContests";
-import { FileTextIcon, ImageIcon, CalendarIcon, TargetIcon } from "@radix-ui/react-icons";
-import { GripVertical, Plus, Trash2, Trophy, Upload, X, Smile } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Contest_Status, Contest_Visibility, ContestInsertSchema } from "@/lib/validations/contest.schema";
+import { CalendarIcon, FileTextIcon, ImageIcon } from "@radix-ui/react-icons";
+import { GripVertical, Plus, Trash2, Trophy, Upload, X, Loader } from "lucide-react";
 import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
-import { Contest_Status, Contest_Visibility, ContestInsertSchema } from "@/lib/validations/contest.schema";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type ContestFormValues = z.infer<typeof ContestInsertSchema>;
 
 export default function AddNewContestPage() {
-  const [newTag, setNewTag] = React.useState("");
-  const [previewImage, setPreviewImage] = React.useState<string | null>(null);
   const [galleryImages, setGalleryImages] = React.useState<File[]>([]);
-  const [tags, setTags] = React.useState<string[]>([]);
   const navigate = useNavigate();
   const createContest = useCreateContest();
   const uploadContestImages = useUploadContestImages();
+  
+  const isLoading = createContest.isPending || uploadContestImages.isPending;
+
   const form = useForm<ContestFormValues>({
     resolver: zodResolver(ContestInsertSchema),
     defaultValues: {
       name: "",
       description: "",
+      slug: "",
+      rules: "",
       startDate: undefined,
       endDate: undefined,
       awards: [{ name: "", icon: "🏆", position: 1 }],
-      tags: [],
       status: Contest_Status.DRAFT,
       visibility: Contest_Visibility.PUBLIC,
+      images: [],
     },
   });
 
@@ -72,6 +74,8 @@ export default function AddNewContestPage() {
       const payload = {
         name: values.name,
         description: values.description,
+        slug: values.slug,
+        rules: values.rules,
         startDate: values.startDate.toISOString(),
         endDate: values.endDate.toISOString(),
         prizePool: values.prizePool,
@@ -95,17 +99,6 @@ export default function AddNewContestPage() {
     }
   };
 
-  const addTag = () => {
-    if (newTag.trim() && !tags.includes(newTag.trim())) {
-      setTags((prev) => [...prev, newTag.trim()]);
-      setNewTag("");
-    }
-  };
-
-  const removeTag = (tagToRemove: string) => {
-    setTags((prev) => prev.filter((tag) => tag !== tagToRemove));
-  };
-
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const validImages = acceptedFiles.filter((file) => file.type.startsWith("image/"));
     if (validImages.length !== acceptedFiles.length) {
@@ -113,6 +106,11 @@ export default function AddNewContestPage() {
     }
     setGalleryImages((prev) => [...prev, ...validImages]);
   }, []);
+
+  // Sync galleryImages with form validation
+  React.useEffect(() => {
+    form.setValue("images", galleryImages);
+  }, [galleryImages, form]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -123,7 +121,10 @@ export default function AddNewContestPage() {
   });
 
   const removeGalleryImage = (index: number) => {
-    setGalleryImages((prev) => prev.filter((_, i) => i !== index));
+    const newImages = galleryImages.filter((_, i) => i !== index);
+    setGalleryImages(newImages);
+    form.setValue("images", newImages);
+    form.trigger("images");
   };
 
   const addAward = () => {
@@ -148,6 +149,7 @@ export default function AddNewContestPage() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Form */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Basic Information */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
@@ -183,6 +185,50 @@ export default function AddNewContestPage() {
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="rules"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Rules & Guidelines</FormLabel>
+                    <FormControl>
+                      <Textarea rows={6} placeholder="Enter contest rules and guidelines..." {...field} value={field.value || ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          {/* URL and Settings */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <FileTextIcon className="w-5 h-5" />
+                URL and Settings
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              <FormField
+                control={form.control}
+                name="slug"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contest Slug</FormLabel>
+                    <FormControl>
+                      <div className="*:not-first:mt-2">
+                        <div className="flex rounded-md shadow-xs">
+                          <span className="border-input bg-gray-200 text-black inline-flex items-center rounded-s-md border px-3 text-sm">{"https://localhost:9999/contests"}</span>
+                          <Input className="-ms-px rounded-s-none shadow-none" placeholder="big-weekend" type="text" {...field} />
+                        </div>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </CardContent>
           </Card>
 
@@ -197,7 +243,7 @@ export default function AddNewContestPage() {
             <CardContent className="space-y-4">
               {/* Gallery Images */}
               <div className="space-y-2">
-                <Label className="text-sm">Gallery Images</Label>
+                <Label className="text-sm">Gallery Images *</Label>
                 <div
                   {...getRootProps()}
                   className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors cursor-pointer ${
@@ -234,6 +280,9 @@ export default function AddNewContestPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Validation Error Display */}
+                {form.formState.errors.images && <p className="text-sm text-destructive mt-1">{form.formState.errors.images.message}</p>}
 
                 {/* Gallery Images Preview */}
                 {galleryImages.length > 0 && (
@@ -284,7 +333,23 @@ export default function AddNewContestPage() {
                   <FormItem>
                     <ShadFormLabel className="text-sm">Total Prize Pool ($) *</ShadFormLabel>
                     <FormControl>
-                      <Input type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value))} min="0" step="0.01" placeholder="10000" className="h-9 text-sm" />
+                      <div className="*:not-first:mt-2">
+                        <div className="relative flex rounded-md shadow-xs">
+                          <span className="text-muted-foreground pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-sm z-10">$</span>
+                          <Input
+                            className="relative -me-px rounded-e-none ps-6 shadow-none z-[2]"
+                            placeholder="0.00"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            {...field}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                          <span className="relative border-input bg-background text-muted-foreground z-0 bg-gray-200 inline-flex items-center rounded-e-md border px-3 text-sm">
+                            USD
+                          </span>
+                        </div>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -371,10 +436,11 @@ export default function AddNewContestPage() {
                         name={`awards.${index}.name`}
                         render={({ field }) => (
                           <FormItem>
-                            <Label className="text-xs">Name *</Label>
+                            <ShadFormLabel className="text-xs">Name *</ShadFormLabel>
                             <FormControl>
                               <Input {...field} placeholder="1st Place" className="h-8 text-xs" />
                             </FormControl>
+                            <FormMessage className="text-xs" />
                           </FormItem>
                         )}
                       />
@@ -413,12 +479,21 @@ export default function AddNewContestPage() {
             </CardContent>
           </Card>
 
-          <Button type="submit" className="w-full">
-            Create Contest
-          </Button>
-          <Button type="button" variant="outline" onClick={() => navigate({ to: "/admin/contests" })} size="sm">
-            Cancel
-          </Button>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" className="w-full h-10 bg-gray-200" onClick={() => navigate({ to: "/admin/contests" })} size="sm" disabled={isLoading}>
+              Cancel
+            </Button>
+            <Button type="submit" className="w-full h-10" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader className="w-4 h-4 mr-2 animate-spin" />
+                  Creating Contest...
+                </>
+              ) : (
+                "Create Contest"
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* Right-hand Switch Panel */}
@@ -471,7 +546,7 @@ export default function AddNewContestPage() {
             </CardContent>
           </Card>
           {/* Categories & Tags */}
-          <Card>
+          {/* <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
                 <TargetIcon className="w-5 h-5" />
@@ -506,7 +581,7 @@ export default function AddNewContestPage() {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
           <Card>
             <CardHeader>
               <CardTitle>Contest Status</CardTitle>

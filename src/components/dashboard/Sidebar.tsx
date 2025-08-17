@@ -60,7 +60,7 @@ export function Sidebar({
 
   const handleLogoutClick = async () => {
     await handleLogout();
-    navigate('/');
+    navigate({ to: "/auth/$id", params: { id: "sign-in" } });
   };
 
   const toggleExpand = () => {

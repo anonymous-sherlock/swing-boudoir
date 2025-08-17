@@ -3,8 +3,9 @@ import { api } from '@/lib/api';
 import { CompetitionsListResponse } from '@/types/competitions.types';
 import { useAuth } from '@/contexts/AuthContext';
 
-const fetchCompetitions = async (): Promise<CompetitionsListResponse> => {
-  const response = await api.get<CompetitionsListResponse>('/api/v1/contest');
+const fetchCompetitions = async (page: number = 1, limit: number = 20): Promise<CompetitionsListResponse> => {
+  const url = `/api/v1/contest?page=${page}&limit=${limit}`;
+  const response = await api.get<CompetitionsListResponse>(url);
   return response.data;
 };
 
@@ -25,7 +26,7 @@ const leaveContest = async (data: { profileId: string; contestId: string }) => {
   return response.data;
 };
 
-export const useCompetitions = () => {
+export const useCompetitions = (page: number = 1, limit: number = 20) => {
   const { user, session, isAuthenticated } = useAuth();
   const profileId = session?.profileId || user?.profileId;
   const queryClient = useQueryClient();
@@ -39,13 +40,14 @@ export const useCompetitions = () => {
     error,
     refetch
   } = useQuery({
-    queryKey: ['competitions'],
-    queryFn: fetchCompetitions,
+    queryKey: ['competitions', page, limit],
+    queryFn: () => fetchCompetitions(page, limit),
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: false,
   });
 
   const competitions = data?.data || [];
+  const pagination = data?.pagination;
 
   const {
     data: joinedData,
@@ -174,5 +176,6 @@ export const useCompetitions = () => {
     // Profile status
     needsProfileSetup,
     profileId,
+    pagination,
   };
 }; 

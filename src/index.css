@@ -3,6 +3,11 @@
 @tailwind utilities;
 
 /* Maxim Covergirl Design System - Luxury modeling competition aesthetic */
+html body[data-scroll-locked] {
+  --removed-body-scroll-bar-size: 0 !important;
+  margin-right: 0 !important;
+  overflow-y: scroll !important;
+}
 
 @layer base {
   :root {

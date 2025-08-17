@@ -7,12 +7,22 @@ export interface Contest {
   id: string
   name: string
   description: string
+  prizePool: number
+  startDate: string
+  endDate: string
+  registrationDeadline: string | null
+  resultAnnounceDate: string | null
+  slug: string
+  status: 'DRAFT' | 'PUBLISHED' | 'ACTIVE' | 'VOTING' | 'JUDGING' | 'COMPLETED' | 'CANCELLED' | 'SUSPENDED'
+  visibility: 'PUBLIC' | 'PRIVATE' | 'INVITE_ONLY' | 'RESTRICTED'
+  isFeatured: boolean
+  isVerified: boolean
+  isVotingEnabled: boolean
+  rules: string | null
+  requirements: string | null
+  winnerProfileId: string | null
   createdAt: string
   updatedAt: string
-  startDate: string
-  prizePool: number
-  endDate: string
-  winnerProfileId: string | null
   awards: Award[]
   images?: ContestImage[] | null
 }
@@ -49,6 +59,11 @@ export interface CreateContestData {
   startDate?: string | null
   prizePool: number
   endDate?: string | null
+  slug?: string
+  status?: 'DRAFT' | 'PUBLISHED' | 'ACTIVE' | 'VOTING' | 'JUDGING' | 'COMPLETED' | 'CANCELLED' | 'SUSPENDED'
+  visibility?: 'PUBLIC' | 'PRIVATE' | 'INVITE_ONLY' | 'RESTRICTED'
+  rules?: string | null
+  requirements?: string | null
   awards: Array<{
     name: string
     icon: string
@@ -61,6 +76,15 @@ export interface UpdateContestData {
   startDate?: string | null
   prizePool?: number
   endDate?: string | null
+  slug?: string
+  status?: 'DRAFT' | 'PUBLISHED' | 'ACTIVE' | 'VOTING' | 'JUDGING' | 'COMPLETED' | 'CANCELLED' | 'SUSPENDED'
+  visibility?: 'PUBLIC' | 'PRIVATE' | 'INVITE_ONLY' | 'RESTRICTED'
+  rules?: string | null
+  requirements?: string | null
+  awards?: Array<{
+    name: string
+    icon: string
+  }>
 }
 
 export interface ContestStats {

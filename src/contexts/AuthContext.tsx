@@ -79,6 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     queryFn: async () => {
       const token = localStorage.getItem(AUTH_TOKEN_KEY);
       if (!token) {
+        queryClient.removeQueries({ queryKey: ["session"] });
         throw new Error("No authentication token");
       }
       const response = await authApi.getSession<GetSessionResponse>();

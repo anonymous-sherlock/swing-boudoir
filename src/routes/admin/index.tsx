@@ -1,4 +1,5 @@
 import { api } from '@/lib/api';
+import { formatCurrency } from '@/utils/format';
 import { createFileRoute } from '@tanstack/react-router';
 import { 
   Trophy, 
@@ -40,7 +41,7 @@ type DashboardAnalytics = {
 export default function Page() {
   const dashboardResponse = Route.useLoaderData();
 
-  const stats: { label: string; value: number; subtext: string; icon: React.ReactNode }[] = [
+  const stats: { label: string; value: number|string; subtext: string; icon: React.ReactNode }[] = [
     {
       label: 'Total Competitions',
       value: dashboardResponse.totalCompetitions,
@@ -61,7 +62,7 @@ export default function Page() {
     },
     {
       label: 'Total Prize Pool',
-      value: Number(dashboardResponse.totalPrizePool.toFixed(2)),
+      value: formatCurrency(dashboardResponse.totalPrizePool, 'USD'),
       subtext: 'Prize money in USD',
       icon: <DollarSign className="h-8 w-8 text-yellow-600" />,
     },

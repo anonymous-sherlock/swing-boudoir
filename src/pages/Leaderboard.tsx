@@ -24,7 +24,7 @@ import {
   ArrowDown,
   Minus
 } from 'lucide-react';
-import Header from '@/components/Header';
+import Header from '@/components/layout/Header';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 

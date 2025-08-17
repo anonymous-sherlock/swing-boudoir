@@ -20,8 +20,8 @@ export const Contest_Visibility = {
 
 export const ContestSchema = z.object({
   id: z.string(),
-  name: z.string({ message: 'contest name is required' }).min(3),
-  description: z.string(),
+  name: z.string({ message: 'contest name is required' }).min(3, "contest name must be at least 3 characters"),
+  description: z.string().min(10, "contest description must be at least 10 characters"),
   prizePool: z.number(),
   startDate: z.date(),
   endDate: z.date(),
@@ -63,20 +63,20 @@ export const ContestInsertSchema = ContestSchema.pick({
   status: true,
   visibility: true,
 }).extend({
-  startDate: z.preprocess(val => (val ? new Date(val as string) : new Date()), z.date()),
-  endDate: z.preprocess(val => (val ? new Date(val as string) : new Date()), z.date()),
+  startDate: z.date({ required_error: "Start date is required" }),
+  endDate: z.date({ required_error: "End date is required" }),
   slug: z.string().optional(),
   rules: z.string().optional().nullable(),
   requirements: z.string().optional().nullable(),
-  prizePool: z.coerce.number(),
+  prizePool: z.coerce.number({ required_error: "Prize pool is required", invalid_type_error: "Prize pool must be a number" }).min(1, "Prize pool is required"),
   awards: z.array(
     z.object({
-      name: z.string(),
+      name: z.string().min(1, "Award name is required"),
       icon: z.string(),
       position: z.number(),
     })
   ),
-  tags: z.array(z.string()),
+  images: z.array(z.any()).min(1, "At least one image is required"),
 });
 
 export const ContestEditSchema = ContestSchema.partial();

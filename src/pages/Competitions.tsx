@@ -1,5 +1,5 @@
-import { CompetitionCard } from "@/components/CompetitionCard";
-import Header from "@/components/Header";
+import { CompetitionCard } from "@/components/competitions/CompetitionCard";
+import Header from "@/components/layout/Header";
 import { PageLoader } from "@/components/PageLoader";
 import { Button } from "@/components/ui/button";
 import { useCompetitions } from "@/hooks/useCompetitions";

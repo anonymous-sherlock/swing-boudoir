@@ -1,6 +1,6 @@
 import { useContests } from "@/hooks/api/useContests";
 import { RefreshCw } from "lucide-react";
-import CompetitionCard from "./CompetitionCard";
+import CompetitionCard from "./competitions/CompetitionCard";
 
 const CompetitionsSection = () => {
   
