@@ -56,6 +56,11 @@ export interface Profile {
         url: string;
       }[]
     | null;
+  user: {
+    name: string;
+    displayName: string;
+    username: string;
+  };
 }
 
 export interface PaginatedResponse<T> {
@@ -151,8 +156,10 @@ const profileApi = {
 
   // Create profile
 
-  createProfile: async (data: z.infer<typeof ProfileInsertSchema>) :Promise<ProfileSelectSchemaType>=> {
-    const response = await api.post('/api/v1/profile', data) ;
+  createProfile: async (
+    data: z.infer<typeof ProfileInsertSchema>
+  ): Promise<ProfileSelectSchemaType> => {
+    const response = await api.post('/api/v1/profile', data);
     return response.data;
   },
 
@@ -258,7 +265,7 @@ export const useProfile = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: profileKeys.lists() });
       // Invalidate session query to refresh user data with new profileId
-      queryClient.invalidateQueries({ queryKey: ["session"] });
+      queryClient.invalidateQueries({ queryKey: ['session'] });
     },
   });
 
@@ -286,7 +293,8 @@ export const useProfile = () => {
   });
 
   const uploadBannerImage = useMutation({
-    mutationFn: ({ id, file }: { id: string; file: File }) => profileApi.uploadBannerImage(id, file),
+    mutationFn: ({ id, file }: { id: string; file: File }) =>
+      profileApi.uploadBannerImage(id, file),
     onSuccess: data => {
       queryClient.invalidateQueries({ queryKey: profileKeys.detail(data.id) });
     },
