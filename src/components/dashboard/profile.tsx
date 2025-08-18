@@ -9,9 +9,11 @@ import { useCompetitions } from "@/hooks/useCompetitions";
 import { formatUsdAbbrev } from "@/lib/utils";
 import { Award, Competition as CompetitionType } from "@/types/competitions.types";
 import { Link } from "@tanstack/react-router";
+import { getSocialMediaUrls } from "@/utils/social-media";
 import { formatDistanceToNow } from "date-fns";
 import { AlertCircle, Camera, Clock, Edit, Eye, Facebook, Gift, Globe, Instagram, MapPin, RefreshCw, Share2, TrendingUp, Trophy, Twitter, Users, Youtube } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { Icons } from "../icons";
 
 interface UserStats {
   totalVotes: number;
@@ -296,62 +298,67 @@ export function PublicProfile() {
             <div className="flex items-center space-x-4 pt-2">
               <span className="text-sm font-medium text-gray-700">Connect:</span>
               <div className="flex space-x-3">
-                <Link
-                  to={userProfile?.instagram || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`inline-flex items-center justify-center h-8 w-8 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors ${!userProfile?.instagram ? "opacity-50 cursor-not-allowed" : "hover:border-gray-300"}`}
-                  onClick={(e) => !userProfile?.instagram && e.preventDefault()}
-                >
-                  <Instagram className="h-4 w-4" />
-                </Link>
-                <Link
-                  to={userProfile?.twitter || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`inline-flex items-center justify-center h-8 w-8 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors ${!userProfile?.twitter ? "opacity-50 cursor-not-allowed" : "hover:border-gray-300"}`}
-                  onClick={(e) => !userProfile?.twitter && e.preventDefault()}
-                >
-                  <Twitter className="h-4 w-4" />
-                </Link>
-                <Link
-                  to={userProfile?.facebook || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`inline-flex items-center justify-center h-8 w-8 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors ${!userProfile?.facebook ? "opacity-50 cursor-not-allowed" : "hover:border-gray-300"}`}
-                  onClick={(e) => !userProfile?.facebook && e.preventDefault()}
-                >
-                  <Facebook className="h-4 w-4" />
-                </Link>
-                <a
-                  href={userProfile?.tiktok || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`inline-flex items-center justify-center h-8 w-8 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors ${!userProfile?.tiktok ? "opacity-50 cursor-not-allowed" : "hover:border-gray-300"}`}
-                  onClick={(e) => !userProfile?.tiktok && e.preventDefault()}
-                >
-                  <svg className="w-4 h-4 text-black" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" />
-                  </svg>
-                </a>
-                <Link
-                  to={userProfile?.youtube || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`inline-flex items-center justify-center h-8 w-8 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors ${!userProfile?.youtube ? "opacity-50 cursor-not-allowed" : "hover:border-gray-300"}`}
-                  onClick={(e) => !userProfile?.youtube && e.preventDefault()}
-                >
-                  <Youtube className="h-4 w-4" />
-                </Link>
-                <Link
-                  to={userProfile?.website || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`inline-flex items-center justify-center h-8 w-8 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors ${!userProfile?.website ? "opacity-50 cursor-not-allowed" : "hover:border-gray-300"}`}
-                  onClick={(e) => !userProfile?.website && e.preventDefault()}
-                >
-                  <Globe className="h-4 w-4" />
-                </Link>
+                {(() => {
+                  const socialUrls = getSocialMediaUrls(userProfile || {});
+                  return (
+                    <>
+                      <Link
+                        to={socialUrls.instagram || "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`inline-flex items-center justify-center h-8 w-8 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors ${!socialUrls.instagram ? "opacity-50 cursor-not-allowed" : "hover:border-gray-300"}`}
+                        onClick={(e) => !socialUrls.instagram && e.preventDefault()}
+                      >
+                        <Icons.instagram className="h-4 w-4 fill-pink-500" />
+                      </Link>
+                      <Link
+                        to={socialUrls.twitter || "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`inline-flex items-center justify-center h-8 w-8 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors ${!socialUrls.twitter ? "opacity-50 cursor-not-allowed" : "hover:border-gray-300"}`}
+                        onClick={(e) => !socialUrls.twitter && e.preventDefault()}
+                      >
+                        <Icons.x className="h-4 w-4 fill-black" />
+                      </Link>
+                      <Link
+                        to={socialUrls.facebook || "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`inline-flex items-center justify-center h-8 w-8 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors ${!socialUrls.facebook ? "opacity-50 cursor-not-allowed" : "hover:border-gray-300"}`}
+                        onClick={(e) => !socialUrls.facebook && e.preventDefault()}
+                      >
+                        <Icons.facebook className="h-4 w-4 fill-blue-500" />
+                      </Link>
+                      <a
+                        href={socialUrls.tiktok || "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`inline-flex items-center justify-center h-8 w-8 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors ${!socialUrls.tiktok ? "opacity-50 cursor-not-allowed" : "hover:border-gray-300"}`}
+                        onClick={(e) => !socialUrls.tiktok && e.preventDefault()}
+                      >
+                        <Icons.tiktok className="h-4 w-4 fill-black" />
+                      </a>
+                      <Link
+                        to={socialUrls.youtube || "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`inline-flex items-center justify-center h-8 w-8 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors ${!socialUrls.youtube ? "opacity-50 cursor-not-allowed" : "hover:border-gray-300"}`}
+                        onClick={(e) => !socialUrls.youtube && e.preventDefault()}
+                      >
+                        <Icons.youtube className="h-4 w-4 fill-red-500" />
+                      </Link>
+                      <Link
+                        to={socialUrls.website || "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`inline-flex items-center justify-center h-8 w-8 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors ${!socialUrls.website ? "opacity-50 cursor-not-allowed" : "hover:border-gray-300"}`}
+                        onClick={(e) => !socialUrls.website && e.preventDefault()}
+                      >
+                        <Globe className="h-4 w-4" />
+                      </Link>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           </div>

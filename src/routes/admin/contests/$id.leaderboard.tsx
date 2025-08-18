@@ -248,7 +248,7 @@ function RouteComponent() {
                 <DialogDescription>Set contest winner here. Click save when you&apos;re done.</DialogDescription>
               </DialogHeader>
               <div className="grid gap-4">
-                <Popover open={open} onOpenChange={setOpen}>
+                <Popover open={open} onOpenChange={setOpen} modal={false}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between">
                       {winnerId && contestLeaderboard?.data ? `@${contestLeaderboard.data.find((p) => p.profileId === winnerId)?.username || "Unknown"}` : "Select a winner"}
@@ -257,7 +257,7 @@ function RouteComponent() {
                   </PopoverTrigger>
                   <PopoverContent className="w-full p-0" style={{ pointerEvents: "auto" }} aria-modal={true}>
                     <Command>
-                      <CommandInput placeholder="Search profiles..." />
+                      <CommandInput placeholder="Search profiles..." autoFocus />
                       <CommandList>
                         <CommandEmpty>No profiles found.</CommandEmpty>
                         <CommandGroup>

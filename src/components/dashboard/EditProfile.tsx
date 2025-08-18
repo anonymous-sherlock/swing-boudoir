@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, Edit, Save, Trash2, X, Trophy, Calendar, User, MessageSquare, Camera, Globe, MapPin, Phone, Heart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { getSocialMediaUrl, isValidSocialMediaUsername } from "@/utils/social-media";
 
 export function EditProfile() {
   const [profile, setProfile] = useState({
@@ -533,9 +534,12 @@ export function EditProfile() {
                     value={profile.instagram}
                     onChange={(e) => setProfile({ ...profile, instagram: e.target.value })}
                     disabled={!isEditing}
-                    placeholder="https://instagram.com/yourusername"
-                    className={!isEditing ? "bg-muted/50 cursor-not-allowed" : "transition-all duration-200 focus:ring-2 focus:ring-primary/20"}
+                    placeholder="yourusername (without @)"
+                    className={`${!isEditing ? "bg-muted/50 cursor-not-allowed" : "transition-all duration-200 focus:ring-2 focus:ring-primary/20"} ${profile.instagram && !isValidSocialMediaUsername('instagram', profile.instagram) ? 'border-red-500 focus:ring-red-500/20' : ''}`}
                   />
+                  {profile.instagram && !isValidSocialMediaUsername('instagram', profile.instagram) && (
+                    <p className="text-xs text-red-500">Invalid Instagram username format</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -548,9 +552,12 @@ export function EditProfile() {
                     value={profile.tiktok}
                     onChange={(e) => setProfile({ ...profile, tiktok: e.target.value })}
                     disabled={!isEditing}
-                    placeholder="https://tiktok.com/@yourusername"
-                    className={!isEditing ? "bg-muted/50 cursor-not-allowed" : "transition-all duration-200 focus:ring-2 focus:ring-primary/20"}
+                    placeholder="yourusername (without @)"
+                    className={`${!isEditing ? "bg-muted/50 cursor-not-allowed" : "transition-all duration-200 focus:ring-2 focus:ring-primary/20"} ${profile.tiktok && !isValidSocialMediaUsername('tiktok', profile.tiktok) ? 'border-red-500 focus:ring-red-500/20' : ''}`}
                   />
+                  {profile.tiktok && !isValidSocialMediaUsername('tiktok', profile.tiktok) && (
+                    <p className="text-xs text-red-500">Invalid TikTok username format</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -563,9 +570,12 @@ export function EditProfile() {
                     value={profile.youtube}
                     onChange={(e) => setProfile({ ...profile, youtube: e.target.value })}
                     disabled={!isEditing}
-                    placeholder="https://youtube.com/@yourchannel"
-                    className={!isEditing ? "bg-muted/50 cursor-not-allowed" : "transition-all duration-200 focus:ring-2 focus:ring-primary/20"}
+                    placeholder="yourchannel (without @)"
+                    className={`${!isEditing ? "bg-muted/50 cursor-not-allowed" : "transition-all duration-200 focus:ring-2 focus:ring-primary/20"} ${profile.youtube && !isValidSocialMediaUsername('youtube', profile.youtube) ? 'border-red-500 focus:ring-red-500/20' : ''}`}
                   />
+                  {profile.youtube && !isValidSocialMediaUsername('youtube', profile.youtube) && (
+                    <p className="text-xs text-red-500">Invalid YouTube channel format</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -578,9 +588,12 @@ export function EditProfile() {
                     value={profile.twitter}
                     onChange={(e) => setProfile({ ...profile, twitter: e.target.value })}
                     disabled={!isEditing}
-                    placeholder="https://twitter.com/yourusername"
-                    className={!isEditing ? "bg-muted/50 cursor-not-allowed" : "transition-all duration-200 focus:ring-2 focus:ring-primary/20"}
+                    placeholder="yourusername (without @)"
+                    className={`${!isEditing ? "bg-muted/50 cursor-not-allowed" : "transition-all duration-200 focus:ring-2 focus:ring-primary/20"} ${profile.twitter && !isValidSocialMediaUsername('twitter', profile.twitter) ? 'border-red-500 focus:ring-red-500/20' : ''}`}
                   />
+                  {profile.twitter && !isValidSocialMediaUsername('twitter', profile.twitter) && (
+                    <p className="text-xs text-red-500">Invalid Twitter username format</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -593,9 +606,12 @@ export function EditProfile() {
                     value={profile.facebook}
                     onChange={(e) => setProfile({ ...profile, facebook: e.target.value })}
                     disabled={!isEditing}
-                    placeholder="https://facebook.com/yourusername"
-                    className={!isEditing ? "bg-muted/50 cursor-not-allowed" : "transition-all duration-200 focus:ring-2 focus:ring-primary/20"}
+                    placeholder="yourusername"
+                    className={`${!isEditing ? "bg-muted/50 cursor-not-allowed" : "transition-all duration-200 focus:ring-2 focus:ring-primary/20"} ${profile.facebook && !isValidSocialMediaUsername('facebook', profile.facebook) ? 'border-red-500 focus:ring-red-500/20' : ''}`}
                   />
+                  {profile.facebook && !isValidSocialMediaUsername('facebook', profile.facebook) && (
+                    <p className="text-xs text-red-500">Invalid Facebook username format</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
