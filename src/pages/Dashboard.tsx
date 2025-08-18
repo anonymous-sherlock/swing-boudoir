@@ -5,7 +5,7 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { DashboardNotifications } from "@/components/dashboard/DashboardNotifications";
 import { EditProfile } from "@/components/dashboard/EditProfile";
 import { PublicProfile } from "@/components/dashboard/profile";
-import { DashboardCompetitions } from "@/components/dashboard/DashboardCompetitions";
+// import { DashboardCompetitions } from "@/components/dashboard/DashboardCompetitions";
 import { Votes } from "@/components/dashboard/Votes";
 import { PrizeHistory } from "@/components/dashboard/PrizeHistory";
 import { Settings } from "@/components/dashboard/Settings";
@@ -16,6 +16,7 @@ import Header from "@/components/layout/Header";
 import { ONBOARDING_REDIRECT } from "@/routes";
 import { DashboardSection } from "@/routes/dashboard/$section";
 import Leaderboard from "@/pages/Leaderboard";
+import { CompetitionsPage } from "@/components/competitions/CompetitionsPage";
 
 function DashboardLayout({
   activeSection = "profile",
@@ -106,7 +107,7 @@ export default function Dashboard() {
       case "profile":
         return <PublicProfile />;
       case "competitions":
-        return <DashboardCompetitions />;
+        return <CompetitionsPage />;
       case "votes":
         return <Votes />;
       case "prize-history":

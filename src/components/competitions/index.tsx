@@ -1,19 +1,16 @@
-import React, { useState, useEffect } from "react";
-import { useQueryState } from "nuqs";
-import { useCompetitions } from "@/hooks/useCompetitions";
 import { CompetitionCard } from "@/components/competitions/CompetitionCard";
 import { CompetitionListItem } from "@/components/competitions/CompetitionListItem";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Search, Filter, Grid3X3, List, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
-import { Competition } from "@/types/competitions.types";
 import { useAuth } from "@/contexts/AuthContext";
+import { Contest, useContests } from "@/hooks/api/useContests";
 import { useToast } from "@/hooks/use-toast";
-import { useCheckContestParticipation, useJoinContest, useLeaveContest } from "@/hooks/api/useContests";
-import { AuthModal } from "@/components/auth/AuthModal";
+import { isAfter, isBefore, startOfDay } from "date-fns";
+import { ChevronLeft, ChevronRight, Grid3X3, List, Loader2, Search } from "lucide-react";
+import { useQueryState } from "nuqs";
+import React, { useEffect, useState } from "react";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -34,7 +31,10 @@ export const CompetitionsList: React.FC = () => {
   // Convert page to number for the hook
   const currentPage = parseInt(page || "1", 10);
 
-  const { competitions, isLoading, error, pagination } = useCompetitions(currentPage, ITEMS_PER_PAGE);
+  // Use the new useContests hook
+  const { data: contestsData, isLoading, error } = useContests(currentPage, ITEMS_PER_PAGE);
+  const contests = contestsData?.data || [];
+  const pagination = contestsData?.pagination;
 
   // Debounce search query and update URL
   useEffect(() => {
@@ -54,12 +54,35 @@ export const CompetitionsList: React.FC = () => {
     setSearchQuery(search || "");
   }, [search]);
 
-  // Filter competitions based on search and status
-  const filteredCompetitions = competitions.filter((competition) => {
-    const matchesSearch =
-      competition.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) || competition.description.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
+  // Get competition status for filtering
+  const getCompetitionStatus = (contest: Contest): "ACTIVE" | "VOTING" | "JUDGING" | "COMPLETED" | "DRAFT" | "PUBLISHED" | "CANCELLED" | "SUSPENDED" => {
+    const now = startOfDay(new Date());
+    const startDate = startOfDay(new Date(contest.startDate));
+    const endDate = startOfDay(new Date(contest.endDate));
 
-    const matchesStatus = status === "all" || competition.status === status;
+    if (isAfter(now, endDate)) {
+      return "COMPLETED";
+    } else if (isBefore(now, startDate)) {
+      return "PUBLISHED";
+    } else if (contest.status === "ACTIVE") {
+      return "ACTIVE";
+    } else if (contest.status === "VOTING") {
+      return "VOTING";
+    } else if (contest.status === "JUDGING") {
+      return "JUDGING";
+    } else {
+      return contest.status as Contest["status"];
+    }
+  };
+
+  // Filter competitions based on search and status
+  const filteredCompetitions = contests.filter((contest) => {
+    const matchesSearch =
+      contest.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) || 
+      contest.description.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
+
+    const contestStatus = getCompetitionStatus(contest);
+    const matchesStatus = status === "all" || contestStatus === status;
 
     return matchesSearch && matchesStatus;
   });
@@ -76,14 +99,6 @@ export const CompetitionsList: React.FC = () => {
 
   const handleViewChange = (newView: "grid" | "list") => {
     setView(newView);
-  };
-
-  // Convert Competition to Contest type for CompetitionCard compatibility
-  const convertCompetitionToContest = (competition: Competition) => {
-    return {
-      ...competition,
-      // Add any missing properties that Contest might have
-    };
   };
 
   const getStatusBadgeVariant = (status: string) => {
@@ -212,9 +227,13 @@ export const CompetitionsList: React.FC = () => {
         {!isLoading && filteredCompetitions.length > 0 && (
           <>
             <div className={view === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8" : "space-y-4 mb-8"}>
-              {filteredCompetitions.map((competition) => (
-                <div key={competition.id}>
-                  {view === "grid" ? <CompetitionCard contest={convertCompetitionToContest(competition)} /> : <CompetitionListItem competition={competition} />}
+              {filteredCompetitions.map((contest) => (
+                <div key={contest.id}>
+                  {view === "grid" ? (
+                    <CompetitionCard contest={contest} />
+                  ) : (
+                    <CompetitionListItem competition={contest} />
+                  )}
                 </div>
               ))}
             </div>

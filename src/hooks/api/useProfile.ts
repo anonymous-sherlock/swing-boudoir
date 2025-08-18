@@ -1,10 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { hc } from '@/lib/api-client';
-import z from 'zod';
-import { schemas } from '@/lib/validations/api-helper';
-import { ProfileInsertSchema } from '@/lib/validations/profile.schema';
 import type { ProfileSelectSchemaType } from '@/lib/validations/profile.schema';
+import { ProfileInsertSchema } from '@/lib/validations/profile.schema';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import z from 'zod';
 
 // Profile types
 export interface Profile {

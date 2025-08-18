@@ -5,12 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthModal } from "@/components/auth/AuthModal";
-import { useCheckContestParticipation, useJoinContest, useLeaveContest } from "@/hooks/api/useContests";
-import { Competition } from "@/types/competitions.types";
+import { useCheckContestParticipation, useJoinContest, useLeaveContest, Contest } from "@/hooks/api/useContests";
 import defaultImage from "@/assets/hot-girl-summer.jpg";
 
 interface CompetitionListItemProps {
-  competition: Competition;
+  competition: Contest;
 }
 
 export const CompetitionListItem: React.FC<CompetitionListItemProps> = ({ competition }) => {

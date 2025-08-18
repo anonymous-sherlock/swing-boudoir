@@ -1,52 +1,80 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Share, Calendar, Users, Gift, RefreshCw } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useCompetitions } from "@/hooks/useCompetitions";
-import { Competition } from "@/types/competitions.types";
-import { formatDistanceToNow, isAfter, isBefore, startOfDay } from "date-fns";
-import { formatUsdAbbrev } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { useContests, useJoinedContests, useJoinContest, Contest } from "@/hooks/api/useContests";
 import { notificationService } from "@/lib/notificationService";
-import { AUTH_TOKEN_KEY } from "@/lib/auth";
-import { useState } from "react";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { formatUsdAbbrev } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
+import { formatDistanceToNow, isAfter, isBefore, startOfDay } from "date-fns";
+import { Calendar, Gift, RefreshCw, Share, Trophy, Users } from "lucide-react";
+import { useState } from "react";
 
 export function DashboardCompetitions() {
   const { toast } = useToast();
-  const { isLoading, getActiveCompetitions, getComingSoonCompetitions, getCompletedCompetitions, joinedCompetitions, isLoadingJoined, refetchJoined, joinContest } =
-    useCompetitions();
-
-  const activeCompetitions = getActiveCompetitions();
-  const comingSoonCompetitions = getComingSoonCompetitions();
-  const endedCompetitions = getCompletedCompetitions();
-  const joinedActiveCompetitions = (joinedCompetitions || []).filter((comp) => {
-    const now = new Date();
-    const startDate = new Date(comp.startDate);
-    const endDate = new Date(comp.endDate);
-    return now >= startDate && now <= endDate;
-  });
-  const joinedIds = new Set((joinedCompetitions || []).map((c) => c.id));
-
-  const { isAuthenticated, user } = useAuth();
-
+  const { user } = useAuth();
+  
   // Pagination state
   const ITEMS_PER_PAGE = 5;
   const [activePage, setActivePage] = useState(1);
   const [joinedPage, setJoinedPage] = useState(1);
 
+  // Use the new useContests hooks
+  const { data: contestsData, isLoading } = useContests(1, 100); // Get all contests for filtering
+  const { data: joinedContestsData, isLoading: isLoadingJoined } = useJoinedContests(user?.profileId || "", 1, 100);
+  const joinContestMutation = useJoinContest();
+
+  // Extract contests from the response
+  const allContests = contestsData?.data || [];
+  const joinedContests = joinedContestsData?.data || [];
+
+  // Filter contests by status
+  const getCompetitionStatus = (contest: Contest): "active" | "coming-soon" | "ended" => {
+    const now = startOfDay(new Date());
+    const startDate = startOfDay(new Date(contest.startDate));
+    const endDate = startOfDay(new Date(contest.endDate));
+
+    if (isAfter(now, endDate)) {
+      return "ended";
+    } else if (isBefore(now, startDate)) {
+      return "coming-soon";
+    } else {
+      return "active";
+    }
+  };
+
+  const activeCompetitions = allContests.filter(contest => getCompetitionStatus(contest) === "active");
+  const comingSoonCompetitions = allContests.filter(contest => getCompetitionStatus(contest) === "coming-soon");
+  const endedCompetitions = allContests.filter(contest => getCompetitionStatus(contest) === "ended");
+  
+  const joinedActiveCompetitions = joinedContests.filter(contest => getCompetitionStatus(contest) === "active");
+  const joinedIds = new Set(joinedContests.map(c => c.id));
+
+  // Pagination calculations
   const activeTotalPages = Math.max(1, Math.ceil(activeCompetitions.length / ITEMS_PER_PAGE));
   const joinedTotalPages = Math.max(1, Math.ceil(joinedActiveCompetitions.length / ITEMS_PER_PAGE));
 
   const activePageItems = activeCompetitions.slice((activePage - 1) * ITEMS_PER_PAGE, activePage * ITEMS_PER_PAGE);
   const joinedPageItems = joinedActiveCompetitions.slice((joinedPage - 1) * ITEMS_PER_PAGE, joinedPage * ITEMS_PER_PAGE);
 
-  const handleJoinContest = async ({ competitionId, competitionName }) => {
+  const handleJoinContest = async (competitionId: string, competitionName: string) => {
+    if (!user?.profileId) {
+      toast({
+        title: "Profile Required",
+        description: "Please complete your profile before joining contests",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      await joinContest(competitionId);
+      await joinContestMutation.mutateAsync({
+        profileId: user.profileId,
+        contestId: competitionId,
+      });
       
       // Trigger notification for joining competition
       if (user?.id && user?.profileId) {
@@ -87,24 +115,10 @@ export function DashboardCompetitions() {
     }
   };
 
-  const getCompetitionStatus = (competition: Competition): "active" | "coming-soon" | "ended" => {
-    const now = startOfDay(new Date());
-    const startDate = startOfDay(new Date(competition.startDate));
-    const endDate = startOfDay(new Date(competition.endDate));
-
-    if (isAfter(now, endDate)) {
-      return "ended";
-    } else if (isBefore(now, startDate)) {
-      return "coming-soon";
-    } else {
-      return "active";
-    }
-  };
-
   const formatPrize = (prizePool: number): string => formatUsdAbbrev(prizePool);
 
   const shareCompetition = async (competitionName: string) => {
-    const url = `${window.location.origin}/public-profile`; // Update with actual profile URL
+    const url = `${window.location.origin}/profile/${user?.username}`;
     try {
       await navigator.clipboard.writeText(url);
       toast({
@@ -114,15 +128,6 @@ export function DashboardCompetitions() {
     } catch (err) {
       console.error("Failed to copy link:", err);
     }
-  };
-
-  const joinCompetition = async (competitionId: string) => {
-    // TODO: API call to join competition
-    console.log(`Joining competition ${competitionId}`);
-    toast({
-      title: "Competition Joined!",
-      description: "You have successfully joined the competition.",
-    });
   };
 
   const getStatusBadge = (status: "active" | "coming-soon" | "ended") => {
@@ -138,9 +143,9 @@ export function DashboardCompetitions() {
     }
   };
 
-  const renderCoverImage = (competition: Competition) => {
-    const coverUrl = competition.images?.[0]?.url || "/placeholder.svg";
-    return <img src={coverUrl} alt={competition.name} className="w-full aspect-video object-cover rounded-md" loading="lazy" />;
+  const renderCoverImage = (contest: Contest) => {
+    const coverUrl = contest.images?.[0]?.url || "/placeholder.svg";
+    return <img src={coverUrl} alt={contest.name} className="w-full aspect-video object-cover rounded-md" loading="lazy" />;
   };
 
   if (isLoading) {
@@ -173,15 +178,15 @@ export function DashboardCompetitions() {
           <div className="space-y-4">
             {activeCompetitions.length > 0 ? (
               <div className="grid grid-cols-1 gap-4">
-                {activePageItems.map((competition) => {
-                  const status = getCompetitionStatus(competition);
+                {activePageItems.map((contest) => {
+                  const status = getCompetitionStatus(contest);
                   return (
-                    <Card key={competition.id}>
+                    <Card key={contest.id}>
                       <CardHeader>
                         <div className="flex items-center justify-between">
                           <CardTitle className="flex items-center">
                             <Trophy className="mr-2 h-5 w-5" />
-                            {competition.name}
+                            {contest.name}
                           </CardTitle>
                           {getStatusBadge(status)}
                         </div>
@@ -191,15 +196,15 @@ export function DashboardCompetitions() {
                           <div className="flex-1 space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div>
-                                <p className="text-muted-foreground mb-2">{formatPrize(competition.prizePool)} Prize Pool</p>
+                                <p className="text-muted-foreground mb-2">{formatPrize(contest.prizePool)} Prize Pool</p>
                                 <div className="flex items-center text-sm text-muted-foreground">
                                   <Calendar className="mr-1 h-4 w-4" />
-                                  Ends: {formatDistanceToNow(new Date(competition.endDate), { addSuffix: true })}
+                                  Ends: {formatDistanceToNow(new Date(contest.endDate), { addSuffix: true })}
                                 </div>
-                                {competition.awards.length > 0 && (
+                                {contest.awards.length > 0 && (
                                   <div className="flex items-center text-sm text-muted-foreground mt-1">
                                     <Trophy className="mr-1 h-4 w-4" />
-                                    {competition.awards.length} award{competition.awards.length !== 1 ? "s" : ""}
+                                    {contest.awards.length} award{contest.awards.length !== 1 ? "s" : ""}
                                   </div>
                                 )}
                               </div>
@@ -207,34 +212,36 @@ export function DashboardCompetitions() {
                                 <div className="text-sm">
                                   <span className="font-medium">Awards:</span>
                                   <ul className="mt-1 space-y-1">
-                                    {competition.awards.slice(0, 3).map((award) => (
+                                    {contest.awards.slice(0, 3).map((award) => (
                                       <li key={award.id} className="text-muted-foreground">
                                         {award.icon} {award.name}
                                       </li>
                                     ))}
-                                    {competition.awards.length > 3 && <li className="text-muted-foreground">+{competition.awards.length - 3} more</li>}
+                                    {contest.awards.length > 3 && <li className="text-muted-foreground">+{contest.awards.length - 3} more</li>}
                                   </ul>
                                 </div>
                               </div>
                             </div>
                             <div className="flex gap-2">
-                              {joinedIds.has(competition.id) ? (
-                                <Button variant="outline" onClick={() => shareCompetition(competition.name)} className="flex items-center">
+                              {joinedIds.has(contest.id) ? (
+                                <Button variant="outline" onClick={() => shareCompetition(contest.name)} className="flex items-center">
                                   <Share className="mr-2 h-4 w-4" />
                                   Share Profile
                                 </Button>
                               ) : (
-                                <Button onClick={() => handleJoinContest({
-                                  competitionId: competition.id,
-                                  competitionName: competition.name,
-                                })}>Register</Button>
+                                <Button 
+                                  onClick={() => handleJoinContest(contest.id, contest.name)}
+                                  disabled={joinContestMutation.isPending}
+                                >
+                                  {joinContestMutation.isPending ? "Joining..." : "Register"}
+                                </Button>
                               )}
                               <Button variant="outline" asChild>
-                                <Link to={`/competition/${competition.id}`}>View Details</Link>
+                                <Link to={`/competitions/$slug`} params={{ slug: contest.slug }}>View Details</Link>
                               </Button>
                             </div>
                           </div>
-                          <div className="w-full md:w-1/3">{renderCoverImage(competition)}</div>
+                          <div className="w-full md:w-1/3">{renderCoverImage(contest)}</div>
                         </div>
                       </CardContent>
                     </Card>
@@ -303,15 +310,15 @@ export function DashboardCompetitions() {
               </div>
             ) : joinedActiveCompetitions.length > 0 ? (
               <div className="grid grid-cols-1 gap-4">
-                {joinedPageItems.map((competition) => {
-                  const status = getCompetitionStatus(competition);
+                {joinedPageItems.map((contest) => {
+                  const status = getCompetitionStatus(contest);
                   return (
-                    <Card key={competition.id}>
+                    <Card key={contest.id}>
                       <CardHeader>
                         <div className="flex items-center justify-between">
                           <CardTitle className="flex items-center">
                             <Trophy className="mr-2 h-5 w-5" />
-                            {competition.name}
+                            {contest.name}
                           </CardTitle>
                           {getStatusBadge(status)}
                         </div>
@@ -321,15 +328,15 @@ export function DashboardCompetitions() {
                           <div className="flex-1 space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div>
-                                <p className="text-muted-foreground mb-2">{formatPrize(competition.prizePool)} Prize Pool</p>
+                                <p className="text-muted-foreground mb-2">{formatPrize(contest.prizePool)} Prize Pool</p>
                                 <div className="flex items-center text-sm text-muted-foreground">
                                   <Calendar className="mr-1 h-4 w-4" />
-                                  Ends: {formatDistanceToNow(new Date(competition.endDate), { addSuffix: true })}
+                                  Ends: {formatDistanceToNow(new Date(contest.endDate), { addSuffix: true })}
                                 </div>
-                                {competition.awards.length > 0 && (
+                                {contest.awards.length > 0 && (
                                   <div className="flex items-center text-sm text-muted-foreground mt-1">
                                     <Trophy className="mr-1 h-4 w-4" />
-                                    {competition.awards.length} award{competition.awards.length !== 1 ? "s" : ""}
+                                    {contest.awards.length} award{contest.awards.length !== 1 ? "s" : ""}
                                   </div>
                                 )}
                               </div>
@@ -337,27 +344,27 @@ export function DashboardCompetitions() {
                                 <div className="text-sm">
                                   <span className="font-medium">Awards:</span>
                                   <ul className="mt-1 space-y-1">
-                                    {competition.awards.slice(0, 3).map((award) => (
+                                    {contest.awards.slice(0, 3).map((award) => (
                                       <li key={award.id} className="text-muted-foreground">
                                         {award.icon} {award.name}
                                       </li>
                                     ))}
-                                    {competition.awards.length > 3 && <li className="text-muted-foreground">+{competition.awards.length - 3} more</li>}
+                                    {contest.awards.length > 3 && <li className="text-muted-foreground">+{contest.awards.length - 3} more</li>}
                                   </ul>
                                 </div>
                               </div>
                             </div>
                             <div className="flex gap-2">
-                              <Button variant="outline" onClick={() => shareCompetition(competition.name)} className="flex items-center">
+                              <Button variant="outline" onClick={() => shareCompetition(contest.name)} className="flex items-center">
                                 <Share className="mr-2 h-4 w-4" />
                                 Share Profile
                               </Button>
                               <Button variant="outline" asChild>
-                                <Link to={`/competition/${competition.id}`}>View Details</Link>
+                                <Link to={`/competitions/$slug`} params={{ slug: contest.slug }}>View Details</Link>
                               </Button>
                             </div>
                           </div>
-                          <div className="w-full md:w-1/3">{renderCoverImage(competition)}</div>
+                          <div className="w-full md:w-1/3">{renderCoverImage(contest)}</div>
                         </div>
                       </CardContent>
                     </Card>
@@ -420,15 +427,15 @@ export function DashboardCompetitions() {
         <div className="space-y-4">
           <h2 className="text-2xl font-semibold">Completed Competitions</h2>
           <div className="grid grid-cols-1 gap-4">
-            {endedCompetitions.map((competition) => {
-              const status = getCompetitionStatus(competition);
+            {endedCompetitions.map((contest) => {
+              const status = getCompetitionStatus(contest);
               return (
-                <Card key={competition.id}>
+                <Card key={contest.id}>
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle className="flex items-center">
                         <Trophy className="mr-2 h-5 w-5" />
-                        {competition.name}
+                        {contest.name}
                       </CardTitle>
                       {getStatusBadge(status)}
                     </div>
@@ -438,12 +445,12 @@ export function DashboardCompetitions() {
                       <div className="flex-1 space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <p className="text-muted-foreground mb-2">{formatPrize(competition.prizePool)} Prize Pool</p>
+                            <p className="text-muted-foreground mb-2">{formatPrize(contest.prizePool)} Prize Pool</p>
                             <div className="flex items-center text-sm text-muted-foreground">
                               <Calendar className="mr-1 h-4 w-4" />
-                              Ended: {formatDistanceToNow(new Date(competition.endDate), { addSuffix: true })}
+                              Ended: {formatDistanceToNow(new Date(contest.endDate), { addSuffix: true })}
                             </div>
-                            {competition.winnerProfileId && (
+                            {contest.winnerProfileId && (
                               <div className="flex items-center text-sm text-muted-foreground mt-1">
                                 <Trophy className="mr-1 h-4 w-4" />
                                 Winner announced
@@ -458,11 +465,11 @@ export function DashboardCompetitions() {
                         </div>
                         <div className="flex gap-2">
                           <Button variant="outline" asChild>
-                            <Link to={`/competition/${competition.id}`}>View Details</Link>
+                            <Link to={`/competitions/$slug`} params={{ slug: contest.slug }}>View Details</Link>
                           </Button>
                         </div>
                       </div>
-                      <div className="w-full md:w-1/3">{renderCoverImage(competition)}</div>
+                      <div className="w-full md:w-1/3">{renderCoverImage(contest)}</div>
                     </div>
                   </CardContent>
                 </Card>
@@ -476,15 +483,15 @@ export function DashboardCompetitions() {
       <div className="space-y-4">
         <h2 className="text-2xl font-semibold">Upcoming Competitions</h2>
         <div className="grid grid-cols-1 gap-4">
-          {comingSoonCompetitions.map((competition) => {
-            const status = getCompetitionStatus(competition);
+          {comingSoonCompetitions.map((contest) => {
+            const status = getCompetitionStatus(contest);
             return (
-              <Card key={competition.id}>
+              <Card key={contest.id}>
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center">
                       <Gift className="mr-2 h-5 w-5" />
-                      {competition.name}
+                      {contest.name}
                     </CardTitle>
                     {getStatusBadge(status)}
                   </div>
@@ -492,41 +499,41 @@ export function DashboardCompetitions() {
                 <CardContent>
                   <div className="flex flex-col md:flex-row gap-4">
                     <div className="flex-1 space-y-4">
-                      <p className="text-muted-foreground">{formatPrize(competition.prizePool)} Prize Pool</p>
+                      <p className="text-muted-foreground">{formatPrize(contest.prizePool)} Prize Pool</p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="flex items-center text-sm text-muted-foreground">
                           <Calendar className="mr-1 h-4 w-4" />
-                          Starts: {formatDistanceToNow(new Date(competition.startDate), { addSuffix: true })}
+                          Starts: {formatDistanceToNow(new Date(contest.startDate), { addSuffix: true })}
                         </div>
                         <div className="flex items-center text-sm text-muted-foreground">
                           <Calendar className="mr-1 h-4 w-4" />
-                          Ends: {formatDistanceToNow(new Date(competition.endDate), { addSuffix: true })}
+                          Ends: {formatDistanceToNow(new Date(contest.endDate), { addSuffix: true })}
                         </div>
                       </div>
                       <div className="space-y-2">
                         <div className="text-sm">
                           <span className="font-medium">Awards:</span>
                           <ul className="mt-1 space-y-1">
-                            {competition.awards.slice(0, 3).map((award) => (
+                            {contest.awards.slice(0, 3).map((award) => (
                               <li key={award.id} className="text-muted-foreground">
                                 {award.icon} {award.name}
                               </li>
                             ))}
-                            {competition.awards.length > 3 && <li className="text-muted-foreground">+{competition.awards.length - 3} more</li>}
+                            {contest.awards.length > 3 && <li className="text-muted-foreground">+{contest.awards.length - 3} more</li>}
                           </ul>
                         </div>
                       </div>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center text-sm text-muted-foreground">
                           <Users className="mr-1 h-4 w-4" />
-                          {competition.awards.length} award{competition.awards.length !== 1 ? "s" : ""} available
+                          {contest.awards.length} award{contest.awards.length !== 1 ? "s" : ""} available
                         </div>
-                        <Button onClick={() => joinCompetition(competition.id)} disabled>
+                        <Button disabled>
                           Coming Soon
                         </Button>
                       </div>
                     </div>
-                    <div className="w-full md:w-1/3">{renderCoverImage(competition)}</div>
+                    <div className="w-full md:w-1/3">{renderCoverImage(contest)}</div>
                   </div>
                 </CardContent>
               </Card>

@@ -41,6 +41,42 @@ export interface ContestImage {
   url: string
 }
 
+// Contest Participation Types based on API documentation
+export interface ContestParticipationCoverImage {
+  id: string
+  key: string
+  name: string
+  url: string
+  size: number | null
+  type: string | null
+  status: 'FAILED' | 'PROCESSING' | 'COMPLETED'
+  mediaType: 'COVER_IMAGE' | 'CONTEST_IMAGE' | 'CONTEST_PARTICIPATION_COVER' | 'PROFILE_IMAGE' | 'PROFILE_COVER_IMAGE' | 'PROFILE_BANNER_IMAGE'
+  createdAt: string
+  updatedAt: string
+  profileId: string | null
+  caption: string | null
+  contestId: string | null
+}
+
+export interface ContestParticipation {
+  id: string
+  profileId: string
+  contestId: string
+  mediaId: string | null
+  coverImage: ContestParticipationCoverImage | null
+  isApproved: boolean
+  isParticipating: boolean | null
+  createdAt: string
+  updatedAt: string
+}
+
+// Contest Participation Check Response Type
+export interface ContestParticipationCheckResponse {
+  hasJoined: boolean
+  participation: ContestParticipation | null
+  contest: Contest
+}
+
 export interface ContestListResponse {
   data: Contest[]
   pagination: {
@@ -129,22 +165,9 @@ export interface ContestLeaderboardResponse {
   }
 }
 
-export interface ContestParticipation {
-  id: string
-  profileId: string
-  contestId: string
-  coverImage: string | null
-  isApproved: boolean
-  isParticipating: boolean | null
-  createdAt: string
-  updatedAt: string
-  contest: Contest
-}
-
 export interface JoinContestData {
   profileId: string
   contestId: string
-  coverImage?: string | null
   isParticipating?: boolean
 }
 
@@ -375,11 +398,7 @@ export function useDeleteAward() {
 export function useCheckContestParticipation(contestId: string, profileId: string) {
   return useQuery({
     queryKey: ['contest', 'participation', contestId, profileId],
-    queryFn: async (): Promise<{
-      hasJoined: boolean
-      participation: ContestParticipation | null
-      contest: Contest
-    }> => {
+    queryFn: async (): Promise<ContestParticipationCheckResponse> => {
       const response = await api.get(`/api/v1/contest/${contestId}/check-participation/${profileId}`)
       return response.data
     },
@@ -464,6 +483,31 @@ export function useRemoveContestImage() {
     onSuccess: () => {
       // Invalidate and refetch contests list
       queryClient.invalidateQueries({ queryKey: ['contests'] })
+    },
+  })
+}
+
+// Hook for uploading contest participation cover image
+export function useUploadContestParticipationCoverImage() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ participationId, file }: { participationId: string; file: File }): Promise<ContestParticipation> => {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await api.post(`/api/v1/contest/participation/${participationId}/upload/cover-image`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+      return response.data
+    },
+    onSuccess: (data) => {
+      // Invalidate and refetch related queries
+      queryClient.invalidateQueries({ queryKey: ['contest', 'participation', data.contestId, data.profileId] })
+      queryClient.invalidateQueries({ queryKey: ['contests', 'joined', data.profileId] })
+      queryClient.invalidateQueries({ queryKey: ['contest', data.contestId] })
     },
   })
 } 

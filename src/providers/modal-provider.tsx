@@ -48,7 +48,7 @@ const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
   const setClose = () => {
     setIsOpen(false);
     setData({});
-    setTimeout(() => (document.body.style.pointerEvents = ""), 200);
+    // setTimeout(() => (document.body.style.pointerEvents = ""), 200);
   };
 
   if (!isMounted) return null;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,53 +6,35 @@ import { Badge } from "@/components/ui/badge";
 import { Share, Star, User, Trophy, Calendar, Users, AlertCircle, Image as ImageIcon, Heart, Clock, Gift, DollarSign, Eye, Menu } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { apiRequest } from "@/lib/api";
-import { Competition } from "@/types/competitions.types";
+import { useProfile } from "@/hooks/api/useProfile";
+import { useJoinedContests, Contest, useContestLeaderboard } from "@/hooks/api/useContests";
+import { useFreeVote, usePaidVote, useFreeVoteAvailability } from "@/hooks/api/useVotes";
 
 import { formatUsdAbbrev } from "@/lib/utils";
+import { PortfolioGallery } from "@/components/PortfolioGallery";
+import { Lightbox } from "@/components/Lightbox";
 
-// API endpoints
-const getModelProfileByUsername = async (username) => {
-  const response = await apiRequest(`/api/v1/profile/username/${username}`, {
-    method: "GET",
-  });
-  if (response.success) return response.data;
-  return null;
-};
+// Types
+interface UserRegistration {
+  id: string;
+  contestId: string;
+  userId: string;
+  status: string;
+  registrationDate: string;
+  currentVotes: number;
+  ranking: number;
+  contest?: Contest;
+  coverImage?: string;
+  // Contest participation specific fields - these are populated when checking participation details
+  participationId?: string;
+  participationCoverImage?: string; // User's uploaded cover image for this contest
+  isApproved?: boolean;
+  isParticipating?: boolean;
+}
 
-const getModelJoinedContests = async (profileId) => {
-  try {
-    const response = await apiRequest(`/api/v1/contest/${profileId}/joined`, {
-      method: "GET",
-    });
-    if (response.success && response.data) {
-      const contests = response.data.data || response.data;
-      console.log("Extracted contests:", contests);
-
-      if (Array.isArray(contests)) {
-        if (contests.length > 0 && contests[0].name) {
-          return contests.map((contest) => ({
-            id: contest.id,
-            contestId: contest.id,
-            contest: contest,
-            userId: profileId,
-            status: "active",
-            registrationDate: contest.createdAt || new Date().toISOString(),
-            currentVotes: 0,
-            ranking: 0,
-          }));
-        } else {
-          return contests;
-        }
-      }
-      return [];
-    }
-    return [];
-  } catch (error) {
-    console.error("Error fetching joined contests:", error);
-    return [];
-  }
-};
+interface TimeLeft {
+  [key: string]: string;
+}
 
 const PAID_VOTE_PACKAGES = [
   {
@@ -80,59 +62,64 @@ const PAID_VOTE_PACKAGES = [
 
 export default function PublicProfilePage() {
   const { username } = useParams({ from: "/_public/profile/$username" });
-  const [modelProfile, setModelProfile] = useState(null);
-  const [userRegistrations, setUserRegistrations] = useState([]);
-  const [timeLeft, setTimeLeft] = useState({});
+  const [userRegistrations, setUserRegistrations] = useState<UserRegistration[]>([]);
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>({});
   const [userVotes, setUserVotes] = useState(0);
-  const [lastVoteTime, setLastVoteTime] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [lastVoteTime, setLastVoteTime] = useState<Date | null>(null);
   const [timeUntilNextVote, setTimeUntilNextVote] = useState("");
   const [showPaidVoteOptions, setShowPaidVoteOptions] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const [lightboxImage, setLightboxImage] = useState<{ url: string; caption: string } | null>(null);
 
-  const safeUserRegistrations = Array.isArray(userRegistrations) ? userRegistrations : [];
+  // API hooks
+  const { useProfileByUsername } = useProfile();
+  const { data: modelProfile, isLoading, error } = useProfileByUsername(username || "");
+  const { data: joinedContestsData } = useJoinedContests(modelProfile?.id || "", 1, 20);
+  const freeVoteMutation = useFreeVote();
+  const paidVoteMutation = usePaidVote();
+  const freeVoteAvailabilityMutation = useFreeVoteAvailability();
+  
 
-  // Load model profile data
+
+  const handleImageClick = (image: { url: string; caption: string }) => {
+    setLightboxImage(image);
+  };
+
+  const closeLightbox = () => {
+    setLightboxImage(null);
+  };
+
+  const safeUserRegistrations = useMemo(() => 
+    Array.isArray(userRegistrations) ? userRegistrations : [], 
+    [userRegistrations]
+  );
+
+  // Process joined contests data and check participation details
   useEffect(() => {
-    const loadProfile = async () => {
-      if (username) {
-        try {
-          setIsLoading(true);
-          console.log("Loading profile for ID:", username);
-          const profile = await getModelProfileByUsername(username);
-          console.log("Profile API Response:", profile);
-          setModelProfile(profile);
+    if (joinedContestsData?.data && modelProfile?.id) {
+      const contests = joinedContestsData.data;
+      const processedContests: UserRegistration[] = contests.map((contest) => ({
+        id: contest.id,
+        contestId: contest.id,
+        userId: modelProfile.id,
+        status: "active",
+        registrationDate: contest.createdAt || new Date().toISOString(),
+        currentVotes: 0,
+        ranking: 0,
+        contest: contest,
+        // Note: These will be populated when we check participation details
+        participationId: undefined,
+        participationCoverImage: undefined,
+        isApproved: false,
+        isParticipating: true,
+      }));
+      setUserRegistrations(processedContests);
+    }
+  }, [joinedContestsData, modelProfile?.id]);
 
-          if (profile?.id) {
-            console.log("Loading contests for profile ID:", profile.id);
-            const contests = await getModelJoinedContests(profile.id);
-            console.log("API Response for joined contests:", contests);
 
-            if (Array.isArray(contests)) {
-              console.log("Setting contests:", contests);
-              setUserRegistrations(contests);
-            } else {
-              console.log("Contests is not an array, setting empty array");
-              setUserRegistrations([]);
-            }
-          } else {
-            console.log("No profile ID found, setting empty contests array");
-            setUserRegistrations([]);
-          }
-        } catch (err) {
-          console.error("Error loading profile:", err);
-          setError("Failed to load profile data");
-          setUserRegistrations([]);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-    loadProfile();
-  }, [username]);
 
   // Load user's voting history from localStorage
   useEffect(() => {
@@ -154,7 +141,7 @@ export default function PublicProfilePage() {
   // Countdown timer for competitions
   useEffect(() => {
     const timer = setInterval(() => {
-      const newTimeLeft = {};
+      const newTimeLeft: TimeLeft = {};
 
       safeUserRegistrations.forEach((reg) => {
         if (reg.contest?.endDate) {
@@ -189,7 +176,7 @@ export default function PublicProfilePage() {
       const now = new Date();
 
       if (nextVoteTime > now) {
-        const options = {
+        const options: Intl.DateTimeFormatOptions = {
           weekday: "short",
           month: "short",
           day: "numeric",
@@ -212,43 +199,72 @@ export default function PublicProfilePage() {
   };
 
   const handleVote = async () => {
-    if (!username) return;
+    if (!username || !modelProfile?.id || !user?.profileId) return;
 
     if (canVote()) {
-      const newVoteCount = userVotes + 1;
-      const now = new Date();
+      try {
+        await freeVoteMutation.mutateAsync({
+          voterId: user.profileId,
+          voteeId: modelProfile.id,
+          contestId: safeUserRegistrations[0]?.contestId || "",
+        });
 
-      const voteKey = `vote_${username}`;
-      const votesKey = `votes_${username}`;
-      localStorage.setItem(voteKey, now.toISOString());
-      localStorage.setItem(votesKey, newVoteCount.toString());
+        const newVoteCount = userVotes + 1;
+        const now = new Date();
 
-      setUserVotes(newVoteCount);
-      setLastVoteTime(now);
+        const voteKey = `vote_${username}`;
+        const votesKey = `votes_${username}`;
+        localStorage.setItem(voteKey, now.toISOString());
+        localStorage.setItem(votesKey, newVoteCount.toString());
 
-      toast({
-        title: "Vote Submitted!",
-        description: `Your vote has been counted successfully. You can vote again in 24 hours.`,
-      });
+        setUserVotes(newVoteCount);
+        setLastVoteTime(now);
+
+        toast({
+          title: "Vote Submitted!",
+          description: `Your vote has been counted successfully. You can vote again in 24 hours.`,
+        });
+      } catch (error) {
+        toast({
+          title: "Vote Failed",
+          description: "Failed to submit vote. Please try again.",
+          variant: "destructive",
+        });
+      }
     } else {
       setShowPaidVoteOptions(true);
     }
   };
 
-  const handlePaidVoteSuccess = (votes) => {
-    if (!username) return;
+  const handlePaidVoteSuccess = async (votes: number) => {
+    if (!username || !modelProfile?.id || !user?.profileId) return;
 
-    const newVoteCount = userVotes + votes;
-    const votesKey = `votes_${username}`;
-    localStorage.setItem(votesKey, newVoteCount.toString());
+    try {
+      await paidVoteMutation.mutateAsync({
+        voteeId: modelProfile.id,
+        voterId: user.profileId,
+        contestId: safeUserRegistrations[0]?.contestId || "",
+        voteCount: votes,
+      });
 
-    setUserVotes(newVoteCount);
-    setShowPaidVoteOptions(false);
+      const newVoteCount = userVotes + votes;
+      const votesKey = `votes_${username}`;
+      localStorage.setItem(votesKey, newVoteCount.toString());
 
-    toast({
-      title: "Paid Votes Added!",
-      description: `You've successfully added ${votes} votes!`,
-    });
+      setUserVotes(newVoteCount);
+      setShowPaidVoteOptions(false);
+
+      toast({
+        title: "Paid Votes Added!",
+        description: `You've successfully added ${votes} votes!`,
+      });
+    } catch (error) {
+      toast({
+        title: "Purchase Failed",
+        description: "Failed to purchase votes. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleBuyVotesClick = () => {
@@ -273,7 +289,7 @@ export default function PublicProfilePage() {
     }
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
       month: "short",
@@ -282,7 +298,7 @@ export default function PublicProfilePage() {
     });
   };
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case "active":
         return <Badge className="bg-green-100 text-green-800 text-xs px-2 py-1">Active</Badge>;
@@ -314,6 +330,13 @@ export default function PublicProfilePage() {
       return reg.status === "active" || reg.status === undefined;
     }
   });
+
+  // Get leaderboard data for the first contest to show model rank and total participants
+  const { data: leaderboardData } = useContestLeaderboard(
+    activeRegistrations[0]?.contestId || "", 
+    1, 
+    100
+  );
 
   if (isLoading) {
     return (
@@ -381,7 +404,7 @@ export default function PublicProfilePage() {
           <div className="text-center space-y-4">
             <AlertCircle className="mx-auto h-12 w-12 text-red-400" />
             <h3 className="text-lg font-semibold text-gray-900">Profile Not Found</h3>
-            <p className="text-gray-600">{error || "This profile could not be loaded."}</p>
+            <p className="text-gray-600">This profile could not be loaded.</p>
             <Button onClick={() => window.location.reload()} variant="outline">
               Try Again
             </Button>
@@ -477,8 +500,10 @@ export default function PublicProfilePage() {
             {modelProfile.bio && <p className="text-sm text-gray-600 mb-4 max-w-xl mx-auto">{modelProfile.bio}</p>}
           </div>
 
+          <PortfolioGallery photos={modelProfile.profilePhotos || []} onImageClick={handleImageClick} />
+
           {/* Active Competitions Section */}
-          <div className="mb-24">
+          <div className="mb-24 mt-20">
             <div className="text-center mb-6">
               <Trophy className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
               <h2 className="text-xl font-bold text-gray-900 mb-1">Active Competitions</h2>
@@ -492,9 +517,21 @@ export default function PublicProfilePage() {
                     <CardContent className="p-0">
                       <div className="flex flex-col lg:flex-row">
                         {/* Contest Photo */}
-                        <div className="lg:w-2/5 rounded-t-lg lg:rounded-l-lg lg:rounded-tr-none overflow-hidden bg-gray-50">
-                          {registration.coverImage ? (
-                            <img src={registration.coverImage} alt="Contest Photo" className="w-full h-48 lg:h-56 object-cover" />
+                        <div className="lg:w-2/5 rounded-t-lg lg:rounded-l-lg lg:rounded-tr-none overflow-hidden bg-gray-50 relative">
+                          {registration.participationCoverImage ? (
+                            <>
+                              <img src={registration.participationCoverImage} alt="Your Contest Photo" className="w-full h-full object-cover" />
+                              <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                                Your Photo
+                              </div>
+                            </>
+                          ) : registration.contest?.images?.[0]?.url ? (
+                            <>
+                              <img src={registration.contest.images[0].url} alt="Contest Photo" className="w-full h-full object-cover" />
+                              <div className="absolute top-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                                Contest Photo
+                              </div>
+                            </>
                           ) : (
                             <div className="w-full h-48 lg:h-56 flex items-center justify-center">
                               <ImageIcon className="w-12 h-12 text-gray-300" />
@@ -530,6 +567,51 @@ export default function PublicProfilePage() {
                               </div>
                             </div>
                           </div>
+
+                          {/* Model Rank and Participants */}
+                          <div className="grid md:grid-cols-2 gap-3 mb-4">
+                            <div className="flex items-center space-x-2">
+                              <Trophy className="w-4 h-4 text-yellow-600" />
+                              <div>
+                                <span className="text-xs text-gray-500">Your Rank</span>
+                                <div className="font-semibold text-yellow-600 text-sm">
+                                  {leaderboardData?.data?.find(entry => entry.profileId === modelProfile?.id)?.rank || "N/A"}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center space-x-2">
+                              <Users className="w-4 h-4 text-purple-600" />
+                              <div>
+                                <span className="text-xs text-gray-500">Participants</span>
+                                <div className="font-semibold text-purple-600 text-sm">
+                                  {leaderboardData?.pagination?.total || "N/A"}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Awards */}
+                          {registration.contest?.awards && registration.contest.awards.length > 0 && (
+                            <div className="mb-4">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <Trophy className="w-4 h-4 text-yellow-600" />
+                                <span className="text-xs text-gray-500 font-medium">Awards</span>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {registration.contest.awards.slice(0, 2).map((award) => (
+                                  <Badge key={award.id} variant="outline" className="text-xs px-2 py-1 border-yellow-200 text-yellow-700">
+                                    {award.icon} {award.name}
+                                  </Badge>
+                                ))}
+                                {registration.contest.awards.length > 2 && (
+                                  <Badge variant="outline" className="text-xs px-2 py-1 border-gray-200 text-gray-600">
+                                    +{registration.contest.awards.length - 2} more
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          )}
 
                           {/* Countdown Timer */}
                           {registration.contest?.endDate && timeLeft[registration.contestId] && (
@@ -587,6 +669,7 @@ export default function PublicProfilePage() {
               <div className="flex flex-col items-center space-y-2">
                 <Button
                   onClick={canVote() ? handleVote : handleBuyVotesClick}
+                  disabled={freeVoteMutation.isPending || paidVoteMutation.isPending}
                   className={`w-full sm:w-auto px-6 py-2 rounded-lg font-medium text-sm ${
                     canVote() ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-red-600 hover:bg-red-700 text-white"
                   }`}
@@ -651,6 +734,9 @@ export default function PublicProfilePage() {
             </div>
           </div>
         )}
+
+        {/* Lightbox */}
+        {lightboxImage && <Lightbox image={lightboxImage} onClose={closeLightbox} />}
       </div>
     </>
   );

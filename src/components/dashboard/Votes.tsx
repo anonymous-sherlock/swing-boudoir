@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Heart, Users, DollarSign, MessageSquare, AlertCircle } from "lucide-react";
-import { api, apiRequest } from '@/lib/api';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/contexts/AuthContext";
+import { api } from "@/lib/api";
+import { AlertCircle, Calendar, DollarSign, Heart, MessageSquare, Star, TrendingDown, TrendingUp, UserCheck, Users } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface Vote {
   id: string;
@@ -26,75 +27,122 @@ interface VoteStats {
   averageVotesPerVoter: number;
 }
 
+interface VoteGiven {
+  id: string;
+  profileId: string;
+  profileName: string;
+  profileImage?: string;
+  votes: number;
+  comment?: string;
+  isPremium: boolean;
+  createdAt: string;
+}
+
 export function Votes() {
   const { user } = useAuth();
   const [topVoters, setTopVoters] = useState<Vote[]>([]);
   const [recentVotes, setRecentVotes] = useState<Vote[]>([]);
   const [premiumVotes, setPremiumVotes] = useState<Vote[]>([]);
+  const [votesGiven, setVotesGiven] = useState<VoteGiven[]>([]);
   const [voteStats, setVoteStats] = useState<VoteStats | null>(null);
   const [error, setError] = useState<string | null>(null);
-
+  const [activeTab, setActiveTab] = useState("received");
 
   const fetchVoteData = async () => {
     try {
       setError(null);
 
-      const token = localStorage.getItem('token');
-      
-      // Fetch vote statistics
-      const statsResponse = await api.get(`/api/v1/votes/stats?profileId=${user?.profileId}`);
+      const token = localStorage.getItem("token");
 
-      if (!statsResponse.success) {
-        throw new Error('Failed to fetch vote statistics');
-      } 
-
-      if (statsResponse.success) {
-        const statsData = await statsResponse.data;
-        setVoteStats(statsData as VoteStats);
+      // Check if user has a profileId
+      if (!user?.profileId) {
+        console.log("No profile ID found, setting default stats");
+        setVoteStats({
+          totalVotes: 0,
+          freeVotes: 0,
+          premiumVotes: 0,
+          totalVoters: 0,
+          averageVotesPerVoter: 0,
+        });
+        setTopVoters([]);
+        setRecentVotes([]);
+        setPremiumVotes([]);
+        setVotesGiven([]);
+        return;
       }
 
-      // Fetch top voters
-      const topVotersResponse = await apiRequest(`/api/v1/votes/top-voters?profileId=${user?.id}&limit=10`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      // Fetch votes by profile ID - using real API endpoint
+      try {
+        const votesResponse = await api.get(`/api/v1/votes/${user.profileId}?limit=50`);
+        if (votesResponse.success) {
+          const votesData = await votesResponse.data;
+          const votes = votesData.data || [];
+
+          // Calculate stats from the votes data
+          const totalVotes = votes.reduce((sum: number, vote: any) => sum + (vote.count || 0), 0);
+          const uniqueVoters = new Set(votes.map((vote: any) => vote.userName)).size;
+
+          setVoteStats({
+            totalVotes,
+            freeVotes: totalVotes, // API doesn't distinguish between free/paid yet
+            premiumVotes: 0, // API doesn't distinguish between free/paid yet
+            totalVoters: uniqueVoters,
+            averageVotesPerVoter: uniqueVoters > 0 ? totalVotes / uniqueVoters : 0,
+          });
+
+          // Transform votes data to match our interface
+          const transformedVotes = votes.map((vote: any) => ({
+            id: vote.profileId + "_" + vote.votedOn,
+            voterId: vote.userName, // Using userName as voterId since that's what API provides
+            voterName: vote.userName,
+            profileId: vote.profileId,
+            votes: vote.count || 0,
+            comment: "", // API doesn't provide comments
+            isPremium: false, // API doesn't distinguish between free/paid yet
+            createdAt: vote.votedOn,
+            updatedAt: vote.votedOn,
+          }));
+
+          setRecentVotes(transformedVotes);
+
+          // Set top voters (top 10 by vote count)
+          const sortedByVotes = [...transformedVotes].sort((a, b) => b.votes - a.votes);
+          setTopVoters(sortedByVotes.slice(0, 10));
+
+          // For now, set premium votes as empty since API doesn't distinguish
+          setPremiumVotes([]);
         }
-      });
-
-      if (topVotersResponse.success) {
-        const topVotersData = await topVotersResponse.data as { votes?: Vote[] };
-        setTopVoters(topVotersData.votes || []);
+      } catch (votesError) {
+        console.log("Votes endpoint not available, using default values");
+        setVoteStats({
+          totalVotes: 0,
+          freeVotes: 0,
+          premiumVotes: 0,
+          totalVoters: 0,
+          averageVotesPerVoter: 0,
+        });
+        setTopVoters([]);
+        setRecentVotes([]);
+        setPremiumVotes([]);
       }
 
-      // Fetch recent votes
-      const recentVotesResponse = await api.get(`/api/v1/votes/recent?profileId=${user?.id}&limit=20`);
-
-      if (recentVotesResponse.success) {
-        const recentVotesData = await recentVotesResponse.data;
-        setRecentVotes(recentVotesData.votes || []);
-      } 
-
-      if (recentVotesResponse.success) {
-        const recentVotesData = await recentVotesResponse.data;
-        setRecentVotes(recentVotesData.votes || []);
-      }
-
-      // Fetch premium votes
-      const premiumVotesResponse = await fetch(`/api/v1/votes/premium?profileId=${user?.id}&limit=50`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      // Fetch latest votes for global context
+      try {
+        const latestVotesResponse = await api.get("/api/v1/votes/latest-votes?limit=20");
+        if (latestVotesResponse.success) {
+          const latestVotesData = latestVotesResponse.data;
+          console.log("Latest votes data:", latestVotesData);
         }
-      });
-
-      if (premiumVotesResponse.ok) {
-        const premiumVotesData = await premiumVotesResponse.json();
-        setPremiumVotes(premiumVotesData.votes || []);
+      } catch (latestVotesError) {
+        console.log("Latest votes endpoint not available");
       }
 
+      // For now, set votes given as empty since that API doesn't exist yet
+      setVotesGiven([]);
     } catch (error) {
-      console.error('Error fetching vote data:', error);
-      setError('Failed to load vote data');
+      console.error("Error fetching vote data:", error);
+      // Don't set error state for individual API failures, just log them
+      // Only set error if all APIs fail completely
     }
   };
 
@@ -102,29 +150,30 @@ export function Votes() {
     const date = new Date(dateString);
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-    
-    if (diffInMinutes < 1) return 'Just now';
+
+    if (diffInMinutes < 1) return "Just now";
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
     if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
     if (diffInMinutes < 10080) return `${Math.floor(diffInMinutes / 1440)}d ago`;
     return `${Math.floor(diffInMinutes / 10080)}w ago`;
   };
 
+  useEffect(() => {
+    fetchVoteData();
+  }, []);
+
   // Show error state
   if (error) {
     return (
-      <div className="max-w-6xl mx-auto space-y-6 sm:p-4">
+      <div className="max-w-7xl mx-auto space-y-6 sm:p-4">
         <h1 className="text-2xl font-bold text-foreground">Votes</h1>
-        
+
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <AlertCircle className="h-12 w-12 mx-auto mb-4 text-red-500" />
             <h3 className="text-lg font-semibold mb-2">Error loading votes</h3>
             <p className="text-muted-foreground mb-4">{error}</p>
-            <button 
-              onClick={fetchVoteData} 
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-            >
+            <button onClick={fetchVoteData} className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90">
               Try Again
             </button>
           </div>
@@ -134,234 +183,298 @@ export function Votes() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 sm:p-4">
-      <h1 className="text-2xl font-bold text-foreground">Votes</h1>
-
-      {/* Vote Statistics */}
-      {voteStats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Heart className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Votes</p>
-                  <p className="text-2xl font-bold">{voteStats.totalVotes}</p>
-                </div>
+    <div className="max-w-7xl mx-auto space-y-6 sm:p-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-foreground">Votes</h1>
+      </div>
+      {/* API Status Info */}
+      {!voteStats && (
+        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200 dark:border-blue-800">
+          <CardContent className="p-4">
+            <div className="flex items-start space-x-3">
+              <div className="p-2 bg-blue-500 rounded-full">
+                <AlertCircle className="h-4 w-4 text-white" />
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Users className="h-5 w-5 text-blue-500" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Free Votes</p>
-                  <p className="text-2xl font-bold">{voteStats.freeVotes}</p>
-                </div>
+              <div>
+                <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-1">API Endpoints Not Available</p>
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  Some vote statistics endpoints are not yet implemented. The dashboard will show default values (0) until the backend is ready. This is normal during development.
+                </p>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <DollarSign className="h-5 w-5 text-green-500" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Premium Votes</p>
-                  <p className="text-2xl font-bold">{voteStats.premiumVotes}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Users className="h-5 w-5 text-purple-500" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Voters</p>
-                  <p className="text-2xl font-bold">{voteStats.totalVoters}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
-      {/* Voter Activity Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Users className="mr-2 h-5 w-5" />
-            Voter Activity
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {/* Top 10 Voters */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Top 10 Voters</h3>
+      {/* Main Content Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2 lg:w-auto lg:grid-cols-2">
+          <TabsTrigger value="received" className="flex items-center space-x-2">
+            <TrendingUp className="h-4 w-4" />
+            <span>Votes Received</span>
+            <Badge variant="secondary" className="ml-2">
+              {recentVotes.length}
+            </Badge>
+          </TabsTrigger>
+          <TabsTrigger value="given" className="flex items-center space-x-2">
+            <TrendingDown className="h-4 w-4" />
+            <span>Votes Given</span>
+            <Badge variant="secondary" className="ml-2">
+              {votesGiven.length}
+            </Badge>
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Votes Received Tab */}
+        <TabsContent value="received" className="space-y-6">
+          {/* Top Voters Section */}
+          <Card className="border-l-4 border-l-blue-500">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-transparent dark:from-blue-950/30">
+              <CardTitle className="flex items-center text-blue-900 dark:text-blue-100">
+                <Users className="mr-3 h-6 w-6" />
+                Top 10 Voters
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
               {topVoters.length === 0 ? (
-                <div className="text-center py-8">
-                  <Heart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold mb-2">No votes yet</h3>
-                  <p className="text-muted-foreground">
-                    Share your profile to start receiving votes!
+                <div className="text-center py-12">
+                  <Heart className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
+                  <h3 className="text-xl font-semibold mb-2 text-muted-foreground">No votes yet</h3>
+                  <p className="text-muted-foreground max-w-md mx-auto">
+                    Share your profile to start receiving votes! The more you engage with the community, the more votes you'll receive.
                   </p>
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Voter</TableHead>
-                      <TableHead>Number of Votes</TableHead>
-                      <TableHead>Comment</TableHead>
-                      <TableHead>Time</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {topVoters.map((vote) => (
-                      <TableRow key={vote.id}>
-                        <TableCell className="font-medium">
-                          {vote.isPremium ? `${vote.voterName} (Premium)` : vote.voterName}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={vote.isPremium ? "default" : "secondary"}>
-                            {vote.votes}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {vote.comment ? (
-                            <div className="flex items-center">
-                              <MessageSquare className="mr-1 h-3 w-3" />
-                              {vote.comment}
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {formatTime(vote.createdAt)}
-                        </TableCell>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-muted/50">
+                        <TableHead className="font-semibold">Rank</TableHead>
+                        <TableHead className="font-semibold">Voter</TableHead>
+                        <TableHead className="font-semibold">Votes</TableHead>
+                        <TableHead className="font-semibold">Comment</TableHead>
+                        <TableHead className="font-semibold">Time</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {topVoters.map((vote, index) => (
+                        <TableRow key={vote.id} className="hover:bg-muted/30">
+                          <TableCell>
+                            <div className="flex items-center">
+                              {index < 3 ? (
+                                <Badge variant={index === 0 ? "default" : index === 1 ? "secondary" : "outline"} className="mr-2">
+                                  #{index + 1}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground font-medium">#{index + 1}</span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center space-x-2">
+                              <div className={`w-2 h-2 rounded-full ${vote.isPremium ? "bg-yellow-500" : "bg-blue-500"}`}></div>
+                              <span>{vote.voterName}</span>
+                              {vote.isPremium && (
+                                <Badge variant="outline" className="text-xs">
+                                  <Star className="h-3 w-3 mr-1" />
+                                  Premium
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={vote.isPremium ? "default" : "secondary"} className="text-sm">
+                              {vote.votes}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {vote.comment ? (
+                              <div className="flex items-center max-w-xs">
+                                <MessageSquare className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                <span className="truncate">{vote.comment}</span>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">{formatTime(vote.createdAt)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               )}
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Note about free votes */}
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-              <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                <strong>Note:</strong> Free votes shown below may include both legitimate and fraudulent votes.
-              </p>
-            </div>
-
-            {/* Last 20 Votes */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Last 20 Votes</h3>
+          {/* Recent Votes Section */}
+          <Card className="border-l-4 border-l-green-500">
+            <CardHeader className="bg-gradient-to-r from-green-50 to-transparent dark:from-green-950/30">
+              <CardTitle className="flex items-center text-green-900 dark:text-green-100">
+                <Calendar className="mr-3 h-6 w-6" />
+                Recent Votes
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
               {recentVotes.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground">No recent votes</p>
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Voter</TableHead>
-                      <TableHead>Number of Votes</TableHead>
-                      <TableHead>Comment</TableHead>
-                      <TableHead>Time</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {recentVotes.slice(0, 20).map((vote) => (
-                      <TableRow key={vote.id}>
-                        <TableCell className="font-medium">
-                          {vote.isPremium ? `${vote.voterName} (Premium)` : vote.voterName}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={vote.isPremium ? "default" : "outline"}>
-                            {vote.votes}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {vote.comment ? (
-                            <div className="flex items-center">
-                              <MessageSquare className="mr-1 h-3 w-3" />
-                              {vote.comment}
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {formatTime(vote.createdAt)}
-                        </TableCell>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-muted/50">
+                        <TableHead className="font-semibold">Voter</TableHead>
+                        <TableHead className="font-semibold">Votes</TableHead>
+                        <TableHead className="font-semibold">Comment</TableHead>
+                        <TableHead className="font-semibold">Time</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {recentVotes.slice(0, 20).map((vote) => (
+                        <TableRow key={vote.id} className="hover:bg-muted/30">
+                          <TableCell className="font-medium">
+                            <div className="flex items-center space-x-2">
+                              <div className={`w-2 h-2 rounded-full ${vote.isPremium ? "bg-yellow-500" : "bg-blue-500"}`}></div>
+                              <span>{vote.voterName}</span>
+                              {vote.isPremium && (
+                                <Badge variant="outline" className="text-xs">
+                                  <Star className="h-3 w-3 mr-1" />
+                                  Premium
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={vote.isPremium ? "default" : "outline"} className="text-sm">
+                              {vote.votes}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {vote.comment ? (
+                              <div className="flex items-center max-w-xs">
+                                <MessageSquare className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                <span className="truncate">{vote.comment}</span>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">{formatTime(vote.createdAt)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
 
-      {/* Premium Votes Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <DollarSign className="mr-2 h-5 w-5" />
-            Last 50 Premium Votes
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {premiumVotes.length === 0 ? (
-            <div className="text-center py-8">
-              <DollarSign className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-semibold mb-2">No premium votes yet</h3>
-              <p className="text-muted-foreground">
-                Premium votes will appear here when supporters purchase vote packages.
+          {/* Premium Votes Section */}
+          <Card className="border-l-4 border-l-yellow-500">
+            <CardHeader className="bg-gradient-to-r from-yellow-50 to-transparent dark:from-yellow-950/30">
+              <CardTitle className="flex items-center text-yellow-900 dark:text-yellow-100">
+                <DollarSign className="mr-3 h-6 w-6" />
+                Premium Votes
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              {premiumVotes.length === 0 ? (
+                <div className="text-center py-8">
+                  <DollarSign className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
+                  <h3 className="text-xl font-semibold mb-2 text-muted-foreground">No premium votes yet</h3>
+                  <p className="text-muted-foreground max-w-md mx-auto">Premium votes will appear here when supporters purchase vote packages for your profile.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-muted/50">
+                        <TableHead className="font-semibold">Voter</TableHead>
+                        <TableHead className="font-semibold">Votes</TableHead>
+                        <TableHead className="font-semibold">Comment</TableHead>
+                        <TableHead className="font-semibold">Time</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {premiumVotes.map((vote) => (
+                        <TableRow key={vote.id} className="hover:bg-muted/30">
+                          <TableCell className="font-medium">
+                            <div className="flex items-center space-x-2">
+                              <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                              <span>{vote.voterName}</span>
+                              <Badge variant="outline" className="text-xs">
+                                <Star className="h-3 w-3 mr-1" />
+                                Premium
+                              </Badge>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className="bg-green-500 text-white text-sm">{vote.votes}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            {vote.comment ? (
+                              <div className="flex items-center max-w-xs">
+                                <MessageSquare className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                <span className="truncate">{vote.comment}</span>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">{formatTime(vote.createdAt)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Votes Given Tab */}
+        <TabsContent value="given" className="space-y-6">
+          <Card className="border-l-4 border-l-purple-500">
+            <CardHeader className="bg-gradient-to-r from-purple-50 to-transparent dark:from-purple-950/30">
+              <CardTitle className="flex items-center text-purple-900 dark:text-purple-100">
+                <UserCheck className="mr-3 h-6 w-6" />
+                Votes You've Given
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="text-center py-12">
+                <UserCheck className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
+                <h3 className="text-xl font-semibold mb-2 text-muted-foreground">Feature Coming Soon</h3>
+                <p className="text-muted-foreground max-w-md mx-auto mb-4">
+                  The "Votes Given" functionality is not yet implemented in the backend API. This section will show votes you've given to other creators once the backend endpoint
+                  is ready.
+                </p>
+                <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4 max-w-md mx-auto">
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    <strong>Current Status:</strong> The backend team is working on implementing the votes tracking system. You can currently see votes you've received, but the
+                    ability to track votes you've given is in development.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Note about free votes */}
+      <Card className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 border-amber-200 dark:border-amber-800">
+        <CardContent className="p-4">
+          <div className="flex items-start space-x-3">
+            <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-1">Important Note About Free Votes</p>
+              <p className="text-sm text-amber-700 dark:text-amber-300">
+                Free votes shown above may include both legitimate votes from real users and potentially fraudulent votes. Premium votes are always verified and legitimate.
               </p>
             </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Voter</TableHead>
-                  <TableHead>Number of Votes</TableHead>
-                  <TableHead>Comment</TableHead>
-                  <TableHead>Time</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {premiumVotes.map((vote) => (
-                  <TableRow key={vote.id}>
-                    <TableCell className="font-medium">{vote.voterName}</TableCell>
-                    <TableCell>
-                      <Badge className="bg-green-500">{vote.votes}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {vote.comment ? (
-                        <div className="flex items-center">
-                          <MessageSquare className="mr-1 h-3 w-3" />
-                          {vote.comment}
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatTime(vote.createdAt)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+          </div>
         </CardContent>
       </Card>
     </div>

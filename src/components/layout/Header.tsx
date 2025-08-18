@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
+import { getUserInitials } from "@/lib/utils";
 
 interface HeaderProps {
   onSidebarToggle?: () => void;
@@ -29,24 +30,11 @@ const Header = ({ onSidebarToggle }: HeaderProps) => {
     }
   };
 
-  const handleNotificationsClick = () => {
-    navigate({ to: "/dashboard/$section", params: { section: "notifications" } });
-  };
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((word) => word[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
   // Mobile menu items for dashboard pages
   const mobileMenuItems = [
-    { id: "notifications", label: "Notifications", icon: Bell, onClick: handleNotificationsClick },
+    { id: "notifications", label: "Notifications", icon: Bell, onClick: () => navigate({ to: "/dashboard/$section", params: { section: "notifications" } }) },
     { id: "competitions", label: "Competitions", icon: Trophy, onClick: () => navigate({ to: "/competitions" }) },
-    { id: "public-profile", label: "Public Profile", icon: Users, onClick: () => navigate({ to: "/dashboard/$section", params: { section: "public-profile" } }) },
+    { id: "public-profile", label: "Public Profile", icon: Users, onClick: () => navigate({ to: "/dashboard/$section", params: { section: "profile" } }) },
     { id: "votes", label: "Votes", icon: Vote, onClick: () => navigate({ to: "/dashboard/$section", params: { section: "votes" } }) },
     // { id: "prize-history", label: "Prize History", icon: Gift, onClick: () => navigate({ to: "/dashboard/$section", params: { section: "prize-history" } }) },
     { id: "leaderboard", label: "Leaderboard", icon: TrendingUp, onClick: () => navigate({ to: "/leaderboard" }) },
@@ -89,12 +77,7 @@ const Header = ({ onSidebarToggle }: HeaderProps) => {
           )}
 
           {/* Mobile Menu Button - Show on mobile for all pages */}
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
-            className="md:hidden"
-          >
+          <Button variant="ghost" size="sm" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden">
             <Menu className="w-5 h-5" />
           </Button>
 
@@ -102,13 +85,15 @@ const Header = ({ onSidebarToggle }: HeaderProps) => {
           {isAuthenticated && user && (
             <>
               {/* Notifications Icon - Desktop Only */}
-              <Button variant="ghost" size="sm" onClick={handleNotificationsClick} className="relative h-8 w-8 rounded-full p-0 hidden lg:flex">
-                <Bell className="w-4 h-4" />
-                {unreadCount > 0 && (
-                  <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center">
-                    {unreadCount > 99 ? "99+" : unreadCount}
-                  </Badge>
-                )}
+              <Button variant="ghost" size="sm" className="relative h-8 w-8 rounded-full p-0 hidden lg:flex">
+                <Link to="/dashboard/$section" params={{ section: "notifications" }} className="relative w-full h-full flex items-center justify-center">
+                  <Bell className="w-4 h-4" />
+                  {unreadCount > 0 && (
+                    <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </Badge>
+                  )}
+                </Link>
               </Button>
 
               <Popover>
@@ -116,7 +101,7 @@ const Header = ({ onSidebarToggle }: HeaderProps) => {
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8 object-cover hover:ring-2 hover:ring-accent transition-all duration-300">
                       <AvatarImage src={user.image} alt={user.name} className="object-cover" />
-                      <AvatarFallback className="bg-primary text-primary-foreground text-sm font-medium">{getInitials(user.name)}</AvatarFallback>
+                      <AvatarFallback className="bg-primary text-primary-foreground text-sm font-medium">{getUserInitials(user.name, user.username)}</AvatarFallback>
                     </Avatar>
                   </Button>
                 </PopoverTrigger>
@@ -128,10 +113,10 @@ const Header = ({ onSidebarToggle }: HeaderProps) => {
                     </div>
                   </div>
                   <div className="p-2">
-                    <Button variant="ghost" className="w-full justify-start h-9 px-2" onClick={() => navigate({ to: "/dashboard"})}>
+                    <Button variant="ghost" className="w-full justify-start h-9 px-2" onClick={() => navigate({ to: "/dashboard" })}>
                       <User className="mr-2 h-4 w-4" />
                       <span>Dashboard</span>
-                    </Button> 
+                    </Button>
                     <Button variant="ghost" className="w-full justify-start h-9 px-2" onClick={() => navigate({ to: "/dashboard/$section", params: { section: "settings" } })}>
                       <SettingsIcon className="mr-2 h-4 w-4" />
                       <span>Settings</span>
@@ -189,7 +174,7 @@ const Header = ({ onSidebarToggle }: HeaderProps) => {
                 <Trophy className="mr-3 h-5 w-5" />
                 <span className="text-base">Competitions</span>
               </Button>
-              
+
               <Button
                 variant="ghost"
                 className="w-full justify-start h-12"
@@ -205,28 +190,30 @@ const Header = ({ onSidebarToggle }: HeaderProps) => {
               {/* Show additional items when authenticated */}
               {isAuthenticated && (
                 <>
-                  {mobileMenuItems.filter(item => !['competitions', 'leaderboard'].includes(item.id)).map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <Button
-                        key={item.id}
-                        variant="ghost"
-                        className="w-full justify-start h-12"
-                        onClick={() => {
-                          item.onClick();
-                          setIsMobileMenuOpen(false);
-                        }}
-                      >
-                        <Icon className="mr-3 h-5 w-5" />
-                        <span className="text-base">{item.label}</span>
-                        {item.id === "notifications" && unreadCount > 0 && (
-                          <Badge variant="destructive" className="ml-auto h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center">
-                            {unreadCount > 99 ? "99+" : unreadCount}
-                          </Badge>
-                        )}
-                      </Button>
-                    );
-                  })}
+                  {mobileMenuItems
+                    .filter((item) => !["competitions", "leaderboard"].includes(item.id))
+                    .map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <Button
+                          key={item.id}
+                          variant="ghost"
+                          className="w-full justify-start h-12"
+                          onClick={() => {
+                            item.onClick();
+                            setIsMobileMenuOpen(false);
+                          }}
+                        >
+                          <Icon className="mr-3 h-5 w-5" />
+                          <span className="text-base">{item.label}</span>
+                          {item.id === "notifications" && unreadCount > 0 && (
+                            <Badge variant="destructive" className="ml-auto h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center">
+                              {unreadCount > 99 ? "99+" : unreadCount}
+                            </Badge>
+                          )}
+                        </Button>
+                      );
+                    })}
 
                   <div className="pt-4 border-t border-border">
                     <Button
