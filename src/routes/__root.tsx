@@ -2,7 +2,6 @@ import { PageLoader } from "@/components/PageLoader";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { QueryClient } from "@tanstack/react-query";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { NuqsAdapter } from "nuqs/adapters/react";
@@ -35,11 +34,9 @@ export const Route = createRootRoute<MyRouterContext>({
     <AuthProvider>
       <NuqsAdapter>
         <ModalProvider>
-          <OnboardingProvider>
-            <NotificationProvider>
-              <AppShell />
-            </NotificationProvider>
-          </OnboardingProvider>
+          <NotificationProvider>
+            <AppShell />
+          </NotificationProvider>
         </ModalProvider>
       </NuqsAdapter>
     </AuthProvider>

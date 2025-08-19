@@ -23,6 +23,11 @@ export const getSocialMediaUrl = (platform: keyof SocialMediaUrls, username: str
 
   const cleanUsername = username.trim().replace(/^@/, ''); // Remove @ if present
 
+  // Check if it's already a URL (starts with http:// or https://)
+  if (cleanUsername.startsWith('http://') || cleanUsername.startsWith('https://')) {
+    return cleanUsername;
+  }
+
   switch (platform) {
     case 'instagram':
       return `https://instagram.com/${cleanUsername}`;

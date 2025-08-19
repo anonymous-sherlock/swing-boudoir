@@ -5,21 +5,36 @@ import { PaginatedResponse, Pagination } from './common.types';
  */
 export interface Notification {
   id: string;
-  userId: string;
   profileId?: string;
-  type: NotificationType;
+  type: keyof Notification_Type;
   title: string;
   message: string;
   data?: Record<string, unknown>;
   isRead: boolean;
   isArchived: boolean;
-  priority: 'low' | 'medium' | 'high';
+  icon?: 'WARNING' | 'SUCESS' | 'INFO';
+  priority?: 'low' | 'medium' | 'high';
+  action?: string;
   createdAt: string;
   updatedAt: string;
   expiresAt?: string;
 }
 
-export type NotificationType = 
+export type Notification_Type = {
+  COMPETITION_JOINED: 'competition_joined';
+  COMPETITION_LEFT: 'competition_left';
+  COMPETITION_CREATED: 'competition_created';
+  COMPETITION_UPCOMING: 'competition_upcoming';
+  VOTE_RECEIVED: 'vote_received';
+  VOTE_PREMIUM: 'vote_premium';
+  SETTINGS_CHANGED: 'settings_changed';
+  REMINDER: 'reminder';
+  TIP: 'tip';
+  MOTIVATION: 'motivation';
+  SYSTEM: 'system';
+};
+
+export type NotificationType =
   | 'competition_joined'
   | 'competition_left'
   | 'competition_created'
@@ -33,14 +48,12 @@ export type NotificationType =
   | 'system';
 
 export interface NotificationCreateRequest {
-  userId: string;
-  profileId?: string;
-  type: NotificationType;
-  title: string;
+  profileId: string;
   message: string;
-  data?: Record<string, unknown>;
-  priority?: 'low' | 'medium' | 'high';
-  expiresAt?: string;
+  title?: string;
+  type?: keyof Notification_Type;
+  icon?: 'WARNING' | 'SUCESS' | 'INFO';
+  action?: string;
 }
 
 export interface NotificationUpdateRequest {
@@ -49,7 +62,7 @@ export interface NotificationUpdateRequest {
 }
 
 export interface NotificationsListResponse {
-  data: Notification[];
+  notifications: Notification[];
   pagination: {
     total: number;
     totalPages: number;
@@ -61,7 +74,7 @@ export interface NotificationsListResponse {
 }
 
 export interface NotificationCounts {
-  total: number;
-  unread: number;
-  archived: number;
+  totalCount: number;
+  unreadCount: number;
+  archivedCount: number;
 }

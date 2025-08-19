@@ -16,7 +16,7 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   
   // Get search params for callback URL
-  const search = useSearch({ from: "/auth/$id" });
+  const search = useSearch({ strict: false, shouldThrow: false }) as { callback?: string };
   const callbackURL = search.callback || "/dashboard";
   
   // Debug: Log the callback URL

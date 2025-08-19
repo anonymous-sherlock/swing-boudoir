@@ -95,7 +95,7 @@ export interface UserProfile {
 /**
  * Enhanced fetch wrapper with proper error handling and authentication
  */
-export const apiRequest = async <T = any>(
+const apiRequest = async <T = any>(
   endpoint: string,
   options: ApiRequestOptions = {}
 ): Promise<ApiResponse<T>> => {

@@ -1,3 +1,4 @@
+import backgroundVideo from "@/assets/final-video.mp4";
 import React from "react";
 import { CheckCircle, Sparkles, Star, Camera } from "lucide-react";
 import { FormData } from "./index";
@@ -5,7 +6,6 @@ import { useProfile } from "@/hooks/api/useProfile";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
-import onboardingFinalScene from "@/assets/onboarding-portfolio.jpg";
 
 interface FinalSceneProps {
   formData: FormData;
@@ -77,21 +77,19 @@ const FinalScene: React.FC<FinalSceneProps> = ({ formData }) => {
 
   return (
     <div className="relative">
-      <div
-        className="scene-background"
-        style={{
-          backgroundImage: `url(${onboardingFinalScene})`,
-        }}
-      />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/30 to-black/90" />
+      {/* Video Background */}
+      <div className="scene-background">
+        <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover">
+          <source src={backgroundVideo} type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+        {/* Overlay for better text readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-black/40 to-black" />
+
+      </div>
 
       <div className="scene-content !pt-28">
         <div className="max-w-4xl mx-auto text-center animate-fade-in-up">
-          <div className="mb-8">
-            <div className="relative inline-block">
-              <CheckCircle className="w-20 h-20 text-green-400 animate-pulse" />
-            </div>
-          </div>
 
           <h1 className="headline mb-6">
             Your profile is ready
@@ -99,7 +97,7 @@ const FinalScene: React.FC<FinalSceneProps> = ({ formData }) => {
             for the spotlight
           </h1>
 
-          <p className="subheading mb-12 max-w-2xl mx-auto">
+          <p className="subheading mb-12 max-w-2xl mx-auto !text-base">
             Congratulations! Your modeling journey begins now. Your unique story and stunning portfolio are ready to captivate the world.
           </p>
 

@@ -169,6 +169,7 @@ export interface JoinContestData {
   profileId: string
   contestId: string
   isParticipating?: boolean
+  coverImage?: string | null
 }
 
 // Hook for getting contest list with pagination
@@ -213,6 +214,18 @@ export function useContest(id: string) {
       return res
     },
     enabled: !!id,
+  })
+}
+
+// Hook for getting a single contest by slug
+export function useContestBySlug(slug: string) {
+  return useQuery({
+    queryKey: ['contest', 'slug', slug],
+    queryFn: async (): Promise<Contest> => {
+      const response = await api.get(`/api/v1/contest/slug/${slug}`)
+      return response.data
+    },
+    enabled: !!slug,
   })
 }
 
@@ -510,5 +523,68 @@ export function useUploadContestParticipationCoverImage() {
       queryClient.invalidateQueries({ queryKey: ['contests', 'joined', data.profileId] })
       queryClient.invalidateQueries({ queryKey: ['contest', data.contestId] })
     },
+  })
+}
+
+// Types for contest participants
+export interface ContestParticipant {
+  id: string
+  contestId: string
+  mediaId: string | null
+  coverImage: {
+    id: string
+    key: string
+    name: string
+    url: string
+    size: number | null
+    type: string | null
+    status: 'FAILED' | 'PROCESSING' | 'COMPLETED'
+    mediaType: 'COVER_IMAGE' | 'CONTEST_IMAGE' | 'CONTEST_PARTICIPATION_COVER' | 'PROFILE_IMAGE' | 'PROFILE_COVER_IMAGE' | 'PROFILE_BANNER_IMAGE'
+    createdAt: string
+    updatedAt: string
+    profileId: string | null
+    caption: string | null
+    contestId: string | null
+  } | null
+  isApproved: boolean
+  isParticipating: boolean | null
+  createdAt: string
+  updatedAt: string
+  profile: {
+    id: string
+    bio: string | null
+    freeVoterMessage: string | null
+    hobbiesAndPassions: string | null
+    paidVoterMessage: string | null
+    user: {
+      id: string
+      email: string
+      name: string
+      image: string | null
+    } | null
+  } | null
+}
+
+export interface ContestParticipantsResponse {
+  data: ContestParticipant[]
+  pagination: {
+    total: number
+    totalPages: number
+    hasNextPage: boolean
+    hasPreviousPage: boolean
+    nextPage: number | null
+    previousPage: number | null
+  }
+}
+
+// Hook for fetching contest participants
+export function useContestParticipants(contestId: string, page: number = 1, limit: number = 20) {
+  return useQuery({
+    queryKey: ['contest', 'participants', contestId, page, limit],
+    queryFn: async (): Promise<ContestParticipantsResponse> => {
+      const response = await api.get(`/api/v1/contest/${contestId}/participants?page=${page}&limit=${limit}`)
+      return response.data
+    },
+    enabled: !!contestId,
   })
 } 

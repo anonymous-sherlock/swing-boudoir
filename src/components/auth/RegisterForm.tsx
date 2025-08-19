@@ -26,7 +26,7 @@ export function RegisterForm() {
   const debounceMs = 450;
 
   // Preserve callback search param
-  const search = useSearch({ from: "/auth/$id" });
+  const search = useSearch({ strict: false, shouldThrow: false }) as { callback?: string };
   const callbackURL = search?.callback || "/dashboard";
 
   const step1Form = useForm<RegisterStep1Data>({

@@ -16,9 +16,7 @@ export function TermsOfService() {
         <CardContent className="space-y-6">
           <section>
             <h3 className="text-lg font-semibold mb-3">1. Acceptance of Terms</h3>
-            <p className="text-muted-foreground">
-              By accessing and using this platform, you accept and agree to be bound by the terms and provision of this agreement.
-            </p>
+            <p className="text-muted-foreground">By accessing and using this platform, you accept and agree to be bound by the terms and provision of this agreement.</p>
           </section>
 
           <section>
@@ -37,16 +35,12 @@ export function TermsOfService() {
 
           <section>
             <h3 className="text-lg font-semibold mb-3">4. Payment Terms</h3>
-            <p className="text-muted-foreground">
-              All payments for premium services are processed securely. Refunds are subject to our refund policy.
-            </p>
+            <p className="text-muted-foreground">All payments for premium services are processed securely. Refunds are subject to our refund policy.</p>
           </section>
 
           <section>
             <h3 className="text-lg font-semibold mb-3">5. Limitation of Liability</h3>
-            <p className="text-muted-foreground">
-              The platform is provided "as is" without warranties. We are not liable for any damages arising from use of the service.
-            </p>
+            <p className="text-muted-foreground">The platform is provided "as is" without warranties. We are not liable for any damages arising from use of the service.</p>
           </section>
         </CardContent>
       </Card>

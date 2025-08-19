@@ -1,11 +1,11 @@
 import { api } from './api';
-import { 
-  Notification, 
-  NotificationCreateRequest, 
-  NotificationUpdateRequest, 
+import {
+  Notification,
+  NotificationCreateRequest,
+  NotificationUpdateRequest,
   NotificationsListResponse,
   NotificationCounts,
-  NotificationType 
+  NotificationType
 } from '@/types/notifications.types';
 
 class NotificationService {
@@ -13,7 +13,7 @@ class NotificationService {
   private unreadCount: number = 0;
   private listeners: ((count: number) => void)[] = [];
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): NotificationService {
     if (!NotificationService.instance) {
@@ -28,7 +28,7 @@ class NotificationService {
       const response = await api.post<Notification>('/notifications', data);
       if (response.success) {
         // Increment unread count if notification is not read
-        if (!data.isRead) {
+        if (response.data.isRead) {
           this.incrementUnreadCount();
         }
         return response.data;
@@ -42,17 +42,17 @@ class NotificationService {
 
   // Get all notifications for a user
   async getNotifications(
-    profileId: string, 
-    page: number = 1, 
+    profileId: string,
+    page: number = 1,
     limit: number = 20,
-    includeArchived: boolean = false
+    isArchived: boolean = false
   ): Promise<NotificationsListResponse | null> {
     try {
       const params = new URLSearchParams({
         profileId,
         page: page.toString(),
         limit: limit.toString(),
-        includeArchived: includeArchived.toString()
+        includeArchived: isArchived.toString()
       });
 
       const response = await api.get<NotificationsListResponse>(`/notifications?${params}`);
@@ -77,7 +77,7 @@ class NotificationService {
   // Update notification (mark as read, archive, etc.)
   async updateNotification(id: string, data: NotificationUpdateRequest): Promise<Notification | null> {
     try {
-      const response = await api.patch<Notification>(`/notifications/${id}`, data);
+      const response = await api.put<Notification>(`/notifications/${id}`, data);
       if (response.success) {
         // Update unread count if marking as read
         if (data.isRead && this.unreadCount > 0) {
@@ -104,10 +104,16 @@ class NotificationService {
     return result !== null;
   }
 
+  // Mark notification as unarchived
+  async markAsUnarchived(id: string): Promise<boolean> {
+    const result = await this.updateNotification(id, { isArchived: false });
+    return result !== null;
+  }
+
   // Mark all notifications as read
-  async markAllAsRead(userId: string): Promise<boolean> {
+  async markAllAsRead(profileId: string): Promise<boolean> {
     try {
-      const response = await api.patch<{ success: boolean }>('/notifications/mark-all-read', { userId });
+      const response = await api.patch<{ success: boolean }>('/notifications/mark-all-read', { profileId });
       if (response.success) {
         this.resetUnreadCount();
         return true;
@@ -120,11 +126,11 @@ class NotificationService {
   }
 
   // Get notification counts
-  async getNotificationCounts(userId: string): Promise<NotificationCounts | null> {
+  async getNotificationCounts(profileId: string): Promise<NotificationCounts | null> {
     try {
-      const response = await api.get<NotificationCounts>(`/notifications/counts?userId=${userId}`);
+      const response = await api.get<NotificationCounts>(`/notifications/${profileId}/stats`);
       if (response.success) {
-        this.unreadCount = response.data.unread;
+        this.unreadCount = response.data.unreadCount;
         return response.data;
       }
       return null;
@@ -146,103 +152,84 @@ class NotificationService {
   }
 
   // Competition-specific notification triggers
-  async notifyCompetitionJoined(userId: string, profileId: string, competitionName: string): Promise<void> {
+  async notifyCompetitionJoined(profileId: string, competitionName: string): Promise<void> {
     await this.createNotification({
-      userId,
       profileId,
-      type: 'competition_joined',
       title: 'Competition Joined! 🎉',
       message: `You've successfully joined "${competitionName}". Good luck!`,
-      priority: 'medium',
-      data: { competitionName }
+      type: 'COMPETITION_JOINED'
     });
   }
 
-  async notifyCompetitionLeft(userId: string, profileId: string, competitionName: string): Promise<void> {
+  async notifyCompetitionLeft(profileId: string, competitionName: string): Promise<void> {
     await this.createNotification({
-      userId,
       profileId,
-      type: 'competition_left',
       title: 'Competition Left',
       message: `You've left "${competitionName}". You can rejoin anytime!`,
-      priority: 'low',
-      data: { competitionName }
+      type: 'COMPETITION_LEFT'
     });
   }
 
-  async notifyCompetitionCreated(userId: string, profileId: string, competitionName: string): Promise<void> {
+  async notifyCompetitionCreated(profileId: string, competitionName: string): Promise<void> {
     await this.createNotification({
-      userId,
       profileId,
-      type: 'competition_created',
       title: 'New Competition Available! 🆕',
       message: `A new competition "${competitionName}" is now available. Check it out!`,
-      priority: 'high',
-      data: { competitionName }
+      type: 'COMPETITION_CREATED'
     });
   }
 
-  async notifyCompetitionUpcoming(userId: string, profileId: string, competitionName: string, startDate: string): Promise<void> {
+  async notifyCompetitionUpcoming(profileId: string, competitionName: string, startDate: string): Promise<void> {
     await this.createNotification({
-      userId,
       profileId,
-      type: 'competition_upcoming',
       title: 'Upcoming Competition! ⏰',
       message: `"${competitionName}" starts soon on ${new Date(startDate).toLocaleDateString()}. Get ready!`,
-      priority: 'medium',
-      data: { competitionName, startDate }
+      type: 'COMPETITION_UPCOMING'
     });
   }
 
   // Vote notifications
-  async notifyVoteReceived(userId: string, profileId: string, voterName: string, isPremium: boolean = false): Promise<void> {
-    const type = isPremium ? 'vote_premium' : 'vote_received';
+  async notifyVoteReceived(profileId: string, voterName: string, isPremium: boolean = false): Promise<void> {
     const title = isPremium ? 'Premium Vote Received! 💎' : 'New Vote! ❤️';
-    const message = isPremium 
+    const message = isPremium
       ? `${voterName} gave you a premium vote! This is amazing!`
       : `${voterName} voted for you! Keep up the great work!`;
 
     await this.createNotification({
-      userId,
       profileId,
-      type,
       title,
       message,
-      priority: 'medium',
-      data: { voterName, isPremium }
+      type: isPremium ? 'VOTE_PREMIUM' : 'VOTE_RECEIVED'
     });
   }
 
   // Settings change notification
-  async notifySettingsChanged(userId: string, profileId: string, settingName: string): Promise<void> {
+  async notifySettingsChanged(profileId: string, settingName: string): Promise<void> {
     await this.createNotification({
-      userId,
       profileId,
-      type: 'settings_changed',
       title: 'Settings Updated',
       message: `Your ${settingName} has been updated successfully.`,
-      priority: 'low',
-      data: { settingName }
+      type: 'SETTINGS_CHANGED'
     });
   }
 
   // Daily motivation and tips
-  async createDailyMotivations(userId: string, profileId: string): Promise<void> {
-    const motivations = [
+  async createDailyMotivations(profileId: string): Promise<void> {
+    const motivations: Array<Omit<NotificationCreateRequest, 'profileId'>> = [
       {
-        type: 'motivation' as NotificationType,
         title: 'Daily Motivation! 🌟',
-        message: 'Remember, every vote is a step closer to your dreams. Keep shining!'
+        message: 'Remember, every vote is a step closer to your dreams. Keep shining!',
+        type: 'MOTIVATION'
       },
       {
-        type: 'tip' as NotificationType,
         title: 'Pro Tip! 💡',
-        message: 'Update your photos regularly to keep your profile fresh and engaging.'
+        message: 'Update your photos regularly to keep your profile fresh and engaging.',
+        type: 'TIP'
       },
       {
-        type: 'reminder' as NotificationType,
         title: 'Friendly Reminder! ⏰',
-        message: 'Don\'t forget to thank your voters - it goes a long way!'
+        message: 'Don\'t forget to thank your voters - it goes a long way!',
+        type: 'REMINDER'
       }
     ];
 
@@ -253,12 +240,10 @@ class NotificationService {
 
     for (const motivation of selected) {
       await this.createNotification({
-        userId,
         profileId,
-        type: motivation.type,
         title: motivation.title,
         message: motivation.message,
-        priority: 'low'
+        type: motivation.type
       });
     }
   }
@@ -302,10 +287,10 @@ class NotificationService {
   }
 
   // Initialize notification counts
-  async initializeCounts(userId: string): Promise<void> {
-    const counts = await this.getNotificationCounts(userId);
+  async initializeCounts(profileId: string): Promise<void> {
+    const counts = await this.getNotificationCounts(profileId);
     if (counts) {
-      this.unreadCount = counts.unread;
+      this.unreadCount = counts.unreadCount;
       this.notifyListeners();
     }
   }

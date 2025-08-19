@@ -35,12 +35,13 @@ import { Route as PublicContactRouteImport } from './routes/_public/contact'
 import { Route as AdminUsersIndexRouteImport } from './routes/admin/users/index'
 import { Route as AdminContestsIndexRouteImport } from './routes/admin/contests/index'
 import { Route as PublicCompetitionsIndexRouteImport } from './routes/_public/competitions/index'
-import { Route as DashboardCompetitionsSlugRouteImport } from './routes/dashboard/competitions.$slug'
 import { Route as AdminContestsCreateRouteImport } from './routes/admin/contests/create'
 import { Route as PublicProfileUsernameRouteImport } from './routes/_public/profile.$username'
-import { Route as PublicCompetitionsSlugRouteImport } from './routes/_public/competitions/$slug'
+import { Route as PublicCompetitionsSlugRouteRouteImport } from './routes/_public/competitions/$slug/route'
+import { Route as PublicCompetitionsSlugIndexRouteImport } from './routes/_public/competitions/$slug/index'
 import { Route as AdminContestsIdLeaderboardRouteImport } from './routes/admin/contests/$id.leaderboard'
 import { Route as AdminContestsIdEditRouteImport } from './routes/admin/contests/$id.edit'
+import { Route as PublicCompetitionsSlugParticipantsRouteImport } from './routes/_public/competitions/$slug/participants'
 
 const WinnersRoute = WinnersRouteImport.update({
   id: '/winners',
@@ -171,12 +172,6 @@ const PublicCompetitionsIndexRoute = PublicCompetitionsIndexRouteImport.update({
   path: '/competitions/',
   getParentRoute: () => PublicRouteRoute,
 } as any)
-const DashboardCompetitionsSlugRoute =
-  DashboardCompetitionsSlugRouteImport.update({
-    id: '/dashboard/competitions/$slug',
-    path: '/dashboard/competitions/$slug',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const AdminContestsCreateRoute = AdminContestsCreateRouteImport.update({
   id: '/contests/create',
   path: '/contests/create',
@@ -187,11 +182,18 @@ const PublicProfileUsernameRoute = PublicProfileUsernameRouteImport.update({
   path: '/profile/$username',
   getParentRoute: () => PublicRouteRoute,
 } as any)
-const PublicCompetitionsSlugRoute = PublicCompetitionsSlugRouteImport.update({
-  id: '/competitions/$slug',
-  path: '/competitions/$slug',
-  getParentRoute: () => PublicRouteRoute,
-} as any)
+const PublicCompetitionsSlugRouteRoute =
+  PublicCompetitionsSlugRouteRouteImport.update({
+    id: '/competitions/$slug',
+    path: '/competitions/$slug',
+    getParentRoute: () => PublicRouteRoute,
+  } as any)
+const PublicCompetitionsSlugIndexRoute =
+  PublicCompetitionsSlugIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => PublicCompetitionsSlugRouteRoute,
+  } as any)
 const AdminContestsIdLeaderboardRoute =
   AdminContestsIdLeaderboardRouteImport.update({
     id: '/contests/$id/leaderboard',
@@ -203,6 +205,12 @@ const AdminContestsIdEditRoute = AdminContestsIdEditRouteImport.update({
   path: '/contests/$id/edit',
   getParentRoute: () => AdminRoute,
 } as any)
+const PublicCompetitionsSlugParticipantsRoute =
+  PublicCompetitionsSlugParticipantsRouteImport.update({
+    id: '/participants',
+    path: '/participants',
+    getParentRoute: () => PublicCompetitionsSlugRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -227,15 +235,16 @@ export interface FileRoutesByFullPath {
   '/leaderboard': typeof LeaderboardIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
   '/voters': typeof VotersIndexRoute
-  '/competitions/$slug': typeof PublicCompetitionsSlugRoute
+  '/competitions/$slug': typeof PublicCompetitionsSlugRouteRouteWithChildren
   '/profile/$username': typeof PublicProfileUsernameRoute
   '/admin/contests/create': typeof AdminContestsCreateRoute
-  '/dashboard/competitions/$slug': typeof DashboardCompetitionsSlugRoute
   '/competitions': typeof PublicCompetitionsIndexRoute
   '/admin/contests': typeof AdminContestsIndexRoute
   '/admin/users': typeof AdminUsersIndexRoute
+  '/competitions/$slug/participants': typeof PublicCompetitionsSlugParticipantsRoute
   '/admin/contests/$id/edit': typeof AdminContestsIdEditRoute
   '/admin/contests/$id/leaderboard': typeof AdminContestsIdLeaderboardRoute
+  '/competitions/$slug/': typeof PublicCompetitionsSlugIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -259,15 +268,15 @@ export interface FileRoutesByTo {
   '/leaderboard': typeof LeaderboardIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
   '/voters': typeof VotersIndexRoute
-  '/competitions/$slug': typeof PublicCompetitionsSlugRoute
   '/profile/$username': typeof PublicProfileUsernameRoute
   '/admin/contests/create': typeof AdminContestsCreateRoute
-  '/dashboard/competitions/$slug': typeof DashboardCompetitionsSlugRoute
   '/competitions': typeof PublicCompetitionsIndexRoute
   '/admin/contests': typeof AdminContestsIndexRoute
   '/admin/users': typeof AdminUsersIndexRoute
+  '/competitions/$slug/participants': typeof PublicCompetitionsSlugParticipantsRoute
   '/admin/contests/$id/edit': typeof AdminContestsIdEditRoute
   '/admin/contests/$id/leaderboard': typeof AdminContestsIdLeaderboardRoute
+  '/competitions/$slug': typeof PublicCompetitionsSlugIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -294,15 +303,16 @@ export interface FileRoutesById {
   '/leaderboard/': typeof LeaderboardIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
   '/voters/': typeof VotersIndexRoute
-  '/_public/competitions/$slug': typeof PublicCompetitionsSlugRoute
+  '/_public/competitions/$slug': typeof PublicCompetitionsSlugRouteRouteWithChildren
   '/_public/profile/$username': typeof PublicProfileUsernameRoute
   '/admin/contests/create': typeof AdminContestsCreateRoute
-  '/dashboard/competitions/$slug': typeof DashboardCompetitionsSlugRoute
   '/_public/competitions/': typeof PublicCompetitionsIndexRoute
   '/admin/contests/': typeof AdminContestsIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
+  '/_public/competitions/$slug/participants': typeof PublicCompetitionsSlugParticipantsRoute
   '/admin/contests/$id/edit': typeof AdminContestsIdEditRoute
   '/admin/contests/$id/leaderboard': typeof AdminContestsIdLeaderboardRoute
+  '/_public/competitions/$slug/': typeof PublicCompetitionsSlugIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -332,12 +342,13 @@ export interface FileRouteTypes {
     | '/competitions/$slug'
     | '/profile/$username'
     | '/admin/contests/create'
-    | '/dashboard/competitions/$slug'
     | '/competitions'
     | '/admin/contests'
     | '/admin/users'
+    | '/competitions/$slug/participants'
     | '/admin/contests/$id/edit'
     | '/admin/contests/$id/leaderboard'
+    | '/competitions/$slug/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -361,15 +372,15 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/onboarding'
     | '/voters'
-    | '/competitions/$slug'
     | '/profile/$username'
     | '/admin/contests/create'
-    | '/dashboard/competitions/$slug'
     | '/competitions'
     | '/admin/contests'
     | '/admin/users'
+    | '/competitions/$slug/participants'
     | '/admin/contests/$id/edit'
     | '/admin/contests/$id/leaderboard'
+    | '/competitions/$slug'
   id:
     | '__root__'
     | '/'
@@ -398,12 +409,13 @@ export interface FileRouteTypes {
     | '/_public/competitions/$slug'
     | '/_public/profile/$username'
     | '/admin/contests/create'
-    | '/dashboard/competitions/$slug'
     | '/_public/competitions/'
     | '/admin/contests/'
     | '/admin/users/'
+    | '/_public/competitions/$slug/participants'
     | '/admin/contests/$id/edit'
     | '/admin/contests/$id/leaderboard'
+    | '/_public/competitions/$slug/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -420,7 +432,6 @@ export interface RootRouteChildren {
   LeaderboardIndexRoute: typeof LeaderboardIndexRoute
   OnboardingIndexRoute: typeof OnboardingIndexRoute
   VotersIndexRoute: typeof VotersIndexRoute
-  DashboardCompetitionsSlugRoute: typeof DashboardCompetitionsSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -607,13 +618,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicCompetitionsIndexRouteImport
       parentRoute: typeof PublicRouteRoute
     }
-    '/dashboard/competitions/$slug': {
-      id: '/dashboard/competitions/$slug'
-      path: '/dashboard/competitions/$slug'
-      fullPath: '/dashboard/competitions/$slug'
-      preLoaderRoute: typeof DashboardCompetitionsSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin/contests/create': {
       id: '/admin/contests/create'
       path: '/contests/create'
@@ -632,8 +636,15 @@ declare module '@tanstack/react-router' {
       id: '/_public/competitions/$slug'
       path: '/competitions/$slug'
       fullPath: '/competitions/$slug'
-      preLoaderRoute: typeof PublicCompetitionsSlugRouteImport
+      preLoaderRoute: typeof PublicCompetitionsSlugRouteRouteImport
       parentRoute: typeof PublicRouteRoute
+    }
+    '/_public/competitions/$slug/': {
+      id: '/_public/competitions/$slug/'
+      path: '/'
+      fullPath: '/competitions/$slug/'
+      preLoaderRoute: typeof PublicCompetitionsSlugIndexRouteImport
+      parentRoute: typeof PublicCompetitionsSlugRouteRoute
     }
     '/admin/contests/$id/leaderboard': {
       id: '/admin/contests/$id/leaderboard'
@@ -649,14 +660,38 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminContestsIdEditRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_public/competitions/$slug/participants': {
+      id: '/_public/competitions/$slug/participants'
+      path: '/participants'
+      fullPath: '/competitions/$slug/participants'
+      preLoaderRoute: typeof PublicCompetitionsSlugParticipantsRouteImport
+      parentRoute: typeof PublicCompetitionsSlugRouteRoute
+    }
   }
 }
+
+interface PublicCompetitionsSlugRouteRouteChildren {
+  PublicCompetitionsSlugParticipantsRoute: typeof PublicCompetitionsSlugParticipantsRoute
+  PublicCompetitionsSlugIndexRoute: typeof PublicCompetitionsSlugIndexRoute
+}
+
+const PublicCompetitionsSlugRouteRouteChildren: PublicCompetitionsSlugRouteRouteChildren =
+  {
+    PublicCompetitionsSlugParticipantsRoute:
+      PublicCompetitionsSlugParticipantsRoute,
+    PublicCompetitionsSlugIndexRoute: PublicCompetitionsSlugIndexRoute,
+  }
+
+const PublicCompetitionsSlugRouteRouteWithChildren =
+  PublicCompetitionsSlugRouteRoute._addFileChildren(
+    PublicCompetitionsSlugRouteRouteChildren,
+  )
 
 interface PublicRouteRouteChildren {
   PublicContactRoute: typeof PublicContactRoute
   PublicFaqRoute: typeof PublicFaqRoute
   PublicRulesRoute: typeof PublicRulesRoute
-  PublicCompetitionsSlugRoute: typeof PublicCompetitionsSlugRoute
+  PublicCompetitionsSlugRouteRoute: typeof PublicCompetitionsSlugRouteRouteWithChildren
   PublicProfileUsernameRoute: typeof PublicProfileUsernameRoute
   PublicCompetitionsIndexRoute: typeof PublicCompetitionsIndexRoute
 }
@@ -665,7 +700,8 @@ const PublicRouteRouteChildren: PublicRouteRouteChildren = {
   PublicContactRoute: PublicContactRoute,
   PublicFaqRoute: PublicFaqRoute,
   PublicRulesRoute: PublicRulesRoute,
-  PublicCompetitionsSlugRoute: PublicCompetitionsSlugRoute,
+  PublicCompetitionsSlugRouteRoute:
+    PublicCompetitionsSlugRouteRouteWithChildren,
   PublicProfileUsernameRoute: PublicProfileUsernameRoute,
   PublicCompetitionsIndexRoute: PublicCompetitionsIndexRoute,
 }
@@ -720,7 +756,6 @@ const rootRouteChildren: RootRouteChildren = {
   LeaderboardIndexRoute: LeaderboardIndexRoute,
   OnboardingIndexRoute: OnboardingIndexRoute,
   VotersIndexRoute: VotersIndexRoute,
-  DashboardCompetitionsSlugRoute: DashboardCompetitionsSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

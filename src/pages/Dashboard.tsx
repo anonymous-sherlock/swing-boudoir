@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useRouter } from "@tanstack/react-router";
+import { useRouter, useParams } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { DashboardNotifications } from "@/components/dashboard/DashboardNotifications";
@@ -54,8 +54,8 @@ function DashboardLayout({
 
 export default function Dashboard() {
   const router = useRouter();
-  const pathname = router.state.location.pathname;
-  const currentSection = pathname.startsWith("/dashboard/") ? (pathname.split("/")[2] as DashboardSection) : undefined;
+  const params = useParams({ from: "/dashboard/$section", shouldThrow: false });
+  const currentSection = params?.section || "profile";
 
   const { isAuthenticated, isLoading, checkUserNeedsOnboarding } = useAuth();
   const [activeSection, setActiveSection] = useState<DashboardSection>(currentSection || "profile");
@@ -71,23 +71,19 @@ export default function Dashboard() {
     // eslint-disable-next-line
   }, [isAuthenticated, isLoading]);
 
-  // Sync state with URL param (but do not redirect if section is missing)
+  // Update URL when section changes (only if user changes section)
+  const handleSetActiveSection = (newSection: DashboardSection) => {
+    setActiveSection(newSection);
+    // Always navigate to update the URL, even if currentSection is undefined
+    router.navigate({ to: "/dashboard/$section", params: { section: newSection } });
+  };
+
+  // Sync state with URL param
   useEffect(() => {
     if (currentSection && currentSection !== activeSection) {
       setActiveSection(currentSection);
     }
-    // eslint-disable-next-line
-  }, [currentSection]);
-
-  // Update URL when section changes (only if user changes section)
-  const handleSetActiveSection = (newSection: DashboardSection) => {
-    setActiveSection(newSection);
-    if (newSection !== currentSection) {
-      router.navigate({ to: "/dashboard/$section", params: { section: newSection } });
-    }
-  };
-
-  // No need to check loading here - it's handled globally
+  }, [currentSection, activeSection]);
 
   if (isLoading) {
     return null;

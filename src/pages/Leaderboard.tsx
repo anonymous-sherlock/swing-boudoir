@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import Header from '@/components/layout/Header';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -10,27 +10,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { api } from '@/lib/api';
 import {
-  Trophy,
+  ArrowDown,
+  ArrowUp,
+  Award,
+  Calendar,
   Crown,
-  Star,
-  TrendingUp,
-  Users,
-  Heart,
   Eye,
   Filter,
-  Search,
-  Calendar,
-  Award,
+  Heart,
   Medal,
-  Zap,
-  Target,
-  ArrowUp,
-  ArrowDown,
   Minus,
+  Search,
+  Star,
+  Target,
+  TrendingUp,
+  Trophy,
+  Users,
+  Zap,
 } from 'lucide-react';
-import Header from '@/components/layout/Header';
-import { api, apiRequest } from '@/lib/api';
+import { useEffect, useState } from 'react';
 
 type LeaderboardStats = {
   totalModels: number;
@@ -113,8 +113,8 @@ export default function Leaderboard() {
   const fetchLeaderboardData = async () => {
     setIsLoading(true);
     try {
-      const leaderboardResponse = await apiRequest('/api/v1/leaderboard', { method: 'GET' });
-      const getLeaderboardStats = await api.get('/api/v1/leaderboard/stats');
+      const leaderboardResponse = await api.get<LeaderboardModel[]>('/api/v1/leaderboard');
+      const getLeaderboardStats = await api.get<LeaderboardStats>('/api/v1/leaderboard/stats');
 
       if (getLeaderboardStats) {
         setLeaderboardStats(getLeaderboardStats.data);

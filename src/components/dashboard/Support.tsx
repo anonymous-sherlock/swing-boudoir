@@ -11,34 +11,34 @@ export function Support() {
   };
 
   const openWhatsApp = () => {
-    window.open("https://wa.me/[PHONE_NUMBER]?text=Hi! I need help with the Swing Boudoir Competition", "_blank");
+    window.open("https://wa.me/447878619356?text=Hi! I need help with the Swing Boudoir Competition", "_blank");
   };
 
   const supportCategories = [
     {
       icon: <Trophy className="h-5 w-5" />,
       title: "Competition Support",
-      email: "competition@swingboudoir.com",
-      description: "Entry questions, voting issues, prize information"
+      email: "submit@swingboudoirmag.com",
+      description: "Entry questions, voting issues, prize information",
     },
     {
       icon: <Camera className="h-5 w-5" />,
       title: "Model Support",
-      email: "models@swingboudoir.com",
-      description: "Photo requirements, profile setup, promotional help"
+      email: "submit@swingboudoirmag.com",
+      description: "Photo requirements, profile setup, promotional help",
     },
     {
       icon: <CreditCard className="h-5 w-5" />,
       title: "Payment & Billing",
-      email: "billing@swingboudoir.com",
-      description: "Vote purchases, refunds, payment issues"
+      email: "submit@swingboudoirmag.com",
+      description: "Vote purchases, refunds, payment issues",
     },
     {
       icon: <Shield className="h-5 w-5" />,
       title: "Technical Issues",
-      email: "tech@swingboudoir.com",
-      description: "Website problems, voting errors, account access"
-    }
+      email: "submit@swingboudoirmag.com",
+      description: "Website problems, voting errors, account access",
+    },
   ];
 
   return (
@@ -55,9 +55,7 @@ export function Support() {
             <AlertCircle className="h-5 w-5 text-orange-600" />
             <div>
               <p className="font-medium text-orange-800 dark:text-orange-200">Competition Deadline Approaching!</p>
-              <p className="text-sm text-orange-700 dark:text-orange-300">
-                Voting closes in 3 days. Need urgent help? Use live chat for fastest response.
-              </p>
+              <p className="text-sm text-orange-700 dark:text-orange-300">Voting closes in 3 days. Need urgent help? Use live chat for fastest response.</p>
             </div>
           </div>
         </CardContent>
@@ -71,9 +69,7 @@ export function Support() {
               <MessageCircle className="h-8 w-8 text-primary" />
             </div>
             <h3 className="font-semibold mb-2">Live Chat</h3>
-            <p className="text-sm text-muted-foreground mb-3">
-              Instant support from our team
-            </p>
+            <p className="text-sm text-muted-foreground mb-3">Instant support from our team</p>
             <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
               <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
               Online Now
@@ -87,10 +83,8 @@ export function Support() {
               <Phone className="h-8 w-8 text-green-600" />
             </div>
             <h3 className="font-semibold mb-2">WhatsApp Support</h3>
-            <p className="text-sm text-muted-foreground mb-3">
-              Quick help via WhatsApp
-            </p>
-            <Badge variant="secondary">+1 (555) 123-4567</Badge>
+            <p className="text-sm text-muted-foreground mb-3">Quick help via WhatsApp</p>
+            <Badge variant="secondary">+44 7878619356</Badge>
           </CardContent>
         </Card>
 
@@ -100,9 +94,7 @@ export function Support() {
               <Mail className="h-8 w-8 text-blue-600" />
             </div>
             <h3 className="font-semibold mb-2">Email Support</h3>
-            <p className="text-sm text-muted-foreground mb-3">
-              Detailed help via email
-            </p>
+            <p className="text-sm text-muted-foreground mb-3">Detailed help via email</p>
             <Badge variant="outline">24hr response</Badge>
           </CardContent>
         </Card>
@@ -120,9 +112,7 @@ export function Support() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {supportCategories.map((category, index) => (
               <div key={index} className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-muted/30 transition-colors">
-                <div className="bg-primary/10 rounded-full p-2">
-                  {category.icon}
-                </div>
+                <div className="bg-primary/10 rounded-full p-2">{category.icon}</div>
                 <div className="flex-1">
                   <h4 className="font-medium mb-1">{category.title}</h4>
                   <p className="text-sm text-muted-foreground mb-2">{category.description}</p>
@@ -179,9 +169,7 @@ export function Support() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                Top 10 contestants get priority support access:
-              </p>
+              <p className="text-sm text-muted-foreground">Top 10 contestants get priority support access:</p>
               <ul className="text-sm space-y-1">
                 <li className="flex items-center">
                   <div className="w-2 h-2 bg-primary rounded-full mr-2"></div>
@@ -202,7 +190,7 @@ export function Support() {
               </ul>
               <Button variant="outline" size="sm" className="mt-3">
                 <Mail className="mr-2 h-4 w-4" />
-                vip@swingboudoir.com
+                submit@swingboudoirmag.com
               </Button>
             </div>
           </CardContent>
@@ -221,40 +209,35 @@ export function Support() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-3">
               <h4 className="font-medium text-primary">🏆 Competition & Voting</h4>
-              
+
               <details className="border rounded-lg">
-                <summary className="p-3 cursor-pointer font-medium hover:bg-muted/50 text-sm">
-                  How do I vote for my favorite model?
-                </summary>
+                <summary className="p-3 cursor-pointer font-medium hover:bg-muted/50 text-sm">How do I vote for my favorite model?</summary>
                 <div className="px-3 pb-3 text-sm text-muted-foreground">
-                  Click on any model's profile and hit the "Vote Now" button. You get 1 free vote every 24 hours per email. Want to vote more? Purchase vote packages starting at $1 for 5 votes.
+                  Click on any model's profile and hit the "Vote Now" button. You get 1 free vote every 24 hours per email. Want to vote more? Purchase vote packages starting at $1
+                  for 5 votes.
                 </div>
               </details>
 
               <details className="border rounded-lg">
-                <summary className="p-3 cursor-pointer font-medium hover:bg-muted/50 text-sm">
-                  What prizes can models win?
-                </summary>
+                <summary className="p-3 cursor-pointer font-medium hover:bg-muted/50 text-sm">What prizes can models win?</summary>
                 <div className="px-3 pb-3 text-sm text-muted-foreground">
-                  🥇 Winner: $999 cash + magazine cover + Instagram collab<br/>
-                  🖐 Top 5: Magazine feature + Hall of Fame entry<br/>
+                  🥇 Winner: $999 cash + magazine cover + Instagram collab
+                  <br />
+                  🖐 Top 5: Magazine feature + Hall of Fame entry
+                  <br />
                   🔟 Top 10: Digital interview + social spotlight
                 </div>
               </details>
 
               <details className="border rounded-lg">
-                <summary className="p-3 cursor-pointer font-medium hover:bg-muted/50 text-sm">
-                  How does the voter reward wheel work?
-                </summary>
+                <summary className="p-3 cursor-pointer font-medium hover:bg-muted/50 text-sm">How does the voter reward wheel work?</summary>
                 <div className="px-3 pb-3 text-sm text-muted-foreground">
                   After voting, spin our reward wheel to win extra votes, exclusive content access, or free digital magazine copies. Each voter gets one spin per day!
                 </div>
               </details>
 
               <details className="border rounded-lg">
-                <summary className="p-3 cursor-pointer font-medium hover:bg-muted/50 text-sm">
-                  When does voting end?
-                </summary>
+                <summary className="p-3 cursor-pointer font-medium hover:bg-muted/50 text-sm">When does voting end?</summary>
                 <div className="px-3 pb-3 text-sm text-muted-foreground">
                   Check the countdown timer on our homepage. Winners are announced within 48 hours of voting closure. Follow us on Instagram @swingboudoir for live updates!
                 </div>
@@ -263,38 +246,30 @@ export function Support() {
 
             <div className="space-y-3">
               <h4 className="font-medium text-primary">👗 For Models</h4>
-              
+
               <details className="border rounded-lg">
-                <summary className="p-3 cursor-pointer font-medium hover:bg-muted/50 text-sm">
-                  How do I join the competition?
-                </summary>
+                <summary className="p-3 cursor-pointer font-medium hover:bg-muted/50 text-sm">How do I join the competition?</summary>
                 <div className="px-3 pb-3 text-sm text-muted-foreground">
                   Reply "I'M IN" to our competition post, complete the onboarding form we send you, and submit 3-5 high-quality photos. Entry is 100% FREE!
                 </div>
               </details>
 
               <details className="border rounded-lg">
-                <summary className="p-3 cursor-pointer font-medium hover:bg-muted/50 text-sm">
-                  What photo requirements do you have?
-                </summary>
+                <summary className="p-3 cursor-pointer font-medium hover:bg-muted/50 text-sm">What photo requirements do you have?</summary>
                 <div className="px-3 pb-3 text-sm text-muted-foreground">
                   High-resolution (1080x1080+), professional lighting, boudoir/fashion appropriate, no watermarks. Must be original content you own the rights to.
                 </div>
               </details>
 
               <details className="border rounded-lg">
-                <summary className="p-3 cursor-pointer font-medium hover:bg-muted/50 text-sm">
-                  How can I promote my voting link?
-                </summary>
+                <summary className="p-3 cursor-pointer font-medium hover:bg-muted/50 text-sm">How can I promote my voting link?</summary>
                 <div className="px-3 pb-3 text-sm text-muted-foreground">
                   Share your personal voting link on Instagram, TikTok, WhatsApp, Snapchat! We provide ready-made templates and captions to help you get more votes.
                 </div>
               </details>
 
               <details className="border rounded-lg">
-                <summary className="p-3 cursor-pointer font-medium hover:bg-muted/50 text-sm">
-                  What if I'm in the Top 10?
-                </summary>
+                <summary className="p-3 cursor-pointer font-medium hover:bg-muted/50 text-sm">What if I'm in the Top 10?</summary>
                 <div className="px-3 pb-3 text-sm text-muted-foreground">
                   Top 10 models get VIP support access, dedicated account managers, and priority assistance. You'll also receive your prizes within 2-4 weeks of competition end.
                 </div>
@@ -309,15 +284,13 @@ export function Support() {
         <CardContent className="pt-6">
           <div className="text-center">
             <h3 className="text-xl font-bold mb-2">Still Need Help?</h3>
-            <p className="text-muted-foreground mb-4">
-              Our expert support team is standing by to help you succeed in the competition
-            </p>
+            <p className="text-muted-foreground mb-4">Our expert support team is standing by to help you succeed in the competition</p>
             <div className="flex flex-wrap justify-center gap-3">
               <Button onClick={openIntercom} size="lg">
                 <MessageCircle className="mr-2 h-5 w-5" />
                 Start Live Chat
               </Button>
-              <Button variant="outline" size="lg" onClick={() => window.location.href = 'mailto:support@swingboudoir.com'}>
+              <Button variant="outline" size="lg" onClick={() => (window.location.href = "mailto:submit@swingboudoirmag.com")}>
                 <Mail className="mr-2 h-5 w-5" />
                 Email Support
               </Button>

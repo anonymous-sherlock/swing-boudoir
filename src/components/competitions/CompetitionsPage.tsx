@@ -6,13 +6,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { useContests, useJoinedContests, useJoinContest, useLeaveContest, Contest } from "@/hooks/api/useContests";
-import { notificationService } from "@/lib/notificationService";
+import { useContests, useJoinedContests, useLeaveContest, Contest } from "@/hooks/api/useContests";
 import { formatUsdAbbrev } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
 import { Calendar, Gift, RefreshCw, Share, Trophy, Users, Clock, TrendingUp, Search } from "lucide-react";
 import { useQueryState } from "nuqs";
+import { ContestJoinButton } from "@/components/global";
 
 export function CompetitionsPage() {
   const { toast } = useToast();
@@ -26,17 +26,16 @@ export function CompetitionsPage() {
   // Local state for debounced search
   const [searchQuery, setSearchQuery] = useState(search || "");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(search || "");
-  
+
   // Pagination settings
   const ITEMS_PER_PAGE = 6;
   const currentPage = parseInt(page || "1", 10);
-  
+
   // Use separate hooks for different contest statuses
-  const { data: activeContestsData, isLoading: isLoadingActive } = useContests(1, 100, 'active');
-  const { data: upcomingContestsData, isLoading: isLoadingUpcoming } = useContests(1, 100, 'upcoming');
-  const { data: endedContestsData, isLoading: isLoadingEnded } = useContests(1, 100, 'ended');
+  const { data: activeContestsData, isLoading: isLoadingActive } = useContests(1, 100, "active");
+  const { data: upcomingContestsData, isLoading: isLoadingUpcoming } = useContests(1, 100, "upcoming");
+  const { data: endedContestsData, isLoading: isLoadingEnded } = useContests(1, 100, "ended");
   const { data: joinedContestsData, isLoading: isLoadingJoined } = useJoinedContests(user?.profileId || "", 1, 100);
-  const joinContestMutation = useJoinContest();
   const leaveContestMutation = useLeaveContest();
 
   // Debounce search query and update URL
@@ -65,21 +64,18 @@ export function CompetitionsPage() {
   // Filter contests by search
   const filterContestsBySearch = (contests: Contest[]) => {
     if (!debouncedSearchQuery) return contests;
-    
-    return contests.filter(contest => 
-      contest.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
-      contest.description.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
+
+    return contests.filter(
+      (contest) => contest.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) || contest.description.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
     );
   };
 
   const activeCompetitions = filterContestsBySearch(activeContests);
   const comingSoonCompetitions = filterContestsBySearch(upcomingContests);
   const endedCompetitions = filterContestsBySearch(endedContests);
-  
-  const joinedActiveCompetitions = joinedContests.filter(contest => 
-    activeContests.some(activeContest => activeContest.id === contest.id)
-  );
-  const joinedIds = new Set(joinedContests.map(c => c.id));
+
+  const joinedActiveCompetitions = joinedContests.filter((contest) => activeContests.some((activeContest) => activeContest.id === contest.id));
+  const joinedIds = new Set(joinedContests.map((c) => c.id));
 
   // Pagination calculations
   const getCurrentTabCompetitions = () => {
@@ -111,61 +107,6 @@ export function CompetitionsPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleJoinContest = async (competitionId: string, competitionName: string) => {
-    if (!user?.profileId) {
-      toast({
-        title: "Profile Required",
-        description: "Please complete your profile before joining contests",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      await joinContestMutation.mutateAsync({
-        profileId: user.profileId,
-        contestId: competitionId,
-      });
-      
-      // Trigger notification for joining competition
-      if (user?.id && user?.profileId) {
-        await notificationService.notifyCompetitionJoined(
-          user.id,
-          user.profileId,
-          competitionName
-        );
-      }
-      
-      toast({
-        title: "Success!",
-        description: `You have joined ${competitionName}`,
-      });
-    } catch (error) {
-      console.log(error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to join contest. Please try again.";
-
-      if (errorMessage.includes("must be logged in")) {
-        toast({
-          title: "Authentication Required",
-          description: "Please log in to join contests",
-          variant: "destructive",
-        });
-      } else if (errorMessage.includes("Profile setup required")) {
-        toast({
-          title: "Profile Setup Required",
-          description: "Please complete your profile before joining contests",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: errorMessage,
-          variant: "destructive",
-        });
-      }
-    }
-  };
-
   const handleLeaveContest = async (competitionId: string, competitionName: string) => {
     if (!user?.profileId) {
       toast({
@@ -181,12 +122,11 @@ export function CompetitionsPage() {
         contestId: competitionId,
         profileId: user.profileId,
       });
-      
+
       toast({
         title: "Success!",
         description: `You have left ${competitionName}`,
       });
-      
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to leave contest. Please try again.";
       toast({
@@ -215,7 +155,7 @@ export function CompetitionsPage() {
   const getStatusBadge = (contest: Contest) => {
     // Map API status to display status
     const status = contest.status;
-    
+
     switch (status) {
       case "ACTIVE":
       case "VOTING":
@@ -267,18 +207,9 @@ export function CompetitionsPage() {
       <div className="mb-6">
         <div className="relative max-w-md mx-auto">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input 
-            placeholder="Search competitions..." 
-            value={searchQuery} 
-            onChange={(e) => setSearchQuery(e.target.value)} 
-            className="pl-10"
-          />
+          <Input placeholder="Search competitions..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
         </div>
-        {debouncedSearchQuery && (
-          <div className="text-center mt-2 text-sm text-gray-600">
-            Searching for "{debouncedSearchQuery}"...
-          </div>
-        )}
+        {debouncedSearchQuery && <div className="text-center mt-2 text-sm text-gray-600">Searching for "{debouncedSearchQuery}"...</div>}
       </div>
 
       {/* Stats Overview Section */}
@@ -392,11 +323,12 @@ export function CompetitionsPage() {
                               <div className="text-sm">
                                 <span className="font-medium text-gray-700">Awards Available:</span>
                                 <div className="mt-1 flex flex-wrap gap-1">
-                                  {contest.awards && contest.awards.slice(0, 2).map((award) => (
-                                    <Badge key={award.id} variant="outline" className="text-xs">
-                                      {award.icon} {award.name}
-                                    </Badge>
-                                  ))}
+                                  {contest.awards &&
+                                    contest.awards.slice(0, 2).map((award) => (
+                                      <Badge key={award.id} variant="outline" className="text-xs">
+                                        {award.icon} {award.name}
+                                      </Badge>
+                                    ))}
                                   {contest.awards && contest.awards.length > 2 && (
                                     <Badge variant="outline" className="text-xs">
                                       +{contest.awards.length - 2} more
@@ -414,12 +346,7 @@ export function CompetitionsPage() {
                                 Share Profile
                               </Button>
                             ) : (
-                              <Button 
-                                onClick={() => handleJoinContest(contest.id, contest.name)}
-                                disabled={joinContestMutation.isPending}
-                              >
-                                {joinContestMutation.isPending ? "Joining..." : "Join Contest"}
-                              </Button>
+                              <ContestJoinButton contest={contest} />
                             )}
                             <Button variant="outline" asChild>
                               <Link to={`/competitions/$slug`} params={{ slug: contest.slug }}>
@@ -429,9 +356,7 @@ export function CompetitionsPage() {
                           </div>
                         </div>
 
-                        <div className="w-full lg:w-80">
-                          {renderCoverImage(contest)}
-                        </div>
+                        <div className="w-full lg:w-80">{renderCoverImage(contest)}</div>
                       </div>
                     </CardContent>
                   </Card>
@@ -441,12 +366,7 @@ export function CompetitionsPage() {
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-center space-x-2 mt-8">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handlePageChange(currentPage - 1)} 
-                    disabled={currentPage <= 1}
-                  >
+                  <Button variant="outline" size="sm" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage <= 1}>
                     Previous
                   </Button>
 
@@ -464,25 +384,14 @@ export function CompetitionsPage() {
                       }
 
                       return (
-                        <Button 
-                          key={pageNum} 
-                          variant={currentPage === pageNum ? "default" : "outline"} 
-                          size="sm" 
-                          onClick={() => handlePageChange(pageNum)} 
-                          className="w-10 h-10"
-                        >
+                        <Button key={pageNum} variant={currentPage === pageNum ? "default" : "outline"} size="sm" onClick={() => handlePageChange(pageNum)} className="w-10 h-10">
                           {pageNum}
                         </Button>
                       );
                     })}
                   </div>
 
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handlePageChange(currentPage + 1)} 
-                    disabled={currentPage >= totalPages}
-                  >
+                  <Button variant="outline" size="sm" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage >= totalPages}>
                     Next
                   </Button>
                 </div>
@@ -505,99 +414,85 @@ export function CompetitionsPage() {
             <>
               <div className="grid grid-cols-1 gap-6">
                 {paginatedCompetitions.map((contest) => (
-                <Card key={contest.id} className="border border-gray-200 hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex flex-col lg:flex-row gap-6">
-                      <div className="flex-1 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-xl font-bold text-gray-900 flex items-center">
-                            <Gift className="mr-2 h-5 w-5 text-gray-600" />
-                            {contest.name}
-                          </h3>
-                          {getStatusBadge(contest)}
-                        </div>
-
-                        <p className="text-gray-900 font-semibold">{formatPrize(contest.prizePool)} Prize Pool</p>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Calendar className="mr-1 h-4 w-4" />
-                            <span>Starts {formatDistanceToNow(new Date(contest.startDate), { addSuffix: true })}</span>
+                  <Card key={contest.id} className="border border-gray-200 hover:shadow-md transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex flex-col lg:flex-row gap-6">
+                        <div className="flex-1 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-xl font-bold text-gray-900 flex items-center">
+                              <Gift className="mr-2 h-5 w-5 text-gray-600" />
+                              {contest.name}
+                            </h3>
+                            {getStatusBadge(contest)}
                           </div>
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Calendar className="mr-1 h-4 w-4" />
-                            <span>Ends {formatDistanceToNow(new Date(contest.endDate), { addSuffix: true })}</span>
-                          </div>
-                        </div>
 
-                        <div className="space-y-2">
-                          <div className="text-sm">
-                            <span className="font-medium text-gray-700">Awards:</span>
-                            <ul className="mt-1 space-y-1">
-                              {contest.awards.slice(0, 3).map((award) => (
-                                <li key={award.id} className="text-gray-600">
-                                  {award.icon} {award.name}
-                                </li>
-                              ))}
-                              {contest.awards.length > 3 && <li className="text-gray-600">+{contest.awards.length - 3} more</li>}
-                            </ul>
-                          </div>
-                        </div>
+                          <p className="text-gray-900 font-semibold">{formatPrize(contest.prizePool)} Prize Pool</p>
 
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Users className="mr-1 h-4 w-4" />
-                          {contest.awards.length} award{contest.awards.length !== 1 ? "s" : ""} available
-                        </div>
-                      </div>
-
-                      <div className="w-full lg:w-80 relative">
-                        {/* Badge on top right of image */}
-                        <div className="absolute top-2 right-2 z-10">
-                          <Badge className="bg-blue-500 text-white text-xs px-2 py-1">
-                            Upcoming
-                          </Badge>
-                        </div>
-                        {renderCoverImage(contest)}
-                        
-                        {/* Prebook button on right side */}
-                        <div className="mt-4">
-                          {joinedIds.has(contest.id) ? (
-                            <div className="w-full p-3 bg-green-50 border border-green-200 rounded-md text-center">
-                              <div className="flex items-center justify-center space-x-2 text-green-700">
-                                <Trophy className="h-4 w-4" />
-                                <span className="font-medium">Your Slot is Booked!</span>
-                              </div>
-                              <p className="text-sm text-green-600 mt-1">You're all set for this competition</p>
-                              
-                              {/* Remove Slot Button */}
-                            
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="flex items-center text-sm text-gray-600">
+                              <Calendar className="mr-1 h-4 w-4" />
+                              <span>Starts {formatDistanceToNow(new Date(contest.startDate), { addSuffix: true })}</span>
                             </div>
-                          ) : (
-                            <Button 
-                              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-                              onClick={() => handleJoinContest(contest.id, contest.name)}
-                              disabled={joinContestMutation.isPending}
-                            >
-                              {joinContestMutation.isPending ? "Joining..." : "Prebook Your Slot"}
-                            </Button>
-                          )}
+                            <div className="flex items-center text-sm text-gray-600">
+                              <Calendar className="mr-1 h-4 w-4" />
+                              <span>Ends {formatDistanceToNow(new Date(contest.endDate), { addSuffix: true })}</span>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <div className="text-sm">
+                              <span className="font-medium text-gray-700">Awards:</span>
+                              <ul className="mt-1 space-y-1">
+                                {contest.awards.slice(0, 3).map((award) => (
+                                  <li key={award.id} className="text-gray-600">
+                                    {award.icon} {award.name}
+                                  </li>
+                                ))}
+                                {contest.awards.length > 3 && <li className="text-gray-600">+{contest.awards.length - 3} more</li>}
+                              </ul>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center text-sm text-gray-600">
+                            <Users className="mr-1 h-4 w-4" />
+                            {contest.awards.length} award{contest.awards.length !== 1 ? "s" : ""} available
+                          </div>
+                        </div>
+
+                        <div className="w-full lg:w-80 relative">
+                          {/* Badge on top right of image */}
+                          <div className="absolute top-2 right-2 z-10">
+                            <Badge className="bg-blue-500 text-white text-xs px-2 py-1">Upcoming</Badge>
+                          </div>
+                          {renderCoverImage(contest)}
+
+                          {/* Prebook button on right side */}
+                          <div className="mt-4">
+                            {joinedIds.has(contest.id) ? (
+                              <div className="w-full p-3 bg-green-50 border border-green-200 rounded-md text-center">
+                                <div className="flex items-center justify-center space-x-2 text-green-700">
+                                  <Trophy className="h-4 w-4" />
+                                  <span className="font-medium">Your Slot is Booked!</span>
+                                </div>
+                                <p className="text-sm text-green-600 mt-1">You're all set for this competition</p>
+
+                                {/* Remove Slot Button */}
+                              </div>
+                            ) : (
+                              <ContestJoinButton contest={contest} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" customButtonText="Prebook Your Slot" />
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
 
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-center space-x-2 mt-8">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handlePageChange(currentPage - 1)} 
-                    disabled={currentPage <= 1}
-                  >
+                  <Button variant="outline" size="sm" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage <= 1}>
                     Previous
                   </Button>
 
@@ -615,25 +510,14 @@ export function CompetitionsPage() {
                       }
 
                       return (
-                        <Button 
-                          key={pageNum} 
-                          variant={currentPage === pageNum ? "default" : "outline"} 
-                          size="sm" 
-                          onClick={() => handlePageChange(pageNum)} 
-                          className="w-10 h-10"
-                        >
+                        <Button key={pageNum} variant={currentPage === pageNum ? "default" : "outline"} size="sm" onClick={() => handlePageChange(pageNum)} className="w-10 h-10">
                           {pageNum}
                         </Button>
                       );
                     })}
                   </div>
 
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handlePageChange(currentPage + 1)} 
-                    disabled={currentPage >= totalPages}
-                  >
+                  <Button variant="outline" size="sm" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage >= totalPages}>
                     Next
                   </Button>
                 </div>
@@ -656,66 +540,59 @@ export function CompetitionsPage() {
             <>
               <div className="grid grid-cols-1 gap-6">
                 {paginatedCompetitions.map((contest) => (
-                <Card key={contest.id} className="border border-gray-200 hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex flex-col lg:flex-row gap-6">
-                      <div className="flex-1 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-xl font-bold text-gray-900 flex items-center">
-                            <Trophy className="mr-2 h-5 w-5 text-gray-600" />
-                            {contest.name}
-                          </h3>
-                          {getStatusBadge(contest)}
-                        </div>
+                  <Card key={contest.id} className="border border-gray-200 hover:shadow-md transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex flex-col lg:flex-row gap-6">
+                        <div className="flex-1 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-xl font-bold text-gray-900 flex items-center">
+                              <Trophy className="mr-2 h-5 w-5 text-gray-600" />
+                              {contest.name}
+                            </h3>
+                            {getStatusBadge(contest)}
+                          </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <p className="text-gray-900 font-semibold">{formatPrize(contest.prizePool)} Prize Pool</p>
-                            <div className="flex items-center text-sm text-gray-600">
-                              <Calendar className="mr-1 h-4 w-4" />
-                              <span>Ended {formatDistanceToNow(new Date(contest.endDate), { addSuffix: true })}</span>
-                            </div>
-                            {contest.winnerProfileId && (
-                              <div className="flex items-center text-sm text-gray-600 mt-1">
-                                <Trophy className="mr-1 h-4 w-4" />
-                                Winner announced
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-gray-900 font-semibold">{formatPrize(contest.prizePool)} Prize Pool</p>
+                              <div className="flex items-center text-sm text-gray-600">
+                                <Calendar className="mr-1 h-4 w-4" />
+                                <span>Ended {formatDistanceToNow(new Date(contest.endDate), { addSuffix: true })}</span>
                               </div>
-                            )}
+                              {contest.winnerProfileId && (
+                                <div className="flex items-center text-sm text-gray-600 mt-1">
+                                  <Trophy className="mr-1 h-4 w-4" />
+                                  Winner announced
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-center p-4 bg-primary/10 rounded-lg">
+                              <Trophy className="mx-auto h-8 w-8 text-primary mb-2" />
+                              <p className="font-semibold">Competition Completed</p>
+                              <p className="text-sm text-muted-foreground">Final results available</p>
+                            </div>
                           </div>
-                          <div className="text-center p-4 bg-primary/10 rounded-lg">
-                            <Trophy className="mx-auto h-8 w-8 text-primary mb-2" />
-                            <p className="font-semibold">Competition Completed</p>
-                            <p className="text-sm text-muted-foreground">Final results available</p>
+
+                          <div className="flex gap-2">
+                            <Button variant="outline" asChild>
+                              <Link to={`/competitions/$slug`} params={{ slug: contest.slug }}>
+                                View Details
+                              </Link>
+                            </Button>
                           </div>
                         </div>
 
-                        <div className="flex gap-2">
-                          <Button variant="outline" asChild>
-                            <Link to={`/competitions/$slug`} params={{ slug: contest.slug }}>
-                              View Details
-                            </Link>
-                          </Button>
-                        </div>
+                        <div className="w-full lg:w-80">{renderCoverImage(contest)}</div>
                       </div>
-
-                      <div className="w-full lg:w-80">
-                        {renderCoverImage(contest)}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
 
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-center space-x-2 mt-8">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handlePageChange(currentPage - 1)} 
-                    disabled={currentPage <= 1}
-                  >
+                  <Button variant="outline" size="sm" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage <= 1}>
                     Previous
                   </Button>
 
@@ -733,25 +610,14 @@ export function CompetitionsPage() {
                       }
 
                       return (
-                        <Button 
-                          key={pageNum} 
-                          variant={currentPage === pageNum ? "default" : "outline"} 
-                          size="sm" 
-                          onClick={() => handlePageChange(pageNum)} 
-                          className="w-10 h-10"
-                        >
+                        <Button key={pageNum} variant={currentPage === pageNum ? "default" : "outline"} size="sm" onClick={() => handlePageChange(pageNum)} className="w-10 h-10">
                           {pageNum}
                         </Button>
                       );
                     })}
                   </div>
 
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handlePageChange(currentPage + 1)} 
-                    disabled={currentPage >= totalPages}
-                  >
+                  <Button variant="outline" size="sm" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage >= totalPages}>
                     Next
                   </Button>
                 </div>
