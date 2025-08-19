@@ -55,13 +55,26 @@ export function CompetitionsPage() {
     setSearchQuery(search || "");
   }, [search]);
 
-  // Extract contests from the responses
-  const activeContests = activeContestsData?.data || [];
-  const upcomingContests = upcomingContestsData?.data || [];
-  const endedContests = endedContestsData?.data || [];
+  // Extract contests from the response
+  const allContests = [...(activeContestsData?.data || []), ...(upcomingContestsData?.data || []), ...(endedContestsData?.data || [])];
   const joinedContests = joinedContestsData?.data || [];
 
-  // Filter contests by search
+  // Helper function to determine competition status
+  const getCompetitionStatus = (contest: Contest) => {
+    const now = new Date();
+    const startDate = new Date(contest.startDate);
+    const endDate = new Date(contest.endDate);
+
+    if (contest.status === "COMPLETED" || now > endDate) {
+      return "ended";
+    } else if (now >= startDate && now <= endDate) {
+      return "active";
+    } else {
+      return "coming-soon";
+    }
+  };
+
+  // Filter contests by status and search
   const filterContestsBySearch = (contests: Contest[]) => {
     if (!debouncedSearchQuery) return contests;
 
@@ -70,11 +83,11 @@ export function CompetitionsPage() {
     );
   };
 
-  const activeCompetitions = filterContestsBySearch(activeContests);
-  const comingSoonCompetitions = filterContestsBySearch(upcomingContests);
-  const endedCompetitions = filterContestsBySearch(endedContests);
+  const activeCompetitions = filterContestsBySearch(allContests.filter((contest) => getCompetitionStatus(contest) === "active"));
+  const comingSoonCompetitions = filterContestsBySearch(allContests.filter((contest) => getCompetitionStatus(contest) === "coming-soon"));
+  const endedCompetitions = filterContestsBySearch(allContests.filter((contest) => getCompetitionStatus(contest) === "ended"));
 
-  const joinedActiveCompetitions = joinedContests.filter((contest) => activeContests.some((activeContest) => activeContest.id === contest.id));
+  const joinedActiveCompetitions = joinedContests.filter((contest) => getCompetitionStatus(contest) === "active");
   const joinedIds = new Set(joinedContests.map((c) => c.id));
 
   // Pagination calculations
@@ -155,7 +168,6 @@ export function CompetitionsPage() {
   const getStatusBadge = (contest: Contest) => {
     // Map API status to display status
     const status = contest.status;
-
     switch (status) {
       case "ACTIVE":
       case "VOTING":
@@ -349,7 +361,7 @@ export function CompetitionsPage() {
                               <ContestJoinButton contest={contest} />
                             )}
                             <Button variant="outline" asChild>
-                              <Link to={`/competitions/$slug`} params={{ slug: contest.slug }}>
+                              <Link to="/competitions/$slug" params={{ slug: contest.slug }}>
                                 View Details
                               </Link>
                             </Button>
@@ -443,19 +455,19 @@ export function CompetitionsPage() {
                             <div className="text-sm">
                               <span className="font-medium text-gray-700">Awards:</span>
                               <ul className="mt-1 space-y-1">
-                                {contest.awards.slice(0, 3).map((award) => (
+                                {contest.awards?.slice(0, 3).map((award) => (
                                   <li key={award.id} className="text-gray-600">
                                     {award.icon} {award.name}
                                   </li>
-                                ))}
-                                {contest.awards.length > 3 && <li className="text-gray-600">+{contest.awards.length - 3} more</li>}
+                                )) || <li className="text-gray-600">No awards specified</li>}
+                                {contest.awards && contest.awards.length > 3 && <li className="text-gray-600">+{contest.awards.length - 3} more</li>}
                               </ul>
                             </div>
                           </div>
 
                           <div className="flex items-center text-sm text-gray-600">
                             <Users className="mr-1 h-4 w-4" />
-                            {contest.awards.length} award{contest.awards.length !== 1 ? "s" : ""} available
+                            {contest.awards?.length || 0} award{(contest.awards?.length || 0) !== 1 ? "s" : ""} available
                           </div>
                         </div>
 
@@ -575,7 +587,7 @@ export function CompetitionsPage() {
 
                           <div className="flex gap-2">
                             <Button variant="outline" asChild>
-                              <Link to={`/competitions/$slug`} params={{ slug: contest.slug }}>
+                              <Link to="/competitions/$slug" params={{ slug: contest.slug }}>
                                 View Details
                               </Link>
                             </Button>
