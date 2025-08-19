@@ -5,78 +5,41 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/api/useProfile";
 import { useToast } from "@/hooks/use-toast";
-import { useCompetitions } from "@/hooks/useCompetitions";
+import { useJoinedContests, Contest, Award } from "@/hooks/api/useContests";
 import { formatUsdAbbrev } from "@/lib/utils";
-import { Award, Competition as CompetitionType } from "@/types/competitions.types";
 import { Link } from "@tanstack/react-router";
 import { getSocialMediaUrls } from "@/utils/social-media";
 import { formatDistanceToNow } from "date-fns";
 import { AlertCircle, Camera, Clock, Edit, Eye, Facebook, Gift, Globe, Instagram, MapPin, RefreshCw, Share2, TrendingUp, Trophy, Twitter, Users, Youtube } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Icons } from "../icons";
+import { Lightbox } from "../Lightbox";
 
-interface UserStats {
-  totalVotes: number;
-  ranking: number;
-  totalParticipants: number;
-  votesNeededForFirst: number;
-  totalCompetitions: number;
-  activeCompetitions: number;
-  completedCompetitions: number;
-  totalEarnings: number;
-}
+
 
 export function PublicProfile() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [timeLeft, setTimeLeft] = useState<{ [key: string]: string }>({});
   const [error, setError] = useState<string | null>(null);
+  const [lightboxImage, setLightboxImage] = useState<{ url: string; caption: string } | null>(null);
 
   // Use the useProfile hook to fetch profile data by username
-  const { useProfileByUsername } = useProfile();
+  const { useProfileByUsername, useProfileStats } = useProfile();
   const { data: userProfile, isLoading: isLoadingProfile, error: profileError, refetch: refetchProfile } = useProfileByUsername(user?.username || "");
+  
+  // Use the new profile stats hook
+  const { data: profileStats, isLoading: isLoadingStats, error: statsError } = useProfileStats(userProfile?.id || "");
 
-  const { joinedCompetitions, isLoadingJoined } = useCompetitions();
-
-  // Fetch user stats
-  const fetchUserStats = useCallback(async () => {
-    if (!user?.id) return;
-
-    try {
-      setError(null);
-      const token = localStorage.getItem("token");
-      const response = await fetch(`/api/v1/users/${user.id}/stats`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (response.ok) {
-        const statsData = await response.json();
-        setUserStats(statsData);
-      } else {
-        throw new Error("Failed to fetch user stats");
-      }
-    } catch (error) {
-      console.error("Error fetching user stats:", error);
-      // setError('Failed to load user statistics');
-    }
-  }, [user?.id]);
-
-  useEffect(() => {
-    if (user?.id) {
-      fetchUserStats();
-    }
-  }, [user?.id, fetchUserStats]);
+  const { data: joinedContestsData, isLoading: isLoadingJoined } = useJoinedContests(user?.profileId || "", 1, 50);
+  const joinedCompetitions = joinedContestsData?.data || [];
 
   // Countdown timer for joined contests
   useEffect(() => {
     const timer = setInterval(() => {
       const newTimeLeft: { [key: string]: string } = {};
 
-      (joinedCompetitions || []).forEach((competition: CompetitionType) => {
+      (joinedCompetitions || []).forEach((competition: Contest) => {
         const now = new Date().getTime();
         const end = new Date(competition.endDate).getTime();
         const difference = end - now;
@@ -125,7 +88,15 @@ export function PublicProfile() {
     });
   };
 
-  const computeStatusForContest = (contest: CompetitionType): "active" | "coming-soon" | "ended" => {
+  const handleImageClick = (image: { url: string; caption: string }) => {
+    setLightboxImage(image);
+  };
+
+  const closeLightbox = () => {
+    setLightboxImage(null);
+  };
+
+  const computeStatusForContest = (contest: Contest): "active" | "coming-soon" | "ended" => {
     const now = new Date();
     const start = new Date(contest.startDate);
     const end = new Date(contest.endDate);
@@ -376,23 +347,38 @@ export function PublicProfile() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">#{userStats?.ranking || 0}</p>
-                  <p className="text-gray-600 text-sm font-medium">Current Rank</p>
+          {isLoadingStats ? (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {[...Array(4)].map((_, index) => (
+                <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="h-8 bg-gray-200 rounded animate-pulse mb-2"></div>
+                      <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                    </div>
+                    <div className="w-10 h-10 bg-gray-200 rounded-full animate-pulse"></div>
+                  </div>
                 </div>
-                <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                  <Trophy className="h-5 w-5 text-gray-600" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">#{profileStats?.currentRank || 0}</p>
+                    <p className="text-gray-600 text-sm font-medium">Current Rank</p>
+                  </div>
+                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                    <Trophy className="h-5 w-5 text-gray-600" />
+                  </div>
                 </div>
               </div>
-            </div>
 
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">{joinedCompetitions?.length || 0}</p>
+                  <p className="text-2xl font-bold text-gray-900">{profileStats?.totalCompetitions || 0}</p>
                   <p className="text-gray-600 text-sm font-medium">Competitions</p>
                 </div>
                 <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
@@ -404,7 +390,7 @@ export function PublicProfile() {
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">{formatUsdAbbrev(userStats?.totalEarnings || 0)}</p>
+                  <p className="text-2xl font-bold text-gray-900">{formatUsdAbbrev(profileStats?.totalEarnings || 0)}</p>
                   <p className="text-gray-600 text-sm font-medium">Total Earnings</p>
                 </div>
                 <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
@@ -416,7 +402,7 @@ export function PublicProfile() {
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">{activeCompetitions.length}</p>
+                  <p className="text-2xl font-bold text-gray-900">{profileStats?.activeContests || 0}</p>
                   <p className="text-gray-600 text-sm font-medium">Active Now</p>
                 </div>
                 <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
@@ -425,6 +411,7 @@ export function PublicProfile() {
               </div>
             </div>
           </div>
+          )}
         </CardContent>
       </Card>
 
@@ -477,12 +464,12 @@ export function PublicProfile() {
                         <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                         <span className="text-xl font-bold text-gray-800">Active Competitions</span>
                       </CardTitle>
-                      <Badge className="bg-gray-100 text-gray-700 text-sm px-3 py-1 w-fit">{activeCompetitions.length} Live Now</Badge>
+                      <Badge className="bg-gray-100 text-gray-700 hover:bg-gray-100 text-sm px-3 py-1 w-fit">{activeCompetitions.length} Live Now</Badge>
                     </div>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 gap-6">
-                      {activeCompetitions.map((competition: CompetitionType) => (
+                      {activeCompetitions.map((competition: Contest) => (
                         <Card key={competition.id} className="border border-gray-200 hover:shadow-md transition-shadow">
                           <CardContent className="p-6">
                             <div className="flex flex-col lg:flex-row gap-6">
@@ -574,7 +561,7 @@ export function PublicProfile() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      {comingSoonCompetitions.slice(0, 3).map((competition: CompetitionType) => (
+                      {comingSoonCompetitions.slice(0, 3).map((competition: Contest) => (
                         <div key={competition.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                           <div className="flex items-center justify-between mb-2">
                             <h4 className="font-semibold text-gray-900 text-sm">{competition.name}</h4>
@@ -601,7 +588,7 @@ export function PublicProfile() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      {endedCompetitions.slice(0, 3).map((competition: CompetitionType) => (
+                      {endedCompetitions.slice(0, 3).map((competition: Contest) => (
                         <div key={competition.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                           <div className="flex items-center justify-between mb-2">
                             <h4 className="font-semibold text-gray-900 text-sm">{competition.name}</h4>
@@ -664,7 +651,17 @@ export function PublicProfile() {
                       />
                       <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-lg flex items-center justify-center">
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                          <Button variant="outline" size="sm" className="bg-white text-gray-900 hover:bg-gray-100">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="bg-white text-gray-900 hover:bg-gray-100"
+                            onClick={() =>
+                              setLightboxImage({
+                                url: photo.url,
+                                caption: photo?.caption ?? ""
+                              })
+                            }
+                          >
                             <Eye className="h-4 w-4 mr-2" />
                             View
                           </Button>
@@ -694,6 +691,9 @@ export function PublicProfile() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Lightbox */}
+      {lightboxImage && <Lightbox image={lightboxImage} onClose={() => setLightboxImage(null)} />}
     </div>
   );
 }

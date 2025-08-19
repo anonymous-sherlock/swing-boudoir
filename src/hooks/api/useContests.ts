@@ -172,14 +172,15 @@ export interface JoinContestData {
 }
 
 // Hook for getting contest list with pagination
-export function useContests(page: number = 1, limit: number = 20) {
+export function useContests(page: number = 1, limit: number = 20, status: "active" | "upcoming" | "all" | "ended" = "all") {
   return useQuery({
-    queryKey: ['contests', page, limit],
+    queryKey: ['contests', page, limit, status],
     queryFn: async () => {
       const response = await hc.getApiv1contest({
         queries: {
           page,
-          limit
+          limit,
+          status
         }
       })
 

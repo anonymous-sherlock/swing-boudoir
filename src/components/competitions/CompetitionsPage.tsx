@@ -10,7 +10,7 @@ import { useContests, useJoinedContests, useJoinContest, useLeaveContest, Contes
 import { notificationService } from "@/lib/notificationService";
 import { formatUsdAbbrev } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
-import { formatDistanceToNow, isAfter, isBefore, startOfDay } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 import { Calendar, Gift, RefreshCw, Share, Trophy, Users, Clock, TrendingUp, Search } from "lucide-react";
 import { useQueryState } from "nuqs";
 
@@ -31,8 +31,10 @@ export function CompetitionsPage() {
   const ITEMS_PER_PAGE = 6;
   const currentPage = parseInt(page || "1", 10);
   
-  // Use the useContests hooks
-  const { data: contestsData, isLoading } = useContests(1, 100); // Get all contests for filtering
+  // Use separate hooks for different contest statuses
+  const { data: activeContestsData, isLoading: isLoadingActive } = useContests(1, 100, 'active');
+  const { data: upcomingContestsData, isLoading: isLoadingUpcoming } = useContests(1, 100, 'upcoming');
+  const { data: endedContestsData, isLoading: isLoadingEnded } = useContests(1, 100, 'ended');
   const { data: joinedContestsData, isLoading: isLoadingJoined } = useJoinedContests(user?.profileId || "", 1, 100);
   const joinContestMutation = useJoinContest();
   const leaveContestMutation = useLeaveContest();
@@ -54,26 +56,13 @@ export function CompetitionsPage() {
     setSearchQuery(search || "");
   }, [search]);
 
-  // Extract contests from the response
-  const allContests = contestsData?.data || [];
+  // Extract contests from the responses
+  const activeContests = activeContestsData?.data || [];
+  const upcomingContests = upcomingContestsData?.data || [];
+  const endedContests = endedContestsData?.data || [];
   const joinedContests = joinedContestsData?.data || [];
 
-  // Filter contests by status
-  const getCompetitionStatus = (contest: Contest): "active" | "coming-soon" | "ended" => {
-    const now = startOfDay(new Date());
-    const startDate = startOfDay(new Date(contest.startDate));
-    const endDate = startOfDay(new Date(contest.endDate));
-
-    if (isAfter(now, endDate)) {
-      return "ended";
-    } else if (isBefore(now, startDate)) {
-      return "coming-soon";
-    } else {
-      return "active";
-    }
-  };
-
-  // Filter contests by status and search
+  // Filter contests by search
   const filterContestsBySearch = (contests: Contest[]) => {
     if (!debouncedSearchQuery) return contests;
     
@@ -83,11 +72,13 @@ export function CompetitionsPage() {
     );
   };
 
-  const activeCompetitions = filterContestsBySearch(allContests.filter(contest => getCompetitionStatus(contest) === "active"));
-  const comingSoonCompetitions = filterContestsBySearch(allContests.filter(contest => getCompetitionStatus(contest) === "coming-soon"));
-  const endedCompetitions = filterContestsBySearch(allContests.filter(contest => getCompetitionStatus(contest) === "ended"));
+  const activeCompetitions = filterContestsBySearch(activeContests);
+  const comingSoonCompetitions = filterContestsBySearch(upcomingContests);
+  const endedCompetitions = filterContestsBySearch(endedContests);
   
-  const joinedActiveCompetitions = joinedContests.filter(contest => getCompetitionStatus(contest) === "active");
+  const joinedActiveCompetitions = joinedContests.filter(contest => 
+    activeContests.some(activeContest => activeContest.id === contest.id)
+  );
   const joinedIds = new Set(joinedContests.map(c => c.id));
 
   // Pagination calculations
@@ -221,14 +212,23 @@ export function CompetitionsPage() {
     }
   };
 
-  const getStatusBadge = (status: "active" | "coming-soon" | "ended") => {
+  const getStatusBadge = (contest: Contest) => {
+    // Map API status to display status
+    const status = contest.status;
+    
     switch (status) {
-      case "active":
+      case "ACTIVE":
+      case "VOTING":
+      case "JUDGING":
         return <Badge className="bg-green-500">Active</Badge>;
-      case "ended":
+      case "COMPLETED":
         return <Badge variant="secondary">Completed</Badge>;
-      case "coming-soon":
+      case "PUBLISHED":
+      case "DRAFT":
         return <Badge variant="outline">Upcoming</Badge>;
+      case "CANCELLED":
+      case "SUSPENDED":
+        return <Badge variant="destructive">Cancelled</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -238,6 +238,8 @@ export function CompetitionsPage() {
     const coverUrl = contest.images?.[0]?.url || "/placeholder.svg";
     return <img src={coverUrl} alt={contest.name} className="w-full aspect-video object-cover rounded-md" loading="lazy" />;
   };
+
+  const isLoading = isLoadingActive || isLoadingUpcoming || isLoadingEnded;
 
   if (isLoading) {
     return (
@@ -374,7 +376,7 @@ export function CompetitionsPage() {
                               <Trophy className="mr-2 h-5 w-5 text-gray-600" />
                               {contest.name}
                             </h3>
-                            {getStatusBadge("active")}
+                            {getStatusBadge(contest)}
                           </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -512,7 +514,7 @@ export function CompetitionsPage() {
                             <Gift className="mr-2 h-5 w-5 text-gray-600" />
                             {contest.name}
                           </h3>
-                          {getStatusBadge("coming-soon")}
+                          {getStatusBadge(contest)}
                         </div>
 
                         <p className="text-gray-900 font-semibold">{formatPrize(contest.prizePool)} Prize Pool</p>
@@ -663,7 +665,7 @@ export function CompetitionsPage() {
                             <Trophy className="mr-2 h-5 w-5 text-gray-600" />
                             {contest.name}
                           </h3>
-                          {getStatusBadge("ended")}
+                          {getStatusBadge(contest)}
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

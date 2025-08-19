@@ -1,13 +1,13 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { useState } from 'react';
-import { Profile, useProfiles, useDeleteProfile } from '@/hooks/useProfiles';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Search, Plus, Edit, Trash2, Eye, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
-import { format } from 'date-fns';
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Search, Plus, Edit, Trash2, Eye, ChevronLeft, ChevronRight, Filter } from "lucide-react";
+import { format } from "date-fns";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,27 +17,25 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Link } from '@tanstack/react-router';
+} from "@/components/ui/alert-dialog";
+import { Link } from "@tanstack/react-router";
+import type { Profile } from "@/hooks/api/useProfile";
+import { useProfile } from "@/hooks/api/useProfile";
 
-export const Route = createFileRoute('/admin/profiles')({
+export const Route = createFileRoute("/admin/profiles")({
   component: () => <ProfilesPage />,
 });
 
 function ProfilesPage() {
   const [page, setPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [limit] = useState(20);
   const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
   const [profileToDelete, setProfileToDelete] = useState<Profile | null>(null);
+  const { deleteProfile, useProfileList } = useProfile();
 
-  const {
-    data: profilesData,
-    isLoading: useProfilesIsLoading,
-    error: useProfilesError,
-  } = useProfiles(page, limit);
-  const { mutateAsync: deleteProfileMutateAsync, isPending: deleteProfileIsPending } =
-    useDeleteProfile();
+  const { data: profilesData, isLoading: useProfilesIsLoading, error: useProfilesError } = useProfileList({ page, limit });
+  const { mutateAsync: deleteProfileMutateAsync, isPending: deleteProfileIsPending } = deleteProfile;
 
   const handleDeleteProfile = async () => {
     if (!profileToDelete) return;
@@ -46,13 +44,13 @@ function ProfilesPage() {
       setIsDeleteOpen(false);
       setProfileToDelete(null);
     } catch (error) {
-      console.error('Failed to delete profile:', error);
+      console.error("Failed to delete profile:", error);
     }
   };
 
   const filteredProfiles =
     profilesData?.data.filter(
-      profile =>
+      (profile) =>
         profile.bio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         profile.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         profile.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -98,9 +96,7 @@ function ProfilesPage() {
         </div>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-center text-red-600">
-              Error loading profiles. Please try again.
-            </div>
+            <div className="text-center text-red-600">Error loading profiles. Please try again.</div>
           </CardContent>
         </Card>
       </div>
@@ -112,9 +108,7 @@ function ProfilesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Profiles</h1>
-          <p className="text-muted-foreground">
-            Manage all user profiles in the system. Total: {profilesData?.pagination.total || 0}
-          </p>
+          <p className="text-muted-foreground">Manage all user profiles in the system. Total: {profilesData?.pagination.total || 0}</p>
         </div>
         <Button>
           <Plus className="w-4 h-4 mr-2" />
@@ -126,12 +120,7 @@ function ProfilesPage() {
       <div className="flex gap-4">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-          <Input
-            placeholder="Search profiles..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+          <Input placeholder="Search profiles..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
         </div>
         <Button variant="outline">
           <Filter className="w-4 h-4 mr-2" />
@@ -141,33 +130,26 @@ function ProfilesPage() {
 
       {/* Profiles Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filteredProfiles.map(profile => {
+        {filteredProfiles.map((profile) => {
           return (
             <Card key={profile.id} className="hover:shadow-md transition-shadow duration-300">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <Avatar className="w-12 h-12">
-                      <AvatarImage
-                        src={profile.coverImage?.url || undefined}
-                        className="object-cover w-full h-full"
-                      />
-                      <AvatarFallback>
-                        {profile.user.username.charAt(0)?.toUpperCase() || 'P'}
-                      </AvatarFallback>
+                      <AvatarImage src={profile.coverImage?.url || undefined} className="object-cover w-full h-full" />
+                      <AvatarFallback>{profile.user.username.charAt(0)?.toUpperCase() || "P"}</AvatarFallback>
                     </Avatar>
                     <div>
                       <CardTitle className="text-lg">
-                        {profile.user.username.substring(0, 20) || 'No Bio'}
-                        {profile.user.username && profile.user.username.length > 20 && '...'}
+                        {profile.user.username.substring(0, 20) || "No Bio"}
+                        {profile.user.username && profile.user.username.length > 20 && "..."}
                       </CardTitle>
-                      <p className="text-sm text-muted-foreground">
-                        ID: {profile.userId.substring(0, 8)}...
-                      </p>
+                      <p className="text-sm text-muted-foreground">ID: {profile.userId.substring(0, 8)}...</p>
                     </div>
                   </div>
                   <div className="flex gap-1">
-                    <Link to={'/profile/$id'} params={{ id: profile.user.username }}>
+                    <Link to={"/profile/$username"} params={{ username: profile.user.username }}>
                       <Button size="sm" variant="ghost">
                         <Eye className="w-4 h-4" />
                       </Button>
@@ -206,24 +188,18 @@ function ProfilesPage() {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary" className="text-xs">
-                        {profile.city || 'No City'}
+                        {profile.city || "No City"}
                       </Badge>
                       <Badge variant="outline" className="text-xs">
-                        {profile.country || 'No Country'}
+                        {profile.country || "No Country"}
                       </Badge>
                     </div>
 
-                    {profile.phone && (
-                      <p className="text-sm text-muted-foreground">📞 {profile.phone}</p>
-                    )}
+                    {profile.phone && <p className="text-sm text-muted-foreground">📞 {profile.phone}</p>}
 
-                    {profile.gender && (
-                      <p className="text-sm text-muted-foreground">👤 {profile.gender}</p>
-                    )}
+                    {profile.gender && <p className="text-sm text-muted-foreground">👤 {profile.gender}</p>}
 
-                    <p className="text-xs text-muted-foreground">
-                      Created: {format(new Date(profile.createdAt), 'MMM dd, yyyy')}
-                    </p>
+                    <p className="text-xs text-muted-foreground">Created: {format(new Date(profile.createdAt), "MMM dd, yyyy")}</p>
                   </div>
                 </div>
               </CardContent>
@@ -236,29 +212,17 @@ function ProfilesPage() {
       {profilesData && profilesData.pagination.totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Showing {(page - 1) * limit + 1} to{' '}
-            {Math.min(page * limit, profilesData.pagination.total)} of{' '}
-            {profilesData.pagination.total} results
+            Showing {(page - 1) * limit + 1} to {Math.min(page * limit, profilesData.pagination.total)} of {profilesData.pagination.total} results
           </p>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage(page - 1)}
-              disabled={!profilesData.pagination.hasPreviousPage}
-            >
+            <Button variant="outline" size="sm" onClick={() => setPage(page - 1)} disabled={!profilesData.pagination.hasPreviousPage}>
               <ChevronLeft className="w-4 h-4 mr-1" />
               Previous
             </Button>
             <span className="text-sm">
               Page {page} of {profilesData.pagination.totalPages}
             </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage(page + 1)}
-              disabled={!profilesData.pagination.hasNextPage}
-            >
+            <Button variant="outline" size="sm" onClick={() => setPage(page + 1)} disabled={!profilesData.pagination.hasNextPage}>
               Next
               <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
@@ -271,19 +235,13 @@ function ProfilesPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Profile</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete{' '}
-              <strong>{profileToDelete?.id ?? 'this profile'}</strong>? This action cannot be
-              undone.
+              Are you sure you want to delete <strong>{profileToDelete?.id ?? "this profile"}</strong>? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleteProfileIsPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteProfile}
-              disabled={deleteProfileIsPending}
-              className="bg-red-600 text-white hover:bg-red-700"
-            >
-              {deleteProfileIsPending ? 'Deleting...' : 'Delete'}
+            <AlertDialogAction onClick={handleDeleteProfile} disabled={deleteProfileIsPending} className="bg-red-600 text-white hover:bg-red-700">
+              {deleteProfileIsPending ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

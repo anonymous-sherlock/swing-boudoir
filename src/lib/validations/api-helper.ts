@@ -31,13 +31,11 @@ const postApiv1profile_Body = z
     city: z.string().max(100).nullable(),
     country: z.string().max(100).nullable(),
     postalCode: z.string().max(20).nullable(),
-    dateOfBirth: z.string().nullable(),
+    dateOfBirth: z.string().nullish(),
     gender: z.string().max(50).nullable(),
     hobbiesAndPassions: z.string().nullable(),
     paidVoterMessage: z.string().nullable(),
     freeVoterMessage: z.string().nullable(),
-    lastFreeVoteAt: z.string().nullable(),
-    coverImageId: z.string().nullable(),
     instagram: z.string().max(255).nullish(),
     tiktok: z.string().max(255).nullish(),
     youtube: z.string().max(255).nullish(),
@@ -46,7 +44,7 @@ const postApiv1profile_Body = z
     linkedin: z.string().max(255).nullish(),
     website: z.string().max(255).nullish(),
     other: z.string().max(255).nullish(),
-    bannerImageId: z.string().nullable(),
+    lastFreeVoteAt: z.string().nullish(),
   })
   .passthrough();
 const patchApiv1profileId_Body = z
@@ -63,8 +61,6 @@ const patchApiv1profileId_Body = z
     hobbiesAndPassions: z.string().nullable(),
     paidVoterMessage: z.string().nullable(),
     freeVoterMessage: z.string().nullable(),
-    lastFreeVoteAt: z.string().nullable(),
-    coverImageId: z.string().nullable(),
     instagram: z.string().max(255).nullable(),
     tiktok: z.string().max(255).nullable(),
     youtube: z.string().max(255).nullable(),
@@ -73,7 +69,7 @@ const patchApiv1profileId_Body = z
     linkedin: z.string().max(255).nullable(),
     website: z.string().max(255).nullable(),
     other: z.string().max(255).nullable(),
-    bannerImageId: z.string().nullable(),
+    lastFreeVoteAt: z.string().nullable(),
   })
   .partial()
   .passthrough();
@@ -148,6 +144,11 @@ const patchApiv1contestId_Body = z
     endDate: z.string().nullable(),
     rules: z.string().nullable(),
     requirements: z.string().nullable(),
+    awards: z.array(
+      z
+        .object({ name: z.string().min(1), icon: z.string().min(1) })
+        .passthrough()
+    ),
   })
   .partial()
   .passthrough();
@@ -169,7 +170,12 @@ const postApiv1contestleave_Body = z
   .object({ contestId: z.string(), profileId: z.string() })
   .passthrough();
 const postApiv1contestvotefree_Body = z
-  .object({ voterId: z.string(), voteeId: z.string(), contestId: z.string() })
+  .object({
+    voterId: z.string(),
+    voteeId: z.string(),
+    contestId: z.string(),
+    comment: z.string().nullable(),
+  })
   .passthrough();
 const postApiv1contestvotepay_Body = z
   .object({
@@ -522,6 +528,14 @@ const endpoints = makeApi([
         name: "limit",
         type: "Query",
         schema: z.number().nullish().default(20),
+      },
+      {
+        name: "status",
+        type: "Query",
+        schema: z
+          .enum(["all", "active", "upcoming", "ended"])
+          .optional()
+          .default("all"),
       },
     ],
     response: z
@@ -2622,6 +2636,7 @@ const endpoints = makeApi([
         contestId: z.string(),
         count: z.number(),
         paymentId: z.string().nullable(),
+        comment: z.string().nullable(),
         createdAt: z.string(),
         updatedAt: z.string(),
       })
@@ -2749,6 +2764,20 @@ const endpoints = makeApi([
             previousPage: z.number().nullable(),
           })
           .passthrough(),
+      })
+      .passthrough(),
+  },
+  {
+    method: "get",
+    path: "/api/v1/leaderboard/stats",
+    alias: "getApiv1leaderboardstats",
+    description: `Get the leaderboard stats with total votes received, top performer and many more`,
+    requestFormat: "json",
+    response: z
+      .object({
+        totalModels: z.number().nullable(),
+        totalVotes: z.number().nullable(),
+        activeContests: z.number().nullable(),
       })
       .passthrough(),
   },
@@ -3098,6 +3127,57 @@ const endpoints = makeApi([
   },
   {
     method: "patch",
+    path: "/api/v1/notifications/:id/archive",
+    alias: "patchApiv1notificationsIdarchive",
+    description: `Archive or unarchive a notification by ID.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string(),
+      },
+    ],
+    response: z
+      .object({
+        id: z.string(),
+        message: z.string(),
+        profileId: z.string(),
+        createdAt: z.string(),
+        updatedAt: z.string(),
+        isRead: z.boolean(),
+        archived: z.boolean(),
+        icon: z.enum(["WARNING", "SUCESS", "INFO"]).nullable(),
+        action: z.string().nullable(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Authentication required`,
+        schema: z
+          .object({
+            message: z.string(),
+            statusText: z.string(),
+            status: z.number(),
+          })
+          .passthrough(),
+      },
+      {
+        status: 404,
+        description: `Notification not found`,
+        schema: z
+          .object({
+            message: z.string(),
+            statusText: z.string(),
+            status: z.number(),
+          })
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: "patch",
     path: "/api/v1/notifications/:id/read",
     alias: "patchApiv1notificationsIdread",
     description: `Mark a notification as read.`,
@@ -3148,6 +3228,83 @@ const endpoints = makeApi([
     ],
   },
   {
+    method: "get",
+    path: "/api/v1/notifications/:profileId/archived",
+    alias: "getApiv1notificationsProfileIdarchived",
+    description: `Get paginated list of archived notifications for the authenticated user.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "profileId",
+        type: "Path",
+        schema: z.string(),
+      },
+      {
+        name: "page",
+        type: "Query",
+        schema: z.number().nullish().default(1),
+      },
+      {
+        name: "limit",
+        type: "Query",
+        schema: z.number().optional().default(10),
+      },
+    ],
+    response: z
+      .object({
+        archivedNotifications: z.array(
+          z
+            .object({
+              id: z.string(),
+              message: z.string(),
+              profileId: z.string(),
+              createdAt: z.string(),
+              updatedAt: z.string(),
+              isRead: z.boolean(),
+              archived: z.boolean(),
+              icon: z.enum(["WARNING", "SUCESS", "INFO"]).nullable(),
+              action: z.string().nullable(),
+            })
+            .passthrough()
+        ),
+        pagination: z
+          .object({
+            total: z.number(),
+            totalPages: z.number(),
+            hasNextPage: z.boolean(),
+            hasPreviousPage: z.boolean(),
+            nextPage: z.number().nullable(),
+            previousPage: z.number().nullable(),
+          })
+          .passthrough(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Authentication required`,
+        schema: z
+          .object({
+            message: z.string(),
+            statusText: z.string(),
+            status: z.number(),
+          })
+          .passthrough(),
+      },
+      {
+        status: 404,
+        description: `Profile not found`,
+        schema: z
+          .object({
+            message: z.string(),
+            statusText: z.string(),
+            status: z.number(),
+          })
+          .passthrough(),
+      },
+    ],
+  },
+  {
     method: "patch",
     path: "/api/v1/notifications/:profileId/read-all",
     alias: "patchApiv1notificationsProfileIdreadAll",
@@ -3162,6 +3319,51 @@ const endpoints = makeApi([
     ],
     response: z
       .object({ message: z.string(), updatedCount: z.number() })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Authentication required`,
+        schema: z
+          .object({
+            message: z.string(),
+            statusText: z.string(),
+            status: z.number(),
+          })
+          .passthrough(),
+      },
+      {
+        status: 404,
+        description: `Profile not found`,
+        schema: z
+          .object({
+            message: z.string(),
+            statusText: z.string(),
+            status: z.number(),
+          })
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/notifications/:profileId/stats",
+    alias: "getApiv1notificationsProfileIdstats",
+    description: `Get notification statistics for a specific profile including total, unread, and archived counts.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "profileId",
+        type: "Path",
+        schema: z.string(),
+      },
+    ],
+    response: z
+      .object({
+        totalNotifications: z.number(),
+        unreadCount: z.number(),
+        archivedCount: z.number(),
+      })
       .passthrough(),
     errors: [
       {
@@ -5393,6 +5595,46 @@ const endpoints = makeApi([
     ],
   },
   {
+    method: "get",
+    path: "/api/v1/votes/:profileId/top-voters",
+    alias: "getApiv1votesProfileIdtopVoters",
+    description: `Get the top 10 voters who have given the highest number of votes to a specific votee profile`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "profileId",
+        type: "Path",
+        schema: z.string(),
+      },
+    ],
+    response: z.array(
+      z
+        .object({
+          rank: z.number(),
+          profileId: z.string(),
+          userName: z.string(),
+          profilePicture: z.string(),
+          totalVotesGiven: z.number(),
+          comment: z.string().nullable(),
+          lastVoteAt: z.string(),
+        })
+        .passthrough()
+    ),
+    errors: [
+      {
+        status: 404,
+        description: `Resource not found`,
+        schema: z
+          .object({
+            message: z.string(),
+            statusText: z.string(),
+            status: z.number(),
+          })
+          .passthrough(),
+      },
+    ],
+  },
+  {
     method: "post",
     path: "/api/v1/votes/is-free-vote-available",
     alias: "postApiv1votesisFreeVoteAvailable",
@@ -5453,31 +5695,28 @@ const endpoints = makeApi([
       .object({
         data: z.array(
           z
-            .array(
-              z
+            .object({
+              votee: z
                 .object({
-                  votee: z
-                    .object({
-                      id: z.string(),
-                      name: z.string(),
-                      profilePicture: z.string(),
-                    })
-                    .passthrough()
-                    .nullable(),
-                  voter: z
-                    .object({
-                      id: z.string(),
-                      name: z.string(),
-                      profilePicture: z.string(),
-                    })
-                    .passthrough()
-                    .nullable(),
-                  totalVotes: z.number().nullable(),
-                  createdAt: z.string(),
+                  id: z.string(),
+                  name: z.string(),
+                  profilePicture: z.string(),
                 })
                 .passthrough()
-            )
-            .nullable()
+                .nullable(),
+              voter: z
+                .object({
+                  id: z.string(),
+                  name: z.string(),
+                  profilePicture: z.string(),
+                })
+                .passthrough()
+                .nullable(),
+              totalVotes: z.number().nullable(),
+              comment: z.string().nullable(),
+              createdAt: z.string(),
+            })
+            .passthrough()
         ),
         pagination: z
           .object({

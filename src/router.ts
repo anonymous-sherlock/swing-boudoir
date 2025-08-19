@@ -11,11 +11,11 @@ export const router = createRouter({
   context: {
     ...TanStackQueryProviderContext,
   },
-  defaultPreload: false,
+  defaultPreload: "intent",
   scrollRestoration: true,
-  defaultStructuralSharing: true,
+  defaultStructuralSharing: false,
   defaultPreloadStaleTime: 0,
-
+  defaultPreloadDelay: 0,
 })
 
 declare module '@tanstack/react-router' {
