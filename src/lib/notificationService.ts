@@ -113,7 +113,7 @@ class NotificationService {
   // Mark all notifications as read
   async markAllAsRead(profileId: string): Promise<boolean> {
     try {
-      const response = await api.patch<{ success: boolean }>('/notifications/mark-all-read', { profileId });
+      const response = await api.patch<{ success: boolean }>(`/notifications/${profileId}/read-all`);
       if (response.success) {
         this.resetUnreadCount();
         return true;

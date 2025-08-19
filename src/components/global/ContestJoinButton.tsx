@@ -151,8 +151,19 @@ export const ContestJoinButton: React.FC<ContestJoinButtonProps> = ({
     window.location.reload();
   };
 
+  // Check if competition has ended
+  const isCompetitionEnded = () => {
+    const now = new Date();
+    const endDate = new Date(contest.endDate);
+    return now > endDate;
+  };
+
   // Determine button text and state
   const getButtonText = () => {
+    if (isCompetitionEnded()) {
+      return "Competition Ended";
+    }
+    
     if (showLeave) {
       return isLeaving ? "Leaving..." : "Leave Contest";
     }
@@ -177,6 +188,7 @@ export const ContestJoinButton: React.FC<ContestJoinButtonProps> = ({
   };
 
   const isButtonDisabled = () => {
+    if (isCompetitionEnded()) return true;
     if (showLeave) return isLeaving;
     if (!isAuthenticated || needsProfileSetup) return false;
     return isJoining || isChecking || isUploadingCover;

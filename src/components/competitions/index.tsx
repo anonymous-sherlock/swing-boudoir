@@ -17,11 +17,14 @@ const ITEMS_PER_PAGE = 12;
 export const CompetitionsList: React.FC = () => {
   const { toast } = useToast();
   const { isAuthenticated, user } = useAuth();
-
+  const statuses = ["all", "active", "upcoming", "ended"] as const;
   // URL state management with nuqs
   const [page, setPage] = useQueryState("page", { defaultValue: "1" });
   const [search, setSearch] = useQueryState("search", { defaultValue: "" });
-  const [status, setStatus] = useQueryState("status", { defaultValue: "all" });
+  const [status, setStatus] = useQueryState<(typeof statuses)[number]>("status", {
+    defaultValue: "active",
+    parse: (value) => (statuses.includes(value as (typeof statuses)[number]) ? (value as (typeof statuses)[number]) : "active"),
+  });
   const [view, setView] = useQueryState("view", { defaultValue: "grid" as "grid" | "list" });
 
   // Local state for debounced search
@@ -31,8 +34,8 @@ export const CompetitionsList: React.FC = () => {
   // Convert page to number for the hook
   const currentPage = parseInt(page || "1", 10);
 
-  // Use the new useContests hook
-  const { data: contestsData, isLoading, error } = useContests(currentPage, ITEMS_PER_PAGE);
+  // Use the new useContests hook with status filtering and search
+  const { data: contestsData, isLoading, error } = useContests(currentPage, ITEMS_PER_PAGE, status, debouncedSearchQuery || undefined);
   const contests = contestsData?.data || [];
   const pagination = contestsData?.pagination;
 
@@ -42,7 +45,7 @@ export const CompetitionsList: React.FC = () => {
       setDebouncedSearchQuery(searchQuery);
       if (searchQuery !== search) {
         setSearch(searchQuery || null);
-        setPage("1"); // Reset to first page when searching
+        setPage("1");
       }
     }, 500);
 
@@ -54,47 +57,14 @@ export const CompetitionsList: React.FC = () => {
     setSearchQuery(search || "");
   }, [search]);
 
-  // Get competition status for filtering
-  const getCompetitionStatus = (contest: Contest): "ACTIVE" | "VOTING" | "JUDGING" | "COMPLETED" | "DRAFT" | "PUBLISHED" | "CANCELLED" | "SUSPENDED" => {
-    const now = startOfDay(new Date());
-    const startDate = startOfDay(new Date(contest.startDate));
-    const endDate = startOfDay(new Date(contest.endDate));
-
-    if (isAfter(now, endDate)) {
-      return "COMPLETED";
-    } else if (isBefore(now, startDate)) {
-      return "PUBLISHED";
-    } else if (contest.status === "ACTIVE") {
-      return "ACTIVE";
-    } else if (contest.status === "VOTING") {
-      return "VOTING";
-    } else if (contest.status === "JUDGING") {
-      return "JUDGING";
-    } else {
-      return contest.status as Contest["status"];
-    }
-  };
-
-  // Filter competitions based on search and status
-  const filteredCompetitions = contests.filter((contest) => {
-    const matchesSearch =
-      contest.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) || 
-      contest.description.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
-
-    const contestStatus = getCompetitionStatus(contest);
-    const matchesStatus = status === "all" || contestStatus === status;
-
-    return matchesSearch && matchesStatus;
-  });
-
   const handlePageChange = (newPage: number) => {
     setPage(newPage.toString());
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleStatusChange = (newStatus: string) => {
-    setStatus(newStatus === "all" ? null : newStatus);
-    setPage("1"); // Reset to first page when filtering
+    setStatus(newStatus as (typeof statuses)[number]);
+    setPage("1");
   };
 
   const handleViewChange = (newView: "grid" | "list") => {
@@ -176,18 +146,15 @@ export const CompetitionsList: React.FC = () => {
             </div>
 
             {/* Status Filter */}
-            <Select value={status || "all"} onValueChange={handleStatusChange}>
+            <Select value={status || "active"} onValueChange={handleStatusChange}>
               <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="ACTIVE">Active</SelectItem>
-                <SelectItem value="VOTING">Voting</SelectItem>
-                <SelectItem value="JUDGING">Judging</SelectItem>
-                <SelectItem value="COMPLETED">Completed</SelectItem>
-                <SelectItem value="DRAFT">Draft</SelectItem>
-                <SelectItem value="PUBLISHED">Published</SelectItem>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="upcoming">Upcoming</SelectItem>
+                <SelectItem value="ended">Ended</SelectItem>
               </SelectContent>
             </Select>
 
@@ -205,7 +172,7 @@ export const CompetitionsList: React.FC = () => {
           {/* Results Count */}
           <div className="flex items-center justify-between text-sm text-gray-600">
             <span>
-              {filteredCompetitions.length} competition{filteredCompetitions.length !== 1 ? "s" : ""} found
+              {contests.length} competition{contests.length !== 1 ? "s" : ""} found
             </span>
             {pagination && (
               <span>
@@ -224,17 +191,11 @@ export const CompetitionsList: React.FC = () => {
         )}
 
         {/* Competitions Grid/List */}
-        {!isLoading && filteredCompetitions.length > 0 && (
+        {!isLoading && contests.length > 0 && (
           <>
             <div className={view === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8" : "space-y-4 mb-8"}>
-              {filteredCompetitions.map((contest) => (
-                <div key={contest.id}>
-                  {view === "grid" ? (
-                    <CompetitionCard contest={contest} />
-                  ) : (
-                    <CompetitionListItem competition={contest} />
-                  )}
-                </div>
+              {contests.map((contest) => (
+                <div key={contest.id}>{view === "grid" ? <CompetitionCard contest={contest} /> : <CompetitionListItem competition={contest} />}</div>
               ))}
             </div>
 
@@ -277,7 +238,7 @@ export const CompetitionsList: React.FC = () => {
         )}
 
         {/* No Results */}
-        {!isLoading && filteredCompetitions.length === 0 && (
+        {!isLoading && contests.length === 0 && (
           <Card className="max-w-md mx-auto text-center">
             <CardHeader>
               <CardTitle>No competitions found</CardTitle>
