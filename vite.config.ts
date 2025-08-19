@@ -8,12 +8,17 @@ import { tanstackRouter } from '@tanstack/router-plugin/vite'
 export default defineConfig({
   plugins: [
     tanstackRouter({
+      routesDirectory: './src/routes',
       target: 'react',
+      // autoCodeSplitting: true,
     }),
     react()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  optimizeDeps: {
+    include: ['@tanstack/react-router'],
   },
 });

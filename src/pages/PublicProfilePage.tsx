@@ -457,9 +457,9 @@ export default function PublicProfilePage() {
         </div>
       )}
 
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 pt-16">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 pt-16 pb-24">
         {/* Banner Section - LinkedIn/YouTube style */}
-        <div className="relative w-full h-48 md:h-64 bg-gradient-to-r from-blue-400 to-purple-500 overflow-hidden">
+        <div className="relative w-full aspect-[4/1] bg-gradient-to-r from-blue-400 to-purple-500 overflow-hidden">
           {modelProfile.coverImage?.url ? (
             <img src={modelProfile.coverImage.url} alt="Profile Banner" className="w-full h-full object-cover" />
           ) : (

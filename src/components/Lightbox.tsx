@@ -63,7 +63,7 @@ export function Lightbox({ image, onClose }: LightboxProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4" onClick={handleBackdropClick}>
+    <div className="fixed inset-0 !m-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4" onClick={handleBackdropClick}>
       {/* Close button */}
       <Button variant="outline" size="sm" className="absolute top-4 right-4 z-10 bg-white/10 border-white/20 text-white hover:bg-white/20" onClick={onClose}>
         <X className="w-4 h-4" />

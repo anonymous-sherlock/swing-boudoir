@@ -61,6 +61,20 @@ export interface Profile {
   };
 }
 
+// Profile Stats interface
+export interface ProfileStats {
+  currentRank: number;
+  totalCompetitions: number;
+  totalEarnings: number;
+  activeContests: number;
+  totalVotes: number;
+  totalVotesReceived: number;
+  winRate: number;
+  averageRank: number;
+  bestRank: number;
+  totalParticipants: number;
+}
+
 export interface PaginatedResponse<T> {
   data: T[];
   pagination: {
@@ -118,6 +132,8 @@ export const profileKeys = {
   detail: (id: string) => [...profileKeys.details(), id] as const,
   byUserId: (userId: string) => [...profileKeys.details(), 'user', userId] as const,
   byUsername: (username: string) => [...profileKeys.details(), 'username', username] as const,
+  stats: () => [...profileKeys.all, 'stats'] as const,
+  statsByProfileId: (profileId: string) => [...profileKeys.stats(), profileId] as const,
 };
 
 // Profile API functions
@@ -219,6 +235,12 @@ const profileApi = {
     const response = await api.delete(`/api/v1/profile/${id}/cover`);
     return response.data;
   },
+
+  // Get profile statistics
+  getProfileStats: async (profileId: string): Promise<ProfileStats> => {
+    const response = await api.get(`/api/v1/profile/${profileId}/stats`);
+    return response.data;
+  },
 };
 
 // Main useProfile hook
@@ -254,6 +276,14 @@ export const useProfile = () => {
       queryKey: profileKeys.byUsername(username),
       queryFn: () => profileApi.getProfileByUsername(username),
       enabled: !!username,
+    });
+  };
+
+  const useProfileStats = (profileId: string) => {
+    return useQuery({
+      queryKey: profileKeys.statsByProfileId(profileId),
+      queryFn: () => profileApi.getProfileStats(profileId),
+      enabled: !!profileId,
     });
   };
 
@@ -327,6 +357,7 @@ export const useProfile = () => {
     useProfile,
     useProfileByUserId,
     useProfileByUsername,
+    useProfileStats,
 
     // Profile mutations
     createProfile,

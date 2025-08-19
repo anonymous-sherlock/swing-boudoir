@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import { useVoteHistory, useTopVoters, useLatestVotes } from "@/hooks/api/useVotes";
 import { AlertCircle, Calendar, DollarSign, Heart, MessageSquare, Star, TrendingDown, TrendingUp, UserCheck, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -38,9 +38,16 @@ interface VoteGiven {
   createdAt: string;
 }
 
+interface VoteHistoryEntry {
+  profileId: string;
+  userName: string;
+  votedOn: string;
+  count: number;
+  comment?: string;
+}
+
 export function Votes() {
   const { user } = useAuth();
-  const [topVoters, setTopVoters] = useState<Vote[]>([]);
   const [recentVotes, setRecentVotes] = useState<Vote[]>([]);
   const [premiumVotes, setPremiumVotes] = useState<Vote[]>([]);
   const [votesGiven, setVotesGiven] = useState<VoteGiven[]>([]);
@@ -48,11 +55,14 @@ export function Votes() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("received");
 
+  // Use the hooks we created
+  const { data: voteHistoryData, isLoading: voteHistoryLoading, error: voteHistoryError } = useVoteHistory(user?.profileId || "", 1, 50);
+  const { data: topVotersData, isLoading: topVotersLoading, error: topVotersError } = useTopVoters(user?.profileId || "");
+  const { data: latestVotesData, isLoading: latestVotesLoading } = useLatestVotes(1, 20);
+
   const fetchVoteData = async () => {
     try {
       setError(null);
-
-      const token = localStorage.getItem("token");
 
       // Check if user has a profileId
       if (!user?.profileId) {
@@ -64,77 +74,10 @@ export function Votes() {
           totalVoters: 0,
           averageVotesPerVoter: 0,
         });
-        setTopVoters([]);
         setRecentVotes([]);
         setPremiumVotes([]);
         setVotesGiven([]);
         return;
-      }
-
-      // Fetch votes by profile ID - using real API endpoint
-      try {
-        const votesResponse = await api.get(`/api/v1/votes/${user.profileId}?limit=50`);
-        if (votesResponse.success) {
-          const votesData = await votesResponse.data;
-          const votes = votesData.data || [];
-
-          // Calculate stats from the votes data
-          const totalVotes = votes.reduce((sum: number, vote: any) => sum + (vote.count || 0), 0);
-          const uniqueVoters = new Set(votes.map((vote: any) => vote.userName)).size;
-
-          setVoteStats({
-            totalVotes,
-            freeVotes: totalVotes, // API doesn't distinguish between free/paid yet
-            premiumVotes: 0, // API doesn't distinguish between free/paid yet
-            totalVoters: uniqueVoters,
-            averageVotesPerVoter: uniqueVoters > 0 ? totalVotes / uniqueVoters : 0,
-          });
-
-          // Transform votes data to match our interface
-          const transformedVotes = votes.map((vote: any) => ({
-            id: vote.profileId + "_" + vote.votedOn,
-            voterId: vote.userName, // Using userName as voterId since that's what API provides
-            voterName: vote.userName,
-            profileId: vote.profileId,
-            votes: vote.count || 0,
-            comment: "", // API doesn't provide comments
-            isPremium: false, // API doesn't distinguish between free/paid yet
-            createdAt: vote.votedOn,
-            updatedAt: vote.votedOn,
-          }));
-
-          setRecentVotes(transformedVotes);
-
-          // Set top voters (top 10 by vote count)
-          const sortedByVotes = [...transformedVotes].sort((a, b) => b.votes - a.votes);
-          setTopVoters(sortedByVotes.slice(0, 10));
-
-          // For now, set premium votes as empty since API doesn't distinguish
-          setPremiumVotes([]);
-        }
-      } catch (votesError) {
-        console.log("Votes endpoint not available, using default values");
-        setVoteStats({
-          totalVotes: 0,
-          freeVotes: 0,
-          premiumVotes: 0,
-          totalVoters: 0,
-          averageVotesPerVoter: 0,
-        });
-        setTopVoters([]);
-        setRecentVotes([]);
-        setPremiumVotes([]);
-      }
-
-      // Fetch latest votes for global context
-      try {
-        const latestVotesResponse = await api.get("/api/v1/votes/latest-votes?limit=20");
-        if (latestVotesResponse.success) {
-          const latestVotesData = latestVotesResponse.data;
-          console.log("Latest votes data:", latestVotesData);
-        }
-      } catch (latestVotesError) {
-        console.log("Latest votes endpoint not available");
       }
 
       // For now, set votes given as empty since that API doesn't exist yet
@@ -145,6 +88,32 @@ export function Votes() {
       // Only set error if all APIs fail completely
     }
   };
+
+  // Process vote history data when it changes
+  useEffect(() => {
+    if (voteHistoryData?.data) {
+      const votes = voteHistoryData.data;
+
+      // Calculate stats from the votes data
+      const totalVotes = votes.reduce((sum: number, vote: VoteHistoryEntry) => sum + (vote.count || 0), 0);
+      const uniqueVoters = new Set(votes.map((vote: VoteHistoryEntry) => vote.userName)).size;
+
+      setVoteStats({
+        totalVotes,
+        freeVotes: totalVotes, // API doesn't distinguish between free/paid yet
+        premiumVotes: 0, // API doesn't distinguish between free/paid yet
+        totalVoters: uniqueVoters,
+        averageVotesPerVoter: uniqueVoters > 0 ? totalVotes / uniqueVoters : 0,
+      });
+
+      // For now, set premium votes as empty since API doesn't distinguish
+      setPremiumVotes([]);
+    }
+  }, [voteHistoryData]);
+
+  useEffect(() => {
+    fetchVoteData();
+  }, []);
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -158,12 +127,23 @@ export function Votes() {
     return `${Math.floor(diffInMinutes / 10080)}w ago`;
   };
 
-  useEffect(() => {
-    fetchVoteData();
-  }, []);
+  // Show loading state
+  if (voteHistoryLoading || topVotersLoading || latestVotesLoading) {
+    return (
+      <div className="max-w-7xl mx-auto space-y-6 sm:p-4">
+        <h1 className="text-2xl font-bold text-foreground">Votes</h1>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading vote data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Show error state
-  if (error) {
+  if (error || voteHistoryError || topVotersError) {
     return (
       <div className="max-w-7xl mx-auto space-y-6 sm:p-4">
         <h1 className="text-2xl font-bold text-foreground">Votes</h1>
@@ -172,7 +152,7 @@ export function Votes() {
           <div className="text-center">
             <AlertCircle className="h-12 w-12 mx-auto mb-4 text-red-500" />
             <h3 className="text-lg font-semibold mb-2">Error loading votes</h3>
-            <p className="text-muted-foreground mb-4">{error}</p>
+            <p className="text-muted-foreground mb-4">{error || voteHistoryError?.message || topVotersError?.message}</p>
             <button onClick={fetchVoteData} className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90">
               Try Again
             </button>
@@ -213,7 +193,7 @@ export function Votes() {
             <TrendingUp className="h-4 w-4" />
             <span>Votes Received</span>
             <Badge variant="secondary" className="ml-2">
-              {recentVotes.length}
+              {latestVotesData?.data?.length || 0}
             </Badge>
           </TabsTrigger>
           <TabsTrigger value="given" className="flex items-center space-x-2">
@@ -236,7 +216,7 @@ export function Votes() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-              {topVoters.length === 0 ? (
+              {!topVotersData || topVotersData.length === 0 ? (
                 <div className="text-center py-12">
                   <Heart className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
                   <h3 className="text-xl font-semibold mb-2 text-muted-foreground">No votes yet</h3>
@@ -253,12 +233,12 @@ export function Votes() {
                         <TableHead className="font-semibold">Voter</TableHead>
                         <TableHead className="font-semibold">Votes</TableHead>
                         <TableHead className="font-semibold">Comment</TableHead>
-                        <TableHead className="font-semibold">Time</TableHead>
+                        <TableHead className="font-semibold">Last Vote</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {topVoters.map((vote, index) => (
-                        <TableRow key={vote.id} className="hover:bg-muted/30">
+                      {topVotersData.map((voter, index) => (
+                        <TableRow key={voter.profileId} className="hover:bg-muted/30">
                           <TableCell>
                             <div className="flex items-center">
                               {index < 3 ? (
@@ -272,32 +252,26 @@ export function Votes() {
                           </TableCell>
                           <TableCell className="font-medium">
                             <div className="flex items-center space-x-2">
-                              <div className={`w-2 h-2 rounded-full ${vote.isPremium ? "bg-yellow-500" : "bg-blue-500"}`}></div>
-                              <span>{vote.voterName}</span>
-                              {vote.isPremium && (
-                                <Badge variant="outline" className="text-xs">
-                                  <Star className="h-3 w-3 mr-1" />
-                                  Premium
-                                </Badge>
-                              )}
+                              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                              <span>{voter.userName}</span>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={vote.isPremium ? "default" : "secondary"} className="text-sm">
-                              {vote.votes}
+                            <Badge variant="secondary" className="text-sm">
+                              {voter.totalVotesGiven}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            {vote.comment ? (
+                            {voter.comment ? (
                               <div className="flex items-center max-w-xs">
                                 <MessageSquare className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
-                                <span className="truncate">{vote.comment}</span>
+                                <span className="truncate">{voter.comment}</span>
                               </div>
                             ) : (
                               <span className="text-muted-foreground">-</span>
                             )}
                           </TableCell>
-                          <TableCell className="text-muted-foreground">{formatTime(vote.createdAt)}</TableCell>
+                          <TableCell className="text-muted-foreground">{formatTime(voter.lastVoteAt)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -316,7 +290,7 @@ export function Votes() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-              {recentVotes.length === 0 ? (
+              {!latestVotesData?.data || latestVotesData.data.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground">No recent votes</p>
                 </div>
@@ -332,23 +306,17 @@ export function Votes() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {recentVotes.slice(0, 20).map((vote) => (
-                        <TableRow key={vote.id} className="hover:bg-muted/30">
+                      {latestVotesData.data.slice(0, 20).map((vote) => (
+                        <TableRow key={`${vote.voter?.id || "unknown"}_${vote.createdAt}`} className="hover:bg-muted/30">
                           <TableCell className="font-medium">
                             <div className="flex items-center space-x-2">
-                              <div className={`w-2 h-2 rounded-full ${vote.isPremium ? "bg-yellow-500" : "bg-blue-500"}`}></div>
-                              <span>{vote.voterName}</span>
-                              {vote.isPremium && (
-                                <Badge variant="outline" className="text-xs">
-                                  <Star className="h-3 w-3 mr-1" />
-                                  Premium
-                                </Badge>
-                              )}
+                              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                              <span>{vote.voter?.name || "Unknown Voter"}</span>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={vote.isPremium ? "default" : "outline"} className="text-sm">
-                              {vote.votes}
+                            <Badge variant="outline" className="text-sm">
+                              {vote.totalVotes || 0}
                             </Badge>
                           </TableCell>
                           <TableCell>

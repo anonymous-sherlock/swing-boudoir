@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
-import { hc } from '@/lib/api-client'
 
 // Types based on the API schema
 export interface Vote {
@@ -11,6 +10,7 @@ export interface Vote {
   contestId: string
   count: number
   paymentId: string | null
+  comment: string | null
   createdAt: string
   updatedAt: string
 }
@@ -44,6 +44,7 @@ export interface LatestVote {
     profilePicture: string
   } | null
   totalVotes: number | null
+  comment: string | null
   createdAt: string
 }
 
@@ -79,16 +80,24 @@ export interface VoteHistoryResponse {
   }
 }
 
+export interface TopVoter {
+  rank: number
+  profileId: string
+  userName: string
+  profilePicture: string
+  totalVotesGiven: number
+  comment: string | null
+  lastVoteAt: string
+}
+
 // Hook for giving a free vote
 export function useFreeVote() {
   const queryClient = useQueryClient()
   
   return useMutation({
-    mutationFn: async (data: { voterId: string; voteeId: string; contestId: string }) => {
-      const response = await hc.postApiv1contestVoteFree({
-        json: data
-      })
-      return response
+    mutationFn: async (data: { voterId: string; voteeId: string; contestId: string; comment?: string }) => {
+      const response = await api.post('/api/v1/contest/vote/free', data)
+      return response.data
     },
     onSuccess: () => {
       // Invalidate relevant queries
@@ -105,10 +114,8 @@ export function usePaidVote() {
   
   return useMutation({
     mutationFn: async (data: { voteeId: string; voterId: string; contestId: string; voteCount: number }) => {
-      const response = await hc.postApiv1contestVotePay({
-        json: data
-      })
-      return response
+      const response = await api.post('/api/v1/contest/vote/pay', data)
+      return response.data
     },
     onSuccess: () => {
       // Invalidate relevant queries
@@ -122,11 +129,9 @@ export function usePaidVote() {
 // Hook for checking free vote availability
 export function useFreeVoteAvailability() {
   return useMutation({
-    mutationFn: async (data: { profileId: string }) => {
-      const response = await hc.postApiv1votesIsFreeVoteAvailable({
-        json: data
-      })
-      return response
+    mutationFn: async (data: { profileId: string }): Promise<FreeVoteAvailability> => {
+      const response = await api.post('/api/v1/votes/is-free-vote-available', data)
+      return response.data
     },
   })
 }
@@ -136,7 +141,8 @@ export function useLatestVotes(page: number = 1, limit: number = 20) {
   return useQuery({
     queryKey: ['votes', 'latest', page, limit],
     queryFn: async (): Promise<LatestVotesResponse> => {
-      const response = await api.get(`/api/v1/votes/latest-votes?page=${page}&limit=${limit}`)
+      // Try without any query parameters first to see if the API works
+      const response = await api.get(`/api/v1/votes/latest-votes`)
       return response.data
     },
   })
@@ -147,7 +153,19 @@ export function useVoteHistory(profileId: string, page: number = 1, limit: numbe
   return useQuery({
     queryKey: ['votes', 'history', profileId, page, limit],
     queryFn: async (): Promise<VoteHistoryResponse> => {
-      const response = await api.get(`/api/v1/votes/${profileId}?page=${page}&limit=${limit}`)
+      const response = await api.get(`/api/v1/votes/${profileId}?page=${Number(page)}&limit=${Number(limit)}`)
+      return response.data
+    },
+    enabled: !!profileId,
+  })
+}
+
+// Hook for getting top voters for a specific profile
+export function useTopVoters(profileId: string) {
+  return useQuery({
+    queryKey: ['votes', 'top-voters', profileId],
+    queryFn: async (): Promise<TopVoter[]> => {
+      const response = await api.get<TopVoter[]>(`/api/v1/votes/${profileId}/top-voters`)
       return response.data
     },
     enabled: !!profileId,
