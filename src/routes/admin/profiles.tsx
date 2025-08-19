@@ -1,13 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Plus, Edit, Trash2, Eye, ChevronLeft, ChevronRight, Filter } from "lucide-react";
-import { format } from "date-fns";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,9 +11,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Link } from "@tanstack/react-router";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import type { Profile } from "@/hooks/api/useProfile";
 import { useProfile } from "@/hooks/api/useProfile";
+import { Link } from "@tanstack/react-router";
+import { format } from "date-fns";
+import { ChevronLeft, ChevronRight, Edit, Eye, Filter, Plus, Search, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/admin/profiles")({
   component: () => <ProfilesPage />,

@@ -11,11 +11,9 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { getSocialMediaUrls } from "@/utils/social-media";
 import { formatDistanceToNow } from "date-fns";
 import { AlertCircle, Camera, Clock, Edit, Eye, Facebook, Gift, Globe, Instagram, MapPin, RefreshCw, Share2, TrendingUp, Trophy, Twitter, Users, Youtube } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { Icons } from "../icons";
 import { Lightbox } from "../Lightbox";
-
-
 
 export function PublicProfile() {
   const { user } = useAuth();
@@ -28,12 +26,12 @@ export function PublicProfile() {
   // Use the useProfile hook to fetch profile data by username
   const { useProfileByUsername, useProfileStats } = useProfile();
   const { data: userProfile, isLoading: isLoadingProfile, error: profileError, refetch: refetchProfile } = useProfileByUsername(user?.username || "");
-  
+
   // Use the new profile stats hook
   const { data: profileStats, isLoading: isLoadingStats, error: statsError } = useProfileStats(userProfile?.id || "");
 
   const { data: joinedContestsData, isLoading: isLoadingJoined } = useJoinedContests(user?.profileId || "", 1, 50);
-  const joinedCompetitions = joinedContestsData?.data || [];
+  const joinedCompetitions = useMemo(() => joinedContestsData?.data || [], [joinedContestsData?.data]);
 
   // Countdown timer for joined contests
   useEffect(() => {
@@ -376,42 +374,42 @@ export function PublicProfile() {
                 </div>
               </div>
 
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">{profileStats?.totalCompetitions || 0}</p>
-                  <p className="text-gray-600 text-sm font-medium">Competitions</p>
-                </div>
-                <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                  <Users className="h-5 w-5 text-gray-600" />
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{profileStats?.totalCompetitions || 0}</p>
+                    <p className="text-gray-600 text-sm font-medium">Competitions</p>
+                  </div>
+                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                    <Users className="h-5 w-5 text-gray-600" />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">{formatUsdAbbrev(profileStats?.totalEarnings || 0)}</p>
-                  <p className="text-gray-600 text-sm font-medium">Total Earnings</p>
-                </div>
-                <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                  <Gift className="h-5 w-5 text-gray-600" />
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{formatUsdAbbrev(profileStats?.totalEarnings || 0)}</p>
+                    <p className="text-gray-600 text-sm font-medium">Total Earnings</p>
+                  </div>
+                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                    <Gift className="h-5 w-5 text-gray-600" />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">{profileStats?.activeContests || 0}</p>
-                  <p className="text-gray-600 text-sm font-medium">Active Now</p>
-                </div>
-                <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                  <Clock className="h-5 w-5 text-gray-600" />
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{profileStats?.activeContests || 0}</p>
+                    <p className="text-gray-600 text-sm font-medium">Active Now</p>
+                  </div>
+                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                    <Clock className="h-5 w-5 text-gray-600" />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
           )}
         </CardContent>
       </Card>
@@ -451,8 +449,8 @@ export function PublicProfile() {
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">Ready to Compete?</h3>
                 <p className="text-gray-600 mb-6 max-w-md mx-auto leading-relaxed">You haven't joined any competitions yet. Start your journey and showcase your talents!</p>
-                <Link 
-                  to="/dashboard/$section" 
+                <Link
+                  to="/dashboard/$section"
                   params={{ section: "competitions" }}
                   className="inline-flex items-center px-8 py-3 bg-black hover:bg-gray-800 text-white font-medium rounded-lg transition-colors"
                 >
@@ -665,7 +663,7 @@ export function PublicProfile() {
                             onClick={() =>
                               setLightboxImage({
                                 url: photo.url,
-                                caption: photo?.caption ?? ""
+                                caption: photo?.caption ?? "",
                               })
                             }
                           >
