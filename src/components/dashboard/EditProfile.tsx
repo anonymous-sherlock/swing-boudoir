@@ -97,6 +97,7 @@ export function EditProfile() {
   const [bannerImage, setBannerImage] = useState<{ id: string; url: string; caption: string | null } | null>(null);
   const [coverImage, setCoverImage] = useState<{ id: string; url: string; caption: string | null } | null>(null);
   const [lightboxImage, setLightboxImage] = useState<{ url: string; caption: string } | null>(null);
+  const [hasPhotoChanges, setHasPhotoChanges] = useState(false);
 
   const profileFileInputRef = useRef<HTMLInputElement>(null);
   const coverFileInputRef = useRef<HTMLInputElement>(null);
@@ -137,6 +138,7 @@ export function EditProfile() {
       setProfileImages(profileData.profilePhotos || []);
       setBannerImage(profileData.bannerImage || null);
       setCoverImage(profileData.coverImage || null);
+      setHasPhotoChanges(false); // Reset photo changes when profile loads
     }
   }, [profileData, reset]);
 
@@ -239,6 +241,7 @@ export function EditProfile() {
     }));
 
     setUploadingImages((prev) => [...prev, ...newUploadingImages]);
+    setHasPhotoChanges(true); // Mark that photos have changed
 
     try {
       await uploadProfilePhotos.mutateAsync({
@@ -282,6 +285,7 @@ export function EditProfile() {
     };
 
     setUploadingCover(newUploadingCover);
+    setHasPhotoChanges(true); // Mark that photos have changed
 
     try {
       await uploadCoverImage.mutateAsync({
@@ -325,6 +329,7 @@ export function EditProfile() {
     };
 
     setUploadingBanner(newUploadingBanner);
+    setHasPhotoChanges(true); // Mark that photos have changed
 
     try {
       await uploadBannerImage.mutateAsync({
@@ -359,6 +364,7 @@ export function EditProfile() {
     if (!profileData?.id) return;
 
     setDeletingImages((prev) => new Set([...prev, imageId]));
+    setHasPhotoChanges(true); // Mark that photos have changed
 
     // Show loading toast
     const loadingToast = toast({
@@ -441,7 +447,7 @@ export function EditProfile() {
             <Button
               onClick={isEditing ? handleSubmit(onSubmit) : () => setIsEditing(true)}
               className="flex items-center gap-2 px-6 py-2 text-sm font-medium transition-all duration-200 hover:scale-105"
-              disabled={isSaving || isUploading || updateProfile.isPending || (isEditing && !isDirty)}
+              disabled={isSaving || isUploading || updateProfile.isPending || (isEditing && !hasChanges)}
               size="lg"
             >
               {isEditing ? <Save className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
@@ -452,8 +458,8 @@ export function EditProfile() {
             <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/50 rounded-lg border border-blue-200 dark:border-blue-800">
               <p className="text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2">
                 <Edit className="h-4 w-4" />
-                You are currently in edit mode. {isDirty && "You have unsaved changes!"}
-                {!isDirty && "Don't forget to save your changes!"}
+                You are currently in edit mode. {hasChanges && "You have unsaved changes!"}
+                {!hasChanges && "Don't forget to save your changes!"}
               </p>
             </div>
           )}
@@ -472,15 +478,15 @@ export function EditProfile() {
           </div> */}
         </div>
 
-        <div className="space-y-8">
+        <div className="space-y-6 sm:space-y-8">
           {/* Banner and Cover Image Section */}
-          <div className="mb-8">
+          <div className="mb-6 sm:mb-8">
             <label className="flex items-center justify-start gap-2 mb-4">
               <Camera className="w-4 h-4" /> Banner & Profile Picture
             </label>
 
             {/* Banner Upload Area */}
-            <div className="relative mb-20">
+            <div className="relative mb-16 sm:mb-20">
               <input
                 type="file"
                 ref={bannerFileInputRef}
@@ -488,12 +494,13 @@ export function EditProfile() {
                 onChange={(e) => handleBannerImageUpload(e.target.files)}
                 className="hidden"
                 disabled={uploadBannerImage.isPending || !isEditing}
+                aria-label="Upload banner image"
               />
 
               <div
                 onClick={() => !uploadBannerImage.isPending && isEditing && bannerFileInputRef.current?.click()}
                 className={cn(
-                  "relative w-full aspect-[4/1] bg-gray-200 border border-dashed border-gray-400 rounded-lg flex items-center justify-center transition-all duration-200 overflow-hidden",
+                  "relative w-full aspect-[4/1] sm:aspect-[4/1] bg-gray-200 border border-dashed border-gray-400 rounded-lg flex items-center justify-center transition-all duration-200 overflow-hidden",
                   uploadBannerImage.isPending || !isEditing ? "cursor-not-allowed" : "cursor-pointer hover:border-yellow-400 hover:bg-yellow-400/10"
                 )}
               >
@@ -514,11 +521,11 @@ export function EditProfile() {
                             caption: "Profile Banner",
                           });
                         }}
-                        className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm hover:bg-green-600 transition-colors z-10"
+                        className="w-6 h-6 sm:w-8 sm:h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-xs sm:text-sm hover:bg-green-600 transition-colors z-10"
                         title="View banner image"
                         disabled={uploadBannerImage.isPending}
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                           <path
                             strokeLinecap="round"
@@ -536,28 +543,28 @@ export function EditProfile() {
                             bannerFileInputRef.current?.click();
                           }
                         }}
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm transition-colors z-10 ${
+                        className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white text-xs sm:text-sm transition-colors z-10 ${
                           isEditing ? "bg-blue-500 hover:bg-blue-600" : "bg-gray-400 cursor-not-allowed"
                         }`}
                         title={isEditing ? "Change banner image" : "Enable edit mode to change banner"}
                         disabled={uploadBannerImage.isPending || !isEditing}
                       >
-                        <Upload className="w-4 h-4" />
+                        <Upload className="w-3 h-3 sm:w-4 sm:h-4" />
                       </button>
                     </div>
                   </>
                 ) : (
-                  <div className="text-center">
-                    <Camera className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                  <div className="text-center px-4">
+                    <Camera className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-4 text-gray-400" />
                     {isEditing ? (
                       <>
-                        <p className="text-lg mb-2">Drop your banner image here or click to browse</p>
-                        <p className="text-sm text-gray-400">JPG, PNG, WEBP up to 10MB</p>
+                        <p className="text-sm sm:text-lg mb-1 sm:mb-2">Drop your banner image here or click to browse</p>
+                        <p className="text-xs sm:text-sm text-gray-400">JPG, PNG, WEBP up to 10MB</p>
                       </>
                     ) : (
                       <>
-                        <p className="text-lg mb-2">Click "Edit Profile" to upload banner</p>
-                        <p className="text-sm text-gray-400">Enable edit mode to change your banner image</p>
+                        <p className="text-sm sm:text-lg mb-1 sm:mb-2">Click "Edit Profile" to upload banner</p>
+                        <p className="text-xs sm:text-sm text-gray-400">Enable edit mode to change your banner image</p>
                       </>
                     )}
                   </div>
@@ -566,10 +573,10 @@ export function EditProfile() {
                 {/* Loading overlay for banner upload */}
                 {uploadBannerImage.isPending && (
                   <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-20">
-                    <div className="text-center text-white">
-                      <div className="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-transparent mx-auto mb-4"></div>
-                      <p className="text-lg font-medium">Uploading Banner...</p>
-                      <p className="text-sm text-white/80">Please wait while we process your image</p>
+                    <div className="text-center text-white px-4">
+                      <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-4 border-white border-t-transparent mx-auto mb-2 sm:mb-4"></div>
+                      <p className="text-sm sm:text-lg font-medium">Uploading Banner...</p>
+                      <p className="text-xs sm:text-sm text-white/80">Please wait while we process your image</p>
                     </div>
                   </div>
                 )}
@@ -578,8 +585,8 @@ export function EditProfile() {
                 {uploadingBanner && !uploadBannerImage.isPending && (
                   <div className="absolute inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-15">
                     <div className="text-center text-white">
-                      <div className="animate-spin rounded-full h-10 w-10 border-3 border-white border-t-transparent mx-auto mb-3"></div>
-                      <p className="text-sm font-medium">Processing Banner...</p>
+                      <div className="animate-spin rounded-full h-6 w-6 sm:h-10 sm:w-10 border-3 border-white border-t-transparent mx-auto mb-2 sm:mb-3"></div>
+                      <p className="text-xs sm:text-sm font-medium">Processing Banner...</p>
                       <p className="text-xs text-white/80">Your new banner is being prepared</p>
                     </div>
                   </div>
@@ -587,7 +594,7 @@ export function EditProfile() {
               </div>
 
               {/* Cover Image (Avatar) Overlapping on Left */}
-              <div className="absolute -bottom-16 left-8">
+              <div className="absolute -bottom-12 sm:-bottom-16 left-4 sm:left-8">
                 <input
                   type="file"
                   ref={coverFileInputRef}
@@ -595,11 +602,12 @@ export function EditProfile() {
                   onChange={(e) => handleCoverImageUpload(e.target.files)}
                   className="hidden"
                   disabled={uploadCoverImage.isPending || !isEditing}
+                  aria-label="Upload profile picture"
                 />
 
                 <div
                   onClick={() => !uploadCoverImage.isPending && isEditing && coverFileInputRef.current?.click()}
-                  className={`relative w-32 h-32 rounded-full border-4 border-white shadow-xl transition-all duration-200 bg-white ${
+                  className={`relative w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white shadow-xl transition-all duration-200 bg-white ${
                     uploadCoverImage.isPending || !isEditing ? "cursor-not-allowed" : "cursor-pointer hover:scale-105"
                   }`}
                 >
@@ -611,7 +619,7 @@ export function EditProfile() {
                         className={`w-full h-full object-cover rounded-full ${uploadingCover ? "blur-sm opacity-75" : ""}`}
                       />
                       <div className="absolute inset-0 bg-black/20 opacity-0 hover:opacity-100 transition-opacity duration-200 rounded-full flex items-center justify-center">
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-1 sm:gap-2">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -620,11 +628,11 @@ export function EditProfile() {
                                 caption: "Profile Picture",
                               });
                             }}
-                            className="bg-green-500 hover:bg-green-600 text-white rounded-full p-1.5 transition-colors duration-200 shadow-lg"
+                            className="bg-green-500 hover:bg-green-600 text-white rounded-full p-1 sm:p-1.5 transition-colors duration-200 shadow-lg"
                             title="View profile picture"
                             disabled={uploadCoverImage.isPending}
                           >
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-2 h-2 sm:w-3 sm:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                               <path
                                 strokeLinecap="round"
@@ -641,20 +649,20 @@ export function EditProfile() {
                                 coverFileInputRef.current?.click();
                               }
                             }}
-                            className={`rounded-full p-1.5 transition-colors duration-200 shadow-lg ${
+                            className={`rounded-full p-1 sm:p-1.5 transition-colors duration-200 shadow-lg ${
                               isEditing ? "bg-blue-500 hover:bg-blue-600 text-white" : "bg-gray-400 text-gray-200 cursor-not-allowed"
                             }`}
                             title={isEditing ? "Change profile picture" : "Enable edit mode to change profile picture"}
                             disabled={uploadCoverImage.isPending || !isEditing}
                           >
-                            <Upload className="w-3 h-3" />
+                            <Upload className="w-2 h-2 sm:w-3 sm:h-3" />
                           </button>
                         </div>
                       </div>
                     </>
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center rounded-full bg-gray-100">
-                      <User className="w-10 h-10 text-gray-500" />
+                      <User className="w-6 h-6 sm:w-10 sm:h-10 text-gray-500" />
                       <span className="text-xs text-gray-500 mt-1">{isEditing ? "Upload Avatar" : "Click Edit to Upload"}</span>
                     </div>
                   )}
@@ -663,7 +671,7 @@ export function EditProfile() {
                   {uploadCoverImage.isPending && (
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center rounded-full z-20">
                       <div className="text-center text-white">
-                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent mx-auto mb-2"></div>
+                        <div className="animate-spin rounded-full h-4 w-4 sm:h-6 sm:w-6 border-2 border-white border-t-transparent mx-auto mb-1 sm:mb-2"></div>
                         <p className="text-xs font-medium">Uploading...</p>
                       </div>
                     </div>
@@ -673,7 +681,7 @@ export function EditProfile() {
                   {uploadingCover && !uploadCoverImage.isPending && (
                     <div className="absolute inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center rounded-full z-15">
                       <div className="text-center text-white">
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mx-auto mb-2"></div>
+                        <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-2 border-white border-t-transparent mx-auto mb-1 sm:mb-2"></div>
                         <p className="text-xs font-medium">Processing...</p>
                       </div>
                     </div>
@@ -684,7 +692,7 @@ export function EditProfile() {
           </div>
 
           {/* Profile Photos Gallery Section */}
-          <div className="mb-8">
+          <div className="mb-6 sm:mb-8">
             <label className="flex items-center justify-start gap-2 mb-4">
               <Upload className="w-4 h-4" /> Profile Photos Gallery (Up to 20)
             </label>
@@ -697,35 +705,36 @@ export function EditProfile() {
               onChange={(e) => handleProfilePhotosUpload(e.target.files)}
               className="hidden"
               disabled={uploadProfilePhotos.isPending || !isEditing}
+              aria-label="Upload profile photos"
             />
 
             <div
               onClick={() => !uploadProfilePhotos.isPending && isEditing && profileFileInputRef.current?.click()}
-              className={`border-2 border-dashed border-gray-400 rounded-lg p-8 text-center transition-all duration-200 relative overflow-hidden ${
+              className={`border-2 border-dashed border-gray-400 rounded-lg p-4 sm:p-8 text-center transition-all duration-200 relative overflow-hidden ${
                 uploadProfilePhotos.isPending || !isEditing ? "cursor-not-allowed border-gray-300 bg-gray-50" : "cursor-pointer hover:border-yellow-400 hover:bg-yellow-400/10"
               }`}
             >
-              <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+              <Upload className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-4 text-gray-400" />
               {isEditing ? (
                 <>
-                  <p className="text-lg mb-2">Drop your portfolio photos here or click to browse</p>
-                  <p className="text-sm text-gray-400">JPG, PNG, WEBP up to 10MB each</p>
-                  <p className="text-sm text-gray-500 mt-2">{profileImages.length + uploadingImages.length}/20 photos uploaded</p>
+                  <p className="text-sm sm:text-lg mb-1 sm:mb-2">Drop your portfolio photos here or click to browse</p>
+                  <p className="text-xs sm:text-sm text-gray-400">JPG, PNG, WEBP up to 10MB each</p>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-2">{profileImages.length + uploadingImages.length}/20 photos uploaded</p>
                 </>
               ) : (
                 <>
-                  <p className="text-lg mb-2">Click "Edit Profile" to upload photos</p>
-                  <p className="text-sm text-gray-400">Enable edit mode to manage your portfolio</p>
-                  <p className="text-sm text-gray-500 mt-2">{profileImages.length + uploadingImages.length}/20 photos uploaded</p>
+                  <p className="text-sm sm:text-lg mb-1 sm:mb-2">Click "Edit Profile" to upload photos</p>
+                  <p className="text-xs sm:text-sm text-gray-400">Enable edit mode to manage your portfolio</p>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-2">{profileImages.length + uploadingImages.length}/20 photos uploaded</p>
                 </>
               )}
 
               {/* Loading overlay for profile photos upload */}
               {uploadProfilePhotos.isPending && (
                 <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center z-10">
-                  <div className="text-center">
-                    <div className="animate-spin rounded-full h-10 w-10 border-3 border-primary border-t-transparent mx-auto mb-3"></div>
-                    <p className="text-sm font-medium text-gray-700">Uploading Images...</p>
+                  <div className="text-center px-4">
+                    <div className="animate-spin rounded-full h-8 w-8 sm:h-10 sm:w-10 border-3 border-primary border-t-transparent mx-auto mb-2 sm:mb-3"></div>
+                    <p className="text-xs sm:text-sm font-medium text-gray-700">Uploading Images...</p>
                     <p className="text-xs text-gray-500">Please wait while we process your photos</p>
                   </div>
                 </div>
@@ -733,8 +742,8 @@ export function EditProfile() {
             </div>
 
             {profileImages.length > 0 || uploadingImages.length > 0 ? (
-              <div className="mt-6">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="mt-4 sm:mt-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                   {/* Show uploaded images */}
                   {profileImages.map((image, index) => (
                     <div key={image.id} className="relative group aspect-square">
@@ -755,7 +764,7 @@ export function EditProfile() {
                       {!image.url && (
                         <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
                           <div className="text-center">
-                            <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                            <Upload className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-1 sm:mb-2 text-gray-400" />
                             <p className="text-xs text-gray-500">Image not available</p>
                           </div>
                         </div>
@@ -765,7 +774,7 @@ export function EditProfile() {
                       {deletingImages.has(image.id) && (
                         <div className="absolute inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center rounded-lg z-20">
                           <div className="text-center text-white">
-                            <div className="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent mx-auto mb-2"></div>
+                            <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-2 border-white border-t-transparent mx-auto mb-1 sm:mb-2"></div>
                             <p className="text-xs font-medium">Deleting...</p>
                           </div>
                         </div>
@@ -775,14 +784,14 @@ export function EditProfile() {
                       {isEditing && (
                         <button
                           onClick={() => removeImage(image.id)}
-                          className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 transition-colors duration-200 shadow-lg opacity-0 group-hover:opacity-100 z-10"
+                          className="absolute top-1 right-1 sm:top-2 sm:right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 sm:p-1.5 transition-colors duration-200 shadow-lg opacity-0 group-hover:opacity-100 z-10"
                           title={`Remove profile image ${index + 1}`}
                           disabled={uploadProfilePhotos.isPending || deletingImages.has(image.id)}
                         >
                           {deletingImages.has(image.id) ? (
-                            <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent" />
+                            <div className="animate-spin rounded-full h-2 w-2 sm:h-3 sm:w-3 border-2 border-white border-t-transparent" />
                           ) : (
-                            <X className="h-3 w-3" />
+                            <X className="h-2 w-2 sm:h-3 sm:w-3" />
                           )}
                         </button>
                       )}
@@ -797,11 +806,11 @@ export function EditProfile() {
                                 caption: image.caption || "",
                               });
                             }}
-                            className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2 transition-colors duration-200 shadow-lg"
+                            className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-1.5 sm:p-2 transition-colors duration-200 shadow-lg"
                             title={`View profile image ${index + 1}`}
                             disabled={uploadProfilePhotos.isPending}
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                               <path
                                 strokeLinecap="round"
@@ -824,7 +833,7 @@ export function EditProfile() {
                       {/* Loading overlay for uploading images */}
                       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center rounded-lg">
                         <div className="text-center text-white">
-                          <div className="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent mx-auto mb-2"></div>
+                          <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-2 border-white border-t-transparent mx-auto mb-1 sm:mb-2"></div>
                           <p className="text-xs font-medium">Uploading...</p>
                         </div>
                       </div>
@@ -833,29 +842,29 @@ export function EditProfile() {
                 </div>
               </div>
             ) : (
-              <div className="mt-6 p-8 text-center bg-gray-50 dark:bg-gray-900 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700">
-                <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                <p className="text-lg text-gray-600 dark:text-gray-400 mb-2">No profile photos yet</p>
-                <p className="text-sm text-gray-500 dark:text-gray-500">Upload your first profile photo to get started</p>
+              <div className="mt-4 sm:mt-6 p-4 sm:p-8 text-center bg-gray-50 dark:bg-gray-900 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700">
+                <Upload className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-4 text-gray-400" />
+                <p className="text-sm sm:text-lg text-gray-600 dark:text-gray-400 mb-1 sm:mb-2">No profile photos yet</p>
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-500">Upload your first profile photo to get started</p>
               </div>
             )}
           </div>
 
           {/* Basic Information & Location */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* Basic Information */}
             <Card className="lg:col-span-2 shadow-lg border-0 bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-800">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <User className="h-5 w-5 text-primary" />
+              <CardHeader className="pb-3 sm:pb-4">
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <User className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                   Basic Information
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <CardContent className="space-y-4 sm:space-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <Label htmlFor="name" className="text-sm font-medium flex items-center gap-2 mb-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
+                      <User className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
                       Profile Name
                     </Label>
                     <Controller
@@ -878,7 +887,7 @@ export function EditProfile() {
 
                   <div>
                     <Label htmlFor="phone" className="text-sm font-medium flex items-center gap-2 mb-2">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <Phone className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
                       Phone Number
                     </Label>
                     <Controller
@@ -903,7 +912,7 @@ export function EditProfile() {
 
                 <div>
                   <Label htmlFor="bio" className="text-sm font-medium flex items-center gap-2 mb-2">
-                    <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                    <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
                     Bio / Short Introduction
                   </Label>
                   <Controller
@@ -928,7 +937,7 @@ export function EditProfile() {
 
                 <div>
                   <Label htmlFor="hobbies" className="text-sm font-medium flex items-center gap-2 mb-2">
-                    <Heart className="h-4 w-4 text-muted-foreground" />
+                    <Heart className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
                     Hobbies & Interests
                   </Label>
                   <Controller
@@ -1390,7 +1399,7 @@ export function EditProfile() {
                     </Button>
                     <Button
                       onClick={handleSubmit(onSubmit)}
-                      disabled={isSaving || isUploading || updateProfile.isPending || !isDirty}
+                      disabled={isSaving || isUploading || updateProfile.isPending || !hasChanges}
                       className="transition-all duration-200 hover:scale-105 px-6"
                       size="lg"
                     >

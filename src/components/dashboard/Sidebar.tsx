@@ -37,7 +37,7 @@ const sidebarItemsMain = [
   { id: "votes" as DashboardSection, label: "Votes", icon: Vote },
   // { id: "prize-history" as DashboardSection, label: "Prize History", icon: Gift },
   { id: "leaderboard" as DashboardSection, label: "Leaderboard", icon: TrendingUp },
-  { id: "notifications" as DashboardSection, label: "Notifications", icon: Bell },
+  // { id: "notifications" as DashboardSection, label: "Notifications", icon: Bell },
 ];
 
 const sidebarItemsSecondary = [
@@ -76,23 +76,19 @@ export function Sidebar({
         }`}
         onClick={onToggle} // Close sidebar when clicking outside
       >
-        {/* Semi-transparent overlay */}
-        <div className="absolute inset-0 bg-black bg-opacity-70"></div>
-        
         {/* Sidebar content */}
         <div 
-          className={`fixed left-0 top-0 h-full bg-white border-r border-border transition-transform duration-300 mobile-sidebar ${
+          className={`fixed left-0 top-0 h-full w-64 bg-white border-r border-border transition-transform duration-300 ${
             isOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
           onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside sidebar
-          style={{ backgroundColor: '#ffffff' }}
         >
-          <div className="w-64 h-full flex flex-col bg-white shadow-2xl mobile-sidebar" style={{ backgroundColor: '#ffffff' }}>
-            <div className="p-4 border-b border-border bg-white mobile-sidebar" style={{ backgroundColor: '#ffffff' }}>
+          <div className="w-full h-full flex flex-col bg-white shadow-2xl">
+            <div className="p-4 border-b border-border bg-white">
               <h2 className="text-xl font-bold text-foreground">Dashboard</h2>
             </div>
             
-            <nav className="flex-1 p-4 space-y-2 bg-white mobile-sidebar" style={{ backgroundColor: '#ffffff' }}>
+            <nav className="flex-1 p-4 space-y-2 bg-white">
               {sidebarItemsMain.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -112,8 +108,8 @@ export function Sidebar({
               })}
             </nav>
 
-            <div className="p-4 border-t border-border bg-white mobile-sidebar" style={{ backgroundColor: '#ffffff' }}>
-              <nav className="space-y-2 bg-white mobile-sidebar" style={{ backgroundColor: '#ffffff' }}>
+            <div className="p-4 border-t border-border bg-white">
+              <nav className="space-y-2 bg-white">
                 {sidebarItemsSecondary.map((item) => {
                   const Icon = item.icon;
                   return (

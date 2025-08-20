@@ -365,7 +365,7 @@ export function PublicProfile() {
               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-2xl font-bold text-gray-900">N/A</p>
+                    <p className="text-2xl font-bold text-gray-900">{profileStats?.currentRank || 20}</p>
                     <p className="text-gray-600 text-sm font-medium">Current Rank</p>
                   </div>
                   <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
