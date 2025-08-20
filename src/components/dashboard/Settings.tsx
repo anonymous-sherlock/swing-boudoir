@@ -21,7 +21,6 @@ import {
   EyeOff,
   Globe,
   Download,
-  Upload,
   Settings as SettingsIcon,
   Monitor,
   Moon,
@@ -100,7 +99,7 @@ export function Settings() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const { toast } = useToast();
   const { useProfileByUserId, updateProfile } = useProfile();
-  
+
   // Fetch user profile using the hook
   const { data: userProfile, isLoading: isProfileLoading, error: profileError } = useProfileByUserId(user?.id || "");
 
@@ -188,22 +187,7 @@ export function Settings() {
     }
   };
 
-  const handleSavePhone = async () => {
-    if (!userProfile) return;
-    try {
-      await updateProfile.mutateAsync({ id: userProfile.id, data: { phone } });
-      toast({
-        title: "Phone Updated",
-        description: "Your phone number has been updated successfully.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update phone number.",
-        variant: "destructive",
-      });
-    }
-  };
+
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 sm:p-4">
@@ -282,9 +266,17 @@ export function Settings() {
                           </div>
                         </div>
                       ) : (
-                        <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
-                            <User className="h-6 w-6 text-muted-foreground" />
+                        <>
+                          <div className="relative w-full aspect-[4/1] bg-gray-100 rounded-lg overflow-hidden">
+                            <img src={`${userProfile?.bannerImage?.url}`} alt="Banner" className="w-full h-full object-cover" />
+                                    </div>
+                          <div className="flex items-center space-x-4">
+                            <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center overflow-hidden">
+                              {userProfile?.coverImage ? (
+                                <img src={`${userProfile.coverImage.url}`} alt="Profile" className="w-full h-full object-cover" />
+                            ) : (
+                              <User className="h-6 w-6 text-muted-foreground" />
+                            )}
                           </div>
                           <div>
                             <p className="font-medium">{userProfile?.user?.name || user?.name || "Unknown User"}</p>
@@ -295,6 +287,7 @@ export function Settings() {
                             <Badge variant="secondary">Active</Badge>
                           </div>
                         </div>
+                        </>
                       )}
                       <Button variant="outline" size="sm" onClick={() => setShowEditProfile(true)} disabled={isProfileLoading}>
                         <User className="h-4 w-4 mr-2" />
@@ -302,6 +295,29 @@ export function Settings() {
                       </Button>
                     </CardContent>
                   </Card>
+
+                  {/* Profile Photos Gallery */}
+                  {userProfile?.profilePhotos && userProfile.profilePhotos.length > 1 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-base">Profile Photos ({userProfile.profilePhotos.length})</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-3 gap-3">
+                          {userProfile.profilePhotos.slice(0, 6).map((photo, index) => (
+                            <div key={photo.id} className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
+                              <img src={`${photo.url}?t=${Date.now()}`} alt={`Profile ${index + 1}`} className="w-full h-full object-cover" />
+                            </div>
+                          ))}
+                          {userProfile.profilePhotos.length > 6 && (
+                            <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
+                              <span className="text-sm text-muted-foreground">+{userProfile.profilePhotos.length - 6} more</span>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
 
                   {/* Contact Information */}
                   <Card>
@@ -332,12 +348,7 @@ export function Settings() {
                             <Label htmlFor="phone" className="text-sm">
                               Phone
                             </Label>
-                            <div className="flex space-x-2">
-                              <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 (555) 123-4567" disabled={updateProfile.isPending} />
-                              <Button onClick={handleSavePhone} disabled={updateProfile.isPending || !userProfile} variant="outline" size="sm">
-                                {updateProfile.isPending ? "..." : "Save"}
-                              </Button>
-                            </div>
+                            <Input id="phone" value={phone} disabled className="bg-muted" />
                           </div>
                         </div>
                       )}

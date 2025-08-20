@@ -47,13 +47,13 @@ export interface Profile {
     url: string;
   } | null;
   profilePhotos?:
-    | {
-        id: string;
-        key: string;
-        caption: string | null;
-        url: string;
-      }[]
-    | null;
+  | {
+    id: string;
+    key: string;
+    caption: string | null;
+    url: string;
+  }[]
+  | null;
   user: {
     name: string;
     displayName: string;
@@ -121,6 +121,11 @@ export interface UpdateProfileRequest {
   freeVoterMessage?: string | null;
   lastFreeVoteAt?: string | null;
   coverImageId?: string | null;
+  user?: {
+    displayUsername?: string | null;
+    username?: string | null;
+    name?: string | null;
+  } | null;
 }
 
 // Query keys for React Query

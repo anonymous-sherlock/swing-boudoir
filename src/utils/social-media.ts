@@ -82,16 +82,28 @@ export const isValidSocialMediaUsername = (platform: keyof SocialMediaUrls, user
 
   const cleanUsername = username.trim().replace(/^@/, '');
 
-  // Basic validation patterns for different platforms
-  const patterns = {
+  // URL pattern for platforms that support full URLs
+  const urlPattern = /^https?:\/\/(www\.)?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(\/.*)?$/;
+
+  // Basic validation patterns for different platforms (username format)
+  const usernamePatterns = {
     instagram: /^[a-zA-Z0-9._]{1,30}$/,
     twitter: /^[a-zA-Z0-9_]{1,15}$/,
     facebook: /^[a-zA-Z0-9.]{5,50}$/,
     tiktok: /^[a-zA-Z0-9._]{2,24}$/,
-    youtube: /^[a-zA-Z0-9_-]{3,30}$/,
+    youtube: /^[a-zA-Z0-9._-]{3,30}$/,
     linkedin: /^[a-zA-Z0-9-]{3,100}$/,
     website: /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, // Basic domain validation
   };
 
-  return patterns[platform]?.test(cleanUsername) ?? false;
+  // Platforms that support both username and URL formats
+  const urlSupportedPlatforms = ['linkedin', 'website', 'youtube', 'facebook', 'instagram', 'twitter', 'tiktok'];
+
+  // Check if it's a valid URL first
+  if (urlPattern.test(cleanUsername)) {
+    return urlSupportedPlatforms.includes(platform);
+  }
+
+  // Check username pattern
+  return usernamePatterns[platform]?.test(cleanUsername) ?? false;
 };

@@ -3,8 +3,7 @@ import { RefreshCw } from "lucide-react";
 import CompetitionCard from "./competitions/CompetitionCard";
 
 const CompetitionsSection = () => {
-  
-  const { data, isLoading } = useContests();
+  const { data, isLoading } = useContests(1, 12, "active");
   const competitions = data?.data;
 
   if (isLoading) {
