@@ -1,5 +1,3 @@
-"use client";
-
 import * as React from "react";
 
 // ** Import 3rd Party Libs

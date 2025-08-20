@@ -1,5 +1,3 @@
-"use client";
-
 // ** Import Date Table
 import { DataTable } from "@/components/data-table/data-table";
 
@@ -16,43 +14,49 @@ import { ToolbarOptions } from "./components/toolbar-options";
 // ** Import Types
 import { UserCamelCase } from "./schema";
 
+// ** Import Auth Context
+import { useAuth } from "@/contexts/AuthContext";
+
 /**
  * UserCamelCaseTable Component
- * 
+ *
  * A data table component that demonstrates camelCase field support.
  * This table uses camelCase field names for both API requests and responses.
- * 
+ *
  * Features:
  * - Row selection with bulk operations
  * - Search and date filtering
  * - Column sorting and resizing
  * - Data export functionality
  * - URL state persistence
- * 
+ *
  * @returns JSX.Element
  */
 export default function UserTable() {
-  function fetchUsersByIdsCamelCase(ids: string[] | number[]): Promise<{ id: string; name: string; email: string; phone: string; image: string; createdAt: string; }[]> {
-    throw new Error("Function not implemented.");
-  }
+  const { user } = useAuth();
+
+  // Create a wrapper function that includes the current user ID
+  const getColumnsWithUser = (handleRowDeselection: ((rowId: string) => void) | null | undefined) => {
+    return getColumns(handleRowDeselection, user?.id);
+  };
 
   return (
     <DataTable<UserCamelCase, unknown>
-      getColumns={getColumns}
+      getColumns={getColumnsWithUser}
       exportConfig={useExportConfig()}
       fetchDataFn={useUsersCamelCaseData}
-      fetchByIdsFn={fetchUsersByIdsCamelCase}
       idField="id"
-      pageSizeOptions={[10, 20, 30, 40, 50, 100, 150]}
+      pageSizeOptions={[10,30, 20, 30, 40, 50, 100, 150]}
       renderToolbarContent={({ selectedRows, allSelectedIds, totalSelectedCount, resetSelection }) => (
         <ToolbarOptions
-          selectedUsers={selectedRows.map(row => ({
-            id: Number(row.id),
+          selectedUsers={selectedRows.map((row) => ({
+            id: row.id,
             name: row.name,
           }))}
-          allSelectedUserIds={allSelectedIds.map(id => Number(id))}
+          allSelectedUserIds={allSelectedIds.map((id) => String(id))}
           totalSelectedCount={totalSelectedCount}
           resetSelection={resetSelection}
+
         />
       )}
       config={{
@@ -63,10 +67,12 @@ export default function UserTable() {
         enableDateFilter: true,
         enableColumnVisibility: true,
         enableUrlState: true,
-        size: "default",
+        size: "sm",
         columnResizingTableId: "user-camel-case-table",
-        searchPlaceholder: "Search users"
+        searchPlaceholder: "Search users",
+        
       }}
+
     />
   );
 }

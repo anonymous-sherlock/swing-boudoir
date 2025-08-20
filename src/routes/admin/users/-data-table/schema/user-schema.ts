@@ -1,5 +1,4 @@
 import { z } from "zod";
-
 /**
  * Zod schema for User entity with camelCase field names
  * 
@@ -15,7 +14,12 @@ export const userCamelCaseSchema = z.object({
   phone: z.string(),
   image: z.string(),
   createdAt: z.string(),
-
+  username: z.string(),
+  profileId: z.string().optional(),
+  role: z.enum(["USER", "MODERATOR", "ADMIN"]),
+  isActive: z.boolean(),
+  emailVerified: z.boolean(),
+  hasProfile: z.boolean(),
 });
 
 export type UserCamelCase = z.infer<typeof userCamelCaseSchema>;

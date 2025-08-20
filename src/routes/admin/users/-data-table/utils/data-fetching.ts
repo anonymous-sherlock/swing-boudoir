@@ -1,4 +1,5 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 
 // ** Import API
 // Define the fetch function locally since it doesn't exist in the API module
@@ -13,21 +14,21 @@ async function fetchUsersCamelCase(params: {
 }) {
   // TODO: Implement actual API call
   // This is a placeholder - replace with your actual API endpoint
-  const response = await fetch(`http://localhost:9999/api/v1/search/users?${new URLSearchParams({
+  const response = await api.get(`/api/v1/search/users?${new URLSearchParams({
     page: params.page.toString(),
     limit: params.limit.toString(),
     search: params.search,
-    from_date: params.fromDate,
-    to_date: params.toDate,
-    sort_by: params.sortBy,
-    sort_order: params.sortOrder,
+    fromDate: params.fromDate,
+    toDate: params.toDate,
+    sortBy: params.sortBy,
+    sortOrder: params.sortOrder,
   })}`);
   
-  if (!response.ok) {
+  if (!response.success) {
     throw new Error('Failed to fetch users');
   }
   
-  return response.json();
+  return response.data;
 }
 
 // ** Import Utils

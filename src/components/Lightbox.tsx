@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect } from "react";
 import { X, Download, Share } from "lucide-react";
 import { Button } from "@/components/ui/button";

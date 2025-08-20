@@ -1,11 +1,9 @@
-"use client";
-
 import { Button } from "@/components/ui/button";
 import { AddUserPopup } from "../actions/add-user-popup";
 
 interface ToolbarOptionsProps {
-  selectedUsers: Array<{ id: number; name: string }>;
-  allSelectedUserIds: number[];
+  selectedUsers: Array<{ id: string; name: string }>;
+  allSelectedUserIds: string[];
   totalSelectedCount: number;
   resetSelection: () => void;
 }

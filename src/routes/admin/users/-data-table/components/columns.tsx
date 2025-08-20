@@ -1,24 +1,21 @@
-"use client";
-
 // ** Import 3rd Party Libs
 import { format } from "date-fns";
 import { ColumnDef } from "@tanstack/react-table";
+import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 
 // ** Import Components
 import { DataTableColumnHeader } from "@/components/data-table/column-header";
 
 // ** Import UI Components
 import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
 
 // ** Import Schema
 import { UserCamelCase } from "../schema";
 
 // ** Import Table Row Actions
 import { DataTableRowActions } from "./row-actions";
-import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
 
-export const getColumns = (handleRowDeselection: ((rowId: string) => void) | null | undefined): ColumnDef<UserCamelCase>[] => {
+export const getColumns = (handleRowDeselection: ((rowId: string) => void) | null | undefined, currentUserId?: string): ColumnDef<UserCamelCase>[] => {
   // Base columns without the select column
   const baseColumns: ColumnDef<UserCamelCase>[] = [
     {
@@ -26,25 +23,37 @@ export const getColumns = (handleRowDeselection: ((rowId: string) => void) | nul
       header: ({ column }) => <DataTableColumnHeader column={column} title="ID" />,
       cell: ({ row }) => <div className="truncate text-left">{row.getValue("id")}</div>,
       size: 70,
+      enableSorting: false,
     },
     {
       accessorKey: "image",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Image" />,
       cell: ({ row }) => (
         <div className="font-medium truncate text-left w-10 h-10 rounded-full flex items-center justify-center">
-          <Avatar className="w-10 h-10 rounded-full flex items-center justify-center">
-            <AvatarImage src={row.getValue("image")} className="object-cover object-center" />
-            <AvatarFallback>{row.original.name.charAt(0)}</AvatarFallback>
+          <Avatar className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+            <AvatarImage src={row.getValue("image")} className="object-cover object-center w-full h-full " />
+            <AvatarFallback className="capitalize">{row.original.name.charAt(0)}</AvatarFallback>
           </Avatar>
         </div>
       ),
       size: 50,
+      enableSorting: false,
+      enableHiding: true,
     },
     {
       accessorKey: "name",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
-      cell: ({ row }) => <div className="font-medium truncate text-left">{row.getValue("name")}</div>,
+      cell: ({ row }) => {
+        const isCurrentUser = currentUserId && row.original.id === currentUserId;
+        return (
+          <div className="flex items-center gap-2 truncate">
+            <span className="font-medium truncate">{row.getValue("name")}</span>
+            {isCurrentUser && <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">You</span>}
+          </div>
+        );
+      },
       size: 200,
+      enableSorting: false,
     },
 
     {
@@ -70,8 +79,58 @@ export const getColumns = (handleRowDeselection: ((rowId: string) => void) | nul
         );
       },
       size: 150,
+      enableHiding: true,
     },
-
+    {
+      accessorKey: "role",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Role" />,
+      cell: ({ row }) => {
+        const role = row.original.role;
+        return (
+          <div className="flex items-center truncate">
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                role === "ADMIN" ? "bg-red-100 text-red-800" : role === "USER" ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-800"
+              }`}
+            >
+              {role}
+            </span>
+          </div>
+        );
+      },
+      size: 100,
+      enableHiding: true,
+    },
+    {
+      accessorKey: "emailVerified",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Email Verified" />,
+      cell: ({ row }) => {
+        const isVerified = row.original.emailVerified;
+        return (
+          <div className="flex items-center truncate">
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${isVerified ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>
+              {isVerified ? "Verified" : "Pending"}
+            </span>
+          </div>
+        );
+      },
+      size: 120,
+    },
+    {
+      accessorKey: "hasProfile",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Onboarding" />,
+      cell: ({ row }) => {
+        const hasProfile = row.original.hasProfile;
+        return (
+          <div className="flex items-center truncate">
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${hasProfile ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"}`}>
+              {hasProfile ? "Completed" : "Pending"}
+            </span>
+          </div>
+        );
+      },
+      size: 120,
+    },
     {
       accessorKey: "createdAt",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Joined" />,

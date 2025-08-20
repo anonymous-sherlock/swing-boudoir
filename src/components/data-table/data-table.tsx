@@ -1,5 +1,3 @@
-"use client";
-
 import type * as React from "react";
 import {
   type ColumnSizingState,
@@ -12,18 +10,11 @@ import {
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
-  type ColumnResizeMode
+  type ColumnResizeMode,
 } from "@tanstack/react-table";
 import { useEffect, useCallback, useMemo, useRef, useState } from "react";
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 import { DataTablePagination } from "./pagination";
 import { DataTableToolbar } from "./toolbar";
@@ -44,15 +35,11 @@ import {
   createColumnVisibilityHandler,
   createPaginationHandler,
   createColumnSizingHandler,
-  createSortingState
+  createSortingState,
 } from "./utils/table-state-handlers";
 import { createKeyboardNavigationHandler } from "./utils/keyboard-navigation";
 import { createConditionalStateHook } from "./utils/conditional-state";
-import {
-  initializeColumnSizes,
-  trackColumnResizing,
-  cleanupColumnResizing
-} from "./utils/column-sizing";
+import { initializeColumnSizes, trackColumnResizing, cleanupColumnResizing } from "./utils/column-sizing";
 
 // Define types for the data fetching function params and result
 interface DataFetchParams {
@@ -90,8 +77,17 @@ interface DataTableProps<TData extends ExportableData, TValue> {
   getColumns: (handleRowDeselection: ((rowId: string) => void) | null | undefined) => ColumnDef<TData, TValue>[];
 
   // Data fetching function
-  fetchDataFn: ((params: DataFetchParams) => Promise<DataFetchResult<TData>>) | 
-               ((page: number, pageSize: number, search: string, dateRange: { from_date: string; to_date: string }, sortBy: string, sortOrder: string, caseConfig?: CaseFormatConfig) => unknown);
+  fetchDataFn:
+    | ((params: DataFetchParams) => Promise<DataFetchResult<TData>>)
+    | ((
+        page: number,
+        pageSize: number,
+        search: string,
+        dateRange: { from_date: string; to_date: string },
+        sortBy: string,
+        sortOrder: string,
+        caseConfig?: CaseFormatConfig
+      ) => unknown);
 
   // Function to fetch specific items by their IDs
   fetchByIdsFn?: (ids: number[] | string[]) => Promise<TData[]>;
@@ -113,12 +109,10 @@ interface DataTableProps<TData extends ExportableData, TValue> {
   pageSizeOptions?: number[];
 
   // Custom toolbar content render function
-  renderToolbarContent?: (props: {
-    selectedRows: TData[];
-    allSelectedIds: (string | number)[];
-    totalSelectedCount: number;
-    resetSelection: () => void;
-  }) => React.ReactNode;
+  renderToolbarContent?: (props: { selectedRows: TData[]; allSelectedIds: (string | number)[]; totalSelectedCount: number; resetSelection: () => void }) => React.ReactNode;
+
+  // Row click callback
+  onRowClick?: (rowData: TData, rowIndex: number) => void;
 }
 
 export function DataTable<TData extends ExportableData, TValue>({
@@ -127,21 +121,19 @@ export function DataTable<TData extends ExportableData, TValue>({
   fetchDataFn,
   fetchByIdsFn,
   exportConfig,
-  idField = 'id' as keyof TData,
+  idField = "id" as keyof TData,
   pageSizeOptions,
-  renderToolbarContent
+  renderToolbarContent,
+  onRowClick,
 }: DataTableProps<TData, TValue>) {
   // Load table configuration with any overrides
   const tableConfig = useTableConfig(config);
 
   // Table ID for localStorage storage - generate a default if not provided
-  const tableId = tableConfig.columnResizingTableId || 'data-table-default';
+  const tableId = tableConfig.columnResizingTableId || "data-table-default";
 
   // Use our custom hook for column resizing
-  const { columnSizing, setColumnSizing, resetColumnSizing } = useTableColumnResize(
-    tableId,
-    tableConfig.enableColumnResizing
-  );
+  const { columnSizing, setColumnSizing, resetColumnSizing } = useTableColumnResize(tableId, tableConfig.enableColumnResizing);
 
   // Create conditional URL state hook based on config
   const useConditionalUrlState = createConditionalStateHook(tableConfig.enableUrlState);
@@ -151,7 +143,7 @@ export function DataTable<TData extends ExportableData, TValue>({
   const [pageSize, setPageSize] = useConditionalUrlState("pageSize", 10);
   const [search, setSearch] = useConditionalUrlState("search", "");
   const [dateRange, setDateRange] = useConditionalUrlState<{ from_date: string; to_date: string }>("dateRange", { from_date: "", to_date: "" });
-  const [sortBy, setSortBy] = useConditionalUrlState("sortBy", "created_at");
+  const [sortBy, setSortBy] = useConditionalUrlState("sortBy", "createdAt");
   const [sortOrder, setSortOrder] = useConditionalUrlState<"asc" | "desc">("sortOrder", "desc");
   const [columnVisibility, setColumnVisibility] = useConditionalUrlState<Record<string, boolean>>("columnVisibility", {});
   const [columnFilters, setColumnFilters] = useConditionalUrlState<Array<{ id: string; value: unknown }>>("columnFilters", []);
@@ -200,28 +192,28 @@ export function DataTable<TData extends ExportableData, TValue>({
   }, [dataItems, selectedItemIds, idField]);
 
   // Calculate total selected items - memoize to avoid recalculation
-  const totalSelectedItems = useMemo(() =>
-    Object.keys(selectedItemIds).length,
-    [selectedItemIds]
-  );
+  const totalSelectedItems = useMemo(() => Object.keys(selectedItemIds).length, [selectedItemIds]);
 
   // PERFORMANCE FIX: Optimized row deselection handler
-  const handleRowDeselection = useCallback((rowId: string) => {
-    if (!dataItems.length) return;
+  const handleRowDeselection = useCallback(
+    (rowId: string) => {
+      if (!dataItems.length) return;
 
-    const rowIndex = Number.parseInt(rowId, 10);
-    const item = dataItems[rowIndex];
+      const rowIndex = Number.parseInt(rowId, 10);
+      const item = dataItems[rowIndex];
 
-    if (item) {
-      const itemId = String(item[idField]);
-      setSelectedItemIds(prev => {
-        // Remove this item ID from selection
-        const next = { ...prev };
-        delete next[itemId];
-        return next;
-      });
-    }
-  }, [dataItems, idField]);
+      if (item) {
+        const itemId = String(item[idField]);
+        setSelectedItemIds((prev) => {
+          // Remove this item ID from selection
+          const next = { ...prev };
+          delete next[itemId];
+          return next;
+        });
+      }
+    },
+    [dataItems, idField]
+  );
 
   // Clear all selections
   const clearAllSelections = useCallback(() => {
@@ -229,48 +221,49 @@ export function DataTable<TData extends ExportableData, TValue>({
   }, []);
 
   // PERFORMANCE FIX: Optimized row selection handler
-  const handleRowSelectionChange = useCallback((updaterOrValue: RowSelectionUpdater | Record<string, boolean>) => {
-    // Determine the new row selection value
-    const newRowSelection = typeof updaterOrValue === 'function'
-      ? updaterOrValue(rowSelection)
-      : updaterOrValue;
+  const handleRowSelectionChange = useCallback(
+    (updaterOrValue: RowSelectionUpdater | Record<string, boolean>) => {
+      // Determine the new row selection value
+      const newRowSelection = typeof updaterOrValue === "function" ? updaterOrValue(rowSelection) : updaterOrValue;
 
-    // Batch update selectedItemIds based on the new row selection
-    setSelectedItemIds(prev => {
-      const next = { ...prev };
+      // Batch update selectedItemIds based on the new row selection
+      setSelectedItemIds((prev) => {
+        const next = { ...prev };
 
-      // Process changes for current page
-      if (dataItems.length) {
-        // First handle explicit selections in newRowSelection
-        for (const [rowId, isSelected] of Object.entries(newRowSelection)) {
-          const rowIndex = Number.parseInt(rowId, 10);
-          if (rowIndex >= 0 && rowIndex < dataItems.length) {
-            const item = dataItems[rowIndex];
-            const itemId = String(item[idField]);
+        // Process changes for current page
+        if (dataItems.length) {
+          // First handle explicit selections in newRowSelection
+          for (const [rowId, isSelected] of Object.entries(newRowSelection)) {
+            const rowIndex = Number.parseInt(rowId, 10);
+            if (rowIndex >= 0 && rowIndex < dataItems.length) {
+              const item = dataItems[rowIndex];
+              const itemId = String(item[idField]);
 
-            if (isSelected) {
-              next[itemId] = true;
-            } else {
-              delete next[itemId];
+              if (isSelected) {
+                next[itemId] = true;
+              } else {
+                delete next[itemId];
+              }
             }
           }
+
+          // Then handle implicit deselection (rows that were selected but aren't in newRowSelection)
+          dataItems.forEach((item, index) => {
+            const itemId = String(item[idField]);
+            const rowId = String(index);
+
+            // If item was selected but isn't in new selection, deselect it
+            if (prev[itemId] && newRowSelection[rowId] === undefined) {
+              delete next[itemId];
+            }
+          });
         }
 
-        // Then handle implicit deselection (rows that were selected but aren't in newRowSelection)
-        dataItems.forEach((item, index) => {
-          const itemId = String(item[idField]);
-          const rowId = String(index);
-
-          // If item was selected but isn't in new selection, deselect it
-          if (prev[itemId] && newRowSelection[rowId] === undefined) {
-            delete next[itemId];
-          }
-        });
-      }
-
-      return next;
-    });
-  }, [dataItems, rowSelection, idField]);
+        return next;
+      });
+    },
+    [dataItems, rowSelection, idField]
+  );
 
   // Get selected items data
   const getSelectedItems = useCallback(async () => {
@@ -280,24 +273,16 @@ export function DataTable<TData extends ExportableData, TValue>({
     }
 
     // Get IDs of selected items
-    const selectedIdsArray = Object.keys(selectedItemIds).map(id =>
-      typeof id === 'string' ? Number.parseInt(id, 10) : id as number
-    );
+    const selectedIdsArray = Object.keys(selectedItemIds).map((id) => (typeof id === "string" ? Number.parseInt(id, 10) : (id as number)));
 
     // Find items from current page that are selected
-    const itemsInCurrentPage = dataItems.filter(item =>
-      selectedItemIds[String(item[idField])]
-    );
+    const itemsInCurrentPage = dataItems.filter((item) => selectedItemIds[String(item[idField])]);
 
     // Get IDs of items on current page
-    const idsInCurrentPage = itemsInCurrentPage.map(item =>
-      item[idField] as unknown as number
-    );
+    const idsInCurrentPage = itemsInCurrentPage.map((item) => item[idField] as unknown as number);
 
     // Find IDs that need to be fetched (not on current page)
-    const idsToFetch = selectedIdsArray.filter(id =>
-      !idsInCurrentPage.includes(id)
-    );
+    const idsToFetch = selectedIdsArray.filter((id) => !idsInCurrentPage.includes(id));
 
     // If all selected items are on current page or we can't fetch by IDs
     if (idsToFetch.length === 0 || !fetchByIdsFn) {
@@ -331,11 +316,11 @@ export function DataTable<TData extends ExportableData, TValue>({
       // Create refs to capture the current sort values at the time of fetching
       const currentSortBy = sortBy;
       const currentSortOrder = sortOrder;
-      
+
       const fetchData = async () => {
         try {
           setIsLoading(true);
-          
+
           const result = await (fetchDataFn as (params: DataFetchParams) => Promise<DataFetchResult<TData>>)({
             page,
             limit: pageSize,
@@ -362,23 +347,26 @@ export function DataTable<TData extends ExportableData, TValue>({
   }, [page, pageSize, search, dateRange, sortBy, sortOrder, fetchDataFn]);
 
   // If fetchDataFn is a React Query hook, call it directly with parameters
-  const queryResult = (fetchDataFn as { isQueryHook?: boolean }).isQueryHook === true
-    ? (fetchDataFn as (page: number, pageSize: number, search: string, dateRange: { from_date: string; to_date: string }, sortBy: string, sortOrder: string, caseConfig?: CaseFormatConfig) => { 
-        isLoading: boolean; 
-        isSuccess: boolean; 
-        isError: boolean; 
-        data?: DataFetchResult<TData>; 
-        error?: Error 
-      })(
-        page, 
-        pageSize, 
-        search, 
-        dateRange, 
-        sortBy,
-        sortOrder,
-        exportConfig.caseConfig
-      )
-    : null;
+  const queryResult =
+    (fetchDataFn as { isQueryHook?: boolean }).isQueryHook === true
+      ? (
+          fetchDataFn as (
+            page: number,
+            pageSize: number,
+            search: string,
+            dateRange: { from_date: string; to_date: string },
+            sortBy: string,
+            sortOrder: string,
+            caseConfig?: CaseFormatConfig
+          ) => {
+            isLoading: boolean;
+            isSuccess: boolean;
+            isError: boolean;
+            data?: DataFetchResult<TData>;
+            error?: Error;
+          }
+        )(page, pageSize, search, dateRange, sortBy, sortOrder, exportConfig.caseConfig)
+      : null;
 
   // If using React Query, update state based on query result
   useEffect(() => {
@@ -418,18 +406,13 @@ export function DataTable<TData extends ExportableData, TValue>({
   const handleSortingChange = useCallback(
     (updaterOrValue: SortingUpdater | { id: string; desc: boolean }[]) => {
       // Extract the new sorting state
-      const newSorting = typeof updaterOrValue === 'function'
-        ? updaterOrValue(sorting)
-        : updaterOrValue;
-      
+      const newSorting = typeof updaterOrValue === "function" ? updaterOrValue(sorting) : updaterOrValue;
+
       if (newSorting.length > 0) {
         const columnId = newSorting[0].id;
         const direction = newSorting[0].desc ? "desc" : "asc";
         // Use Promise.all for batch updates to ensure they're applied together
-        Promise.all([
-          setSortBy(columnId),
-          setSortOrder(direction)
-        ]).catch(err => {
+        Promise.all([setSortBy(columnId), setSortOrder(direction)]).catch((err) => {
           console.error("Failed to update URL sorting params:", err);
         });
       }
@@ -437,42 +420,34 @@ export function DataTable<TData extends ExportableData, TValue>({
     [setSortBy, setSortOrder, sorting]
   );
 
-  const handleColumnFiltersChange = useCallback(
-    createColumnFiltersHandler(setColumnFilters),
-    []
-  );
+  const handleColumnFiltersChange = useCallback(createColumnFiltersHandler(setColumnFilters), []);
 
-  const handleColumnVisibilityChange = useCallback(
-    createColumnVisibilityHandler(setColumnVisibility),
-    []
-  );
+  const handleColumnVisibilityChange = useCallback(createColumnVisibilityHandler(setColumnVisibility), []);
 
   const handlePaginationChange = useCallback(
     (updaterOrValue: PaginationUpdater<TData> | { pageIndex: number; pageSize: number }) => {
       // Extract the new pagination state
-      const newPagination = typeof updaterOrValue === 'function'
-        ? updaterOrValue({ pageIndex: page - 1, pageSize })
-        : updaterOrValue;
-      
+      const newPagination = typeof updaterOrValue === "function" ? updaterOrValue({ pageIndex: page - 1, pageSize }) : updaterOrValue;
+
       // Special handling: When page size changes, always reset to page 1
       if (newPagination.pageSize !== pageSize) {
         // First, directly update URL to ensure it's in sync
         const url = new URL(window.location.href);
-        url.searchParams.set('pageSize', String(newPagination.pageSize));
-        url.searchParams.set('page', '1'); // Always reset to page 1
-        window.history.replaceState({}, '', url.toString());
-        
+        url.searchParams.set("pageSize", String(newPagination.pageSize));
+        url.searchParams.set("page", "1"); // Always reset to page 1
+        window.history.replaceState({}, "", url.toString());
+
         // Then update our state
         setPageSize(newPagination.pageSize);
         setPage(1);
         return;
       }
-      
+
       // Only update page if it's changed - this handles normal page navigation
-      if ((newPagination.pageIndex + 1) !== page) {
+      if (newPagination.pageIndex + 1 !== page) {
         const setPagePromise = setPage(newPagination.pageIndex + 1);
-        if (setPagePromise && typeof setPagePromise.catch === 'function') {
-          setPagePromise.catch(err => {
+        if (setPagePromise && typeof setPagePromise.catch === "function") {
+          setPagePromise.catch((err) => {
             console.error("Failed to update page param:", err);
           });
         }
@@ -483,8 +458,8 @@ export function DataTable<TData extends ExportableData, TValue>({
 
   const handleColumnSizingChange = useCallback(
     (updaterOrValue: ColumnSizingState | ((prev: ColumnSizingState) => ColumnSizingState)) => {
-      if (typeof updaterOrValue === 'function') {
-        setColumnSizing(current => updaterOrValue(current));
+      if (typeof updaterOrValue === "function") {
+        setColumnSizing((current) => updaterOrValue(current));
       } else {
         setColumnSizing(updaterOrValue);
       }
@@ -493,39 +468,73 @@ export function DataTable<TData extends ExportableData, TValue>({
   );
 
   // Column order change handler
-  const handleColumnOrderChange = useCallback((updaterOrValue: ColumnOrderUpdater | string[]) => {
-    const newColumnOrder = typeof updaterOrValue === 'function'
-      ? updaterOrValue(columnOrder)
-      : updaterOrValue;
+  const handleColumnOrderChange = useCallback(
+    (updaterOrValue: ColumnOrderUpdater | string[]) => {
+      const newColumnOrder = typeof updaterOrValue === "function" ? updaterOrValue(columnOrder) : updaterOrValue;
 
-    setColumnOrder(newColumnOrder);
+      setColumnOrder(newColumnOrder);
 
-    // Persist column order to localStorage
-    try {
-      localStorage.setItem('data-table-column-order', JSON.stringify(newColumnOrder));
-    } catch (error) {
-      console.error('Failed to save column order to localStorage:', error);
-    }
-  }, [columnOrder]);
+      // Persist column order to localStorage
+      try {
+        localStorage.setItem("data-table-column-order", JSON.stringify(newColumnOrder));
+      } catch (error) {
+        console.error("Failed to save column order to localStorage:", error);
+      }
+    },
+    [columnOrder]
+  );
 
   // Load column order from localStorage on initial render
   useEffect(() => {
     try {
-      const savedOrder = localStorage.getItem('data-table-column-order');
+      const savedOrder = localStorage.getItem("data-table-column-order");
       if (savedOrder) {
         const parsedOrder = JSON.parse(savedOrder);
         setColumnOrder(parsedOrder);
       }
     } catch (error) {
-      console.error('Error loading column order:', error);
+      console.error("Error loading column order:", error);
     }
   }, []);
 
   // Memoize table configuration to prevent unnecessary re-renders
-  const tableOptions = useMemo(() => ({
-    data: dataItems,
-    columns,
-    state: {
+  const tableOptions = useMemo(
+    () => ({
+      data: dataItems,
+      columns,
+      state: {
+        sorting,
+        columnVisibility,
+        rowSelection,
+        columnFilters,
+        pagination,
+        columnSizing,
+        columnOrder,
+      },
+      columnResizeMode: "onChange" as ColumnResizeMode,
+      onColumnSizingChange: handleColumnSizingChange,
+      onColumnOrderChange: handleColumnOrderChange,
+      pageCount: data?.pagination.total_pages || 0,
+      enableRowSelection: tableConfig.enableRowSelection,
+      enableColumnResizing: tableConfig.enableColumnResizing,
+      manualPagination: true,
+      manualSorting: true,
+      manualFiltering: true,
+      onRowSelectionChange: handleRowSelectionChange,
+      onSortingChange: handleSortingChange,
+      onColumnFiltersChange: handleColumnFiltersChange,
+      onColumnVisibilityChange: handleColumnVisibilityChange,
+      onPaginationChange: handlePaginationChange,
+      getCoreRowModel: getCoreRowModel<TData>(),
+      getFilteredRowModel: getFilteredRowModel<TData>(),
+      getPaginationRowModel: getPaginationRowModel<TData>(),
+      getSortedRowModel: getSortedRowModel<TData>(),
+      getFacetedRowModel: getFacetedRowModel<TData>(),
+      getFacetedUniqueValues: getFacetedUniqueValues<TData>(),
+    }),
+    [
+      dataItems,
+      columns,
       sorting,
       columnVisibility,
       rowSelection,
@@ -533,65 +542,58 @@ export function DataTable<TData extends ExportableData, TValue>({
       pagination,
       columnSizing,
       columnOrder,
-    },
-    columnResizeMode: 'onChange' as ColumnResizeMode,
-    onColumnSizingChange: handleColumnSizingChange,
-    onColumnOrderChange: handleColumnOrderChange,
-    pageCount: data?.pagination.total_pages || 0,
-    enableRowSelection: tableConfig.enableRowSelection,
-    enableColumnResizing: tableConfig.enableColumnResizing,
-    manualPagination: true,
-    manualSorting: true,
-    manualFiltering: true,
-    onRowSelectionChange: handleRowSelectionChange,
-    onSortingChange: handleSortingChange,
-    onColumnFiltersChange: handleColumnFiltersChange,
-    onColumnVisibilityChange: handleColumnVisibilityChange,
-    onPaginationChange: handlePaginationChange,
-    getCoreRowModel: getCoreRowModel<TData>(),
-    getFilteredRowModel: getFilteredRowModel<TData>(),
-    getPaginationRowModel: getPaginationRowModel<TData>(),
-    getSortedRowModel: getSortedRowModel<TData>(),
-    getFacetedRowModel: getFacetedRowModel<TData>(),
-    getFacetedUniqueValues: getFacetedUniqueValues<TData>(),
-  }), [
-    dataItems,
-    columns,
-    sorting,
-    columnVisibility,
-    rowSelection,
-    columnFilters,
-    pagination,
-    columnSizing,
-    columnOrder,
-    handleColumnSizingChange,
-    handleColumnOrderChange,
-    data?.pagination.total_pages,
-    tableConfig.enableRowSelection,
-    tableConfig.enableColumnResizing,
-    handleRowSelectionChange,
-    handleSortingChange,
-    handleColumnFiltersChange,
-    handleColumnVisibilityChange,
-    handlePaginationChange,
-  ]);
+      handleColumnSizingChange,
+      handleColumnOrderChange,
+      data?.pagination.total_pages,
+      tableConfig.enableRowSelection,
+      tableConfig.enableColumnResizing,
+      handleRowSelectionChange,
+      handleSortingChange,
+      handleColumnFiltersChange,
+      handleColumnVisibilityChange,
+      handlePaginationChange,
+    ]
+  );
 
   // Set up the table with memoized configuration
   const table = useReactTable<TData>(tableOptions);
 
+  // Row click handler with conflict prevention
+  const handleRowClick = useCallback(
+    (event: React.MouseEvent, rowData: TData, rowIndex: number) => {
+      // Prevent row click if clicking on interactive elements (buttons, links, etc.)
+      const target = event.target as HTMLElement;
+      const isInteractiveElement = target.closest('button, a, input, select, textarea, [role="button"], [role="link"]');
+
+      if (isInteractiveElement) {
+        return;
+      }
+
+      // Call the onRowClick callback if provided
+      onRowClick?.(rowData, rowIndex);
+    },
+    [onRowClick]
+  );
+
   // Create keyboard navigation handler
   const handleKeyDown = useCallback(
-    createKeyboardNavigationHandler(table, (row, rowIndex) => {
-      // Example action on keyboard activation
-    }),
-    []
+    createKeyboardNavigationHandler(
+      table,
+      onRowClick
+        ? (rowData: TData, rowIndex: number) => {
+            // Handle keyboard activation (Enter/Space) for row clicks
+            onRowClick(rowData, rowIndex);
+          }
+        : undefined
+    ),
+    [onRowClick]
   );
 
   // Add an effect to validate page number when page size changes
   useEffect(() => {
     // This effect ensures page is valid after page size changes
     const totalPages = data?.pagination.total_pages || 0;
-    
+
     if (totalPages > 0 && page > totalPages) {
       setPage(1);
     }
@@ -604,10 +606,7 @@ export function DataTable<TData extends ExportableData, TValue>({
 
   // Handle column resizing
   useEffect(() => {
-    const isResizingAny =
-      table.getHeaderGroups().some(headerGroup =>
-        headerGroup.headers.some(header => header.column.getIsResizing())
-      );
+    const isResizingAny = table.getHeaderGroups().some((headerGroup) => headerGroup.headers.some((header) => header.column.getIsResizing()));
 
     trackColumnResizing(isResizingAny);
 
@@ -625,9 +624,9 @@ export function DataTable<TData extends ExportableData, TValue>({
 
     // Remove from localStorage
     try {
-      localStorage.removeItem('data-table-column-order');
+      localStorage.removeItem("data-table-column-order");
     } catch (error) {
-      console.error('Failed to remove column order from localStorage:', error);
+      console.error("Failed to remove column order from localStorage:", error);
     }
   }, [table]);
 
@@ -646,7 +645,7 @@ export function DataTable<TData extends ExportableData, TValue>({
       if (tableState.pageSize !== pageSize || Math.abs(tableState.pageIndex - (page - 1)) > 0) {
         table.setPagination({
           pageIndex: page - 1,
-          pageSize: pageSize
+          pageSize: pageSize,
         });
       }
     }
@@ -658,9 +657,7 @@ export function DataTable<TData extends ExportableData, TValue>({
       <Alert variant="destructive" className="my-4">
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Error</AlertTitle>
-        <AlertDescription>
-          Failed to load data: {error instanceof Error ? error.message : "Unknown error"}
-        </AlertDescription>
+        <AlertDescription>Failed to load data: {error instanceof Error ? error.message : "Unknown error"}</AlertDescription>
       </Alert>
     );
   }
@@ -681,7 +678,7 @@ export function DataTable<TData extends ExportableData, TValue>({
             resetColumnSizing();
             // Force a small delay and then refresh the UI
             setTimeout(() => {
-              window.dispatchEvent(new Event('resize'));
+              window.dispatchEvent(new Event("resize"));
             }, 100);
           }}
           resetColumnOrder={resetColumnOrder}
@@ -694,7 +691,7 @@ export function DataTable<TData extends ExportableData, TValue>({
             selectedRows: dataItems.filter((item) => selectedItemIds[String(item[idField])]),
             allSelectedIds: Object.keys(selectedItemIds),
             totalSelectedCount: totalSelectedItems,
-            resetSelection: clearAllSelections
+            resetSelection: clearAllSelections,
           })}
         />
       )}
@@ -708,9 +705,7 @@ export function DataTable<TData extends ExportableData, TValue>({
         <Table className={tableConfig.enableColumnResizing ? "resizable-table" : ""}>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow
-                key={headerGroup.id}
-              >
+              <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     className="px-2 py-2 relative text-left group/th"
@@ -723,15 +718,8 @@ export function DataTable<TData extends ExportableData, TValue>({
                     }}
                     data-column-resizing={header.column.getIsResizing() ? "true" : undefined}
                   >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                    {tableConfig.enableColumnResizing && header.column.getCanResize() && (
-                      <DataTableResizer header={header} table={table} />
-                    )}
+                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                    {tableConfig.enableColumnResizing && header.column.getCanResize() && <DataTableResizer header={header} table={table} />}
                   </TableHead>
                 ))}
               </TableRow>
@@ -742,16 +730,9 @@ export function DataTable<TData extends ExportableData, TValue>({
             {isLoading ? (
               // Loading state
               Array.from({ length: pageSize }).map((_, i) => (
-                <TableRow
-                  key={`loading-row-${crypto.randomUUID()}`}
-                  tabIndex={-1}
-                >
+                <TableRow key={`loading-row-${crypto.randomUUID()}`} tabIndex={-1}>
                   {Array.from({ length: columns.length }).map((_, j, array) => (
-                    <TableCell
-                      key={`skeleton-cell-${crypto.randomUUID()}`}
-                      className="px-4 py-2 truncate max-w-0 text-left"
-                      tabIndex={-1}
-                    >
+                    <TableCell key={`skeleton-cell-${crypto.randomUUID()}`} className="px-4 py-2 truncate max-w-0 text-left" tabIndex={-1}>
                       <Skeleton className="h-6 w-full" />
                     </TableCell>
                   ))}
@@ -767,26 +748,30 @@ export function DataTable<TData extends ExportableData, TValue>({
                   data-state={row.getIsSelected() ? "selected" : undefined}
                   tabIndex={0}
                   aria-selected={row.getIsSelected()}
-                  onClick={tableConfig.enableClickRowSelect ? () => row.toggleSelected() : undefined}
+                  onClick={(event) => {
+                    // Handle click row select if enabled
+                    if (tableConfig.enableClickRowSelect) {
+                      row.toggleSelected();
+                    }
+                    // Handle custom row click callback
+                    if (onRowClick) {
+                      handleRowClick(event, row.original, rowIndex);
+                    }
+                  }}
                   onFocus={(e) => {
                     // Add a data attribute to the currently focused row
                     for (const el of document.querySelectorAll('[data-focused="true"]')) {
-                      el.removeAttribute('data-focused');
+                      el.removeAttribute("data-focused");
                     }
-                    e.currentTarget.setAttribute('data-focused', 'true');
+                    e.currentTarget.setAttribute("data-focused", "true");
+                  }}
+                  style={{
+                    cursor: onRowClick ? "pointer" : undefined,
                   }}
                 >
                   {row.getVisibleCells().map((cell, cellIndex) => (
-                    <TableCell
-                      className="px-4 py-2 truncate max-w-0 text-left"
-                      key={cell.id}
-                      id={`cell-${rowIndex}-${cellIndex}`}
-                      data-cell-index={cellIndex}
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
+                    <TableCell className="px-4 py-2 truncate max-w-0 text-left" key={cell.id} id={`cell-${rowIndex}-${cellIndex}`} data-cell-index={cellIndex}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -794,10 +779,7 @@ export function DataTable<TData extends ExportableData, TValue>({
             ) : (
               // No results
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-left truncate"
-                >
+                <TableCell colSpan={columns.length} className="h-24 text-left truncate">
                   No results.
                 </TableCell>
               </TableRow>

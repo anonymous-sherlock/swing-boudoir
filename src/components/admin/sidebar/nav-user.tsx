@@ -1,5 +1,3 @@
-"use client";
-
 import { BadgeCheck, Bell, ChevronsUpDown, CreditCard, LogOut, Shield, User, Mail, CheckCircle, XCircle } from "lucide-react";
 import { cn, getUserInitials } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";

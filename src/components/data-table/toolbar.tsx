@@ -1,18 +1,13 @@
-"use client";
 
 import { Cross2Icon } from "@radix-ui/react-icons";
 import type { Table } from "@tanstack/react-table";
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
-import { useRouter, useSearch } from "@tanstack/react-router";
+import { useRouter, useLocation, useSearch } from "@tanstack/react-router";
 import { Settings, Undo2, TrashIcon, EyeOff, CheckSquare, MoveHorizontal } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarDatePicker } from "@/components/calendar-date-picker";
 import { DataTableViewOptions } from "./view-options";
 import { DataTableExport } from "./data-export";
@@ -23,26 +18,35 @@ import type { TableConfig } from "./utils/table-config";
 import { formatDate } from "./utils/date-format";
 
 // Helper functions for component sizing
-const getInputSizeClass = (size: 'sm' | 'default' | 'lg') => {
+const getInputSizeClass = (size: "sm" | "default" | "lg") => {
   switch (size) {
-    case 'sm': return 'h-8';
-    case 'lg': return 'h-11';
-    default: return '';
+    case "sm":
+      return "h-8";
+    case "lg":
+      return "h-11";
+    default:
+      return "";
   }
 };
 
-const getButtonSizeClass = (size: 'sm' | 'default' | 'lg', isIcon = false) => {
+const getButtonSizeClass = (size: "sm" | "default" | "lg", isIcon = false) => {
   if (isIcon) {
     switch (size) {
-      case 'sm': return 'h-8 w-8';
-      case 'lg': return 'h-11 w-11';
-      default: return '';
+      case "sm":
+        return "h-8 w-8";
+      case "lg":
+        return "h-11 w-11";
+      default:
+        return "";
     }
   }
   switch (size) {
-    case 'sm': return 'h-8 px-3';
-    case 'lg': return 'h-11 px-5';
-    default: return '';
+    case "sm":
+      return "h-8 px-3";
+    case "lg":
+      return "h-11 px-5";
+    default:
+      return "";
   }
 };
 
@@ -53,9 +57,9 @@ interface DataTableToolbarProps<TData extends ExportableData> {
     value:
       | { from_date: string; to_date: string }
       | ((prev: { from_date: string; to_date: string }) => {
-        from_date: string;
-        to_date: string;
-      })
+          from_date: string;
+          to_date: string;
+        })
   ) => void;
   totalSelectedItems?: number;
   deleteSelection?: () => void;
@@ -92,19 +96,17 @@ export function DataTableToolbar<TData extends ExportableData>({
 }: DataTableToolbarProps<TData>) {
   // Get router and pathname for URL state reset
   const router = useRouter();
-  const pathname = router.state.location.pathname;
-    const search = useSearch({strict:false,shouldThrow:false});
-   
-  // Convert TanStack Router search object to URLSearchParams for compatibility
+  const location = useLocation();
+  const search = useSearch({ strict: false, shouldThrow: false }) as Record<string, string>;
+  
+  // Create URLSearchParams from search object for compatibility
   const searchParams = useMemo(() => {
     const params = new URLSearchParams();
-    if (search) {
-      Object.entries(search).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          params.set(key, String(value));
-        }
-      });
-    }
+    Object.entries(search).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        params.set(key, value);
+      }
+    });
     return params;
   }, [search]);
 
@@ -113,18 +115,13 @@ export function DataTableToolbar<TData extends ExportableData>({
   // Get search value directly from URL query parameter
   const searchParamFromUrl = searchParams.get("search") || "";
   // Decode URL-encoded search parameter
-  const decodedSearchParam = searchParamFromUrl
-    ? decodeURIComponent(searchParamFromUrl)
-    : "";
+  const decodedSearchParam = searchParamFromUrl ? decodeURIComponent(searchParamFromUrl) : "";
 
   // Get search value from table state as fallback
-  const currentSearchFromTable =
-    (table.getState().globalFilter as string) || "";
+  const currentSearchFromTable = (table.getState().globalFilter as string) || "";
 
   // Initialize local search state with URL value or table state
-  const [localSearch, setLocalSearch] = useState(
-    decodedSearchParam || currentSearchFromTable
-  );
+  const [localSearch, setLocalSearch] = useState(decodedSearchParam || currentSearchFromTable);
 
   // Track if the search is being updated locally
   const isLocallyUpdatingSearch = useRef(false);
@@ -137,9 +134,7 @@ export function DataTableToolbar<TData extends ExportableData>({
     }
 
     const searchFromUrl = searchParams.get("search") || "";
-    const decodedSearchFromUrl = searchFromUrl
-      ? decodeURIComponent(searchFromUrl)
-      : "";
+    const decodedSearchFromUrl = searchFromUrl ? decodeURIComponent(searchFromUrl) : "";
 
     if (decodedSearchFromUrl !== localSearch) {
       setLocalSearch(decodedSearchFromUrl);
@@ -161,7 +156,7 @@ export function DataTableToolbar<TData extends ExportableData>({
 
   // Reference to track if we're currently updating dates
   const isUpdatingDates = useRef(false);
-  
+
   // Reference to track the last set date values to prevent updates with equal values
   const lastSetDates = useRef<{
     from: Date | undefined;
@@ -182,14 +177,14 @@ export function DataTableToolbar<TData extends ExportableData>({
     if (dateRangeParam) {
       try {
         const parsed = JSON.parse(dateRangeParam);
-        
+
         // Parse dates from URL param
         const fromDate = parsed?.from_date ? parseDateFromUrl(parsed.from_date) : undefined;
         const toDate = parsed?.to_date ? parseDateFromUrl(parsed.to_date) : undefined;
-        
+
         // Cache these values
         lastSetDates.current = { from: fromDate, to: toDate };
-        
+
         return {
           from: fromDate,
           to: toDate,
@@ -209,9 +204,7 @@ export function DataTableToolbar<TData extends ExportableData>({
   }>(getInitialDates());
 
   // Track if user has explicitly changed dates
-  const [datesModified, setDatesModified] = useState(
-    !!dates.from || !!dates.to
-  );
+  const [datesModified, setDatesModified] = useState(!!dates.from || !!dates.to);
 
   // Load initial date range from URL params only once on component mount
   useEffect(() => {
@@ -272,20 +265,14 @@ export function DataTableToolbar<TData extends ExportableData>({
     if (isUpdatingDates.current) {
       return;
     }
-    
+
     const newDates = getInitialDates();
-    
+
     // Check if dates have actually changed to avoid unnecessary updates
-    const hasFromChanged = 
-      (newDates.from && !dates.from) || 
-      (!newDates.from && dates.from) || 
-      (newDates.from && dates.from && newDates.from.getTime() !== dates.from.getTime());
-      
-    const hasToChanged = 
-      (newDates.to && !dates.to) || 
-      (!newDates.to && dates.to) || 
-      (newDates.to && dates.to && newDates.to.getTime() !== dates.to.getTime());
-    
+    const hasFromChanged = (newDates.from && !dates.from) || (!newDates.from && dates.from) || (newDates.from && dates.from && newDates.from.getTime() !== dates.from.getTime());
+
+    const hasToChanged = (newDates.to && !dates.to) || (!newDates.to && dates.to) || (newDates.to && dates.to && newDates.to.getTime() !== dates.to.getTime());
+
     if (hasFromChanged || hasToChanged) {
       setDates(newDates);
       setDatesModified(!!(newDates.from || newDates.to));
@@ -295,24 +282,18 @@ export function DataTableToolbar<TData extends ExportableData>({
   // Handle date selection for filtering
   const handleDateSelect = ({ from, to }: { from: Date; to: Date }) => {
     // Compare with previous dates to avoid unnecessary updates
-    const hasFromChanged = 
-      (from && !dates.from) || 
-      (!from && dates.from) || 
-      (from && dates.from && from.getTime() !== dates.from.getTime());
-      
-    const hasToChanged = 
-      (to && !dates.to) || 
-      (!to && dates.to) || 
-      (to && dates.to && to.getTime() !== dates.to.getTime());
-    
+    const hasFromChanged = (from && !dates.from) || (!from && dates.from) || (from && dates.from && from.getTime() !== dates.from.getTime());
+
+    const hasToChanged = (to && !dates.to) || (!to && dates.to) || (to && dates.to && to.getTime() !== dates.to.getTime());
+
     // Only update if dates have actually changed
     if (!hasFromChanged && !hasToChanged) {
       return;
     }
-    
+
     // Set flag to prevent update loops
     isUpdatingDates.current = true;
-    
+
     // Update internal state
     setDates({ from, to });
     setDatesModified(true);
@@ -323,7 +304,7 @@ export function DataTableToolbar<TData extends ExportableData>({
       from_date: from ? formatDate(from) : "",
       to_date: to ? formatDate(to) : "",
     });
-    
+
     // Reset the updating flag after a delay
     setTimeout(() => {
       isUpdatingDates.current = false;
@@ -352,21 +333,13 @@ export function DataTableToolbar<TData extends ExportableData>({
 
     // Reset URL state by removing all query parameters, but only if URL state is enabled
     if (config.enableUrlState) {
-      // Use TanStack Router's navigate method to clear search params
-      router.navigate({
-        to: pathname,
-        search: {},
-        replace: true,
-      });
+      resetUrlState(router, location.pathname);
     }
   };
 
   // Get selected items data for export - this is now just for the UI indication
   // The actual data fetching happens in the export component
-  const selectedItems =
-    totalSelectedItems > 0
-      ? new Array(totalSelectedItems).fill({} as TData)
-      : [];
+  const selectedItems = totalSelectedItems > 0 ? new Array(totalSelectedItems).fill({} as TData) : [];
 
   // Get all available items data for export
   const allItems = getAllItems ? getAllItems() : [];
@@ -398,11 +371,7 @@ export function DataTableToolbar<TData extends ExportableData>({
         )}
 
         {isFiltered && (
-          <Button
-            variant="ghost"
-            onClick={handleResetFilters}
-            className={getButtonSizeClass(config.size)}
-          >
+          <Button variant="ghost" onClick={handleResetFilters} className={getButtonSizeClass(config.size)}>
             Reset
             <Cross2Icon className="ml-2 h-4 w-4" />
           </Button>
@@ -428,22 +397,11 @@ export function DataTableToolbar<TData extends ExportableData>({
           />
         )}
 
-        {config.enableColumnVisibility && (
-          <DataTableViewOptions
-            table={table}
-            columnMapping={columnMapping}
-            size={config.size}
-          />
-        )}
+        {config.enableColumnVisibility && <DataTableViewOptions table={table} columnMapping={columnMapping} size={config.size} />}
 
         <Popover>
           <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className={getButtonSizeClass(config.size, true)}
-              title="Table Settings"
-            >
+            <Button variant="outline" size="icon" className={getButtonSizeClass(config.size, true)} title="Table Settings">
               <Settings className="h-4 w-4" />
               <span className="sr-only">Open table settings</span>
             </Button>
@@ -505,12 +463,7 @@ export function DataTableToolbar<TData extends ExportableData>({
                 )}
 
                 {!table.getIsAllColumnsVisible() && (
-                  <Button
-                    variant="outline"
-                    size={config.size}
-                    className="justify-start"
-                    onClick={() => table.resetColumnVisibility()}
-                  >
+                  <Button variant="outline" size={config.size} className="justify-start" onClick={() => table.resetColumnVisibility()}>
                     <EyeOff className="mr-2 h-4 w-4" />
                     Show All Columns
                   </Button>

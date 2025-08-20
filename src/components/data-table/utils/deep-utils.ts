@@ -257,9 +257,13 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
 
 /**
  * Reset URL parameters by removing all query parameters
- * @param router Next.js router instance
+ * @param router TanStack Router instance
  * @param pathname Current pathname
  */
-export function resetUrlState(router: { replace: (path: string) => void }, pathname: string): void {
-  router.replace(pathname);
+export function resetUrlState(router: { navigate: (options: { to: string; search: Record<string, unknown>; replace?: boolean }) => void }, pathname: string): void {
+  router.navigate({
+    to: pathname,
+    search: {},
+    replace: true,
+  });
 }

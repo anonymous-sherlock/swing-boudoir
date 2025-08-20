@@ -11,7 +11,7 @@
  */
 
 import { AUTH_TOKEN_KEY } from './auth';
-import { API_CONFIG, getApiUrl, getAuthUrl } from './config';
+import { getApiUrl, getAuthUrl } from './config';
 
 // Common API response types
 export interface ApiSuccessResponse<T = any> {

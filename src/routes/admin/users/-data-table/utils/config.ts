@@ -13,11 +13,14 @@ export function useExportConfig() {
     return {
       id: "ID",
       name: "Name",
+      username: "Username",
       email: "Email",
       phone: "Phone",
       image: "Image",
+      role: "Role",
+      emailVerified: "Email Verified",
+      hasProfile: "Onboarding Status",
       createdAt: "Joined Date",
-
     };
   }, []);
   
@@ -25,13 +28,14 @@ export function useExportConfig() {
   const columnWidths = useMemo(() => {
     return [
       { wch: 10 }, // ID
+      { wch: 20 }, // Image
       { wch: 20 }, // Name
       { wch: 30 }, // Email
       { wch: 15 }, // Phone
-      { wch: 8 },  // Age
+      { wch: 12 }, // Role
+      { wch: 15 }, // Email Verified
+      { wch: 18 }, // Onboarding Status
       { wch: 20 }, // Created At
-      { wch: 15 }, // Expense Count
-      { wch: 15 }  // Total Expenses
     ];
   }, []);
   
@@ -40,17 +44,21 @@ export function useExportConfig() {
     return [
       "id",
       "name",
+      "username",
       "email",
       "phone",
       "image",
+      "role",
+      "emailVerified",
+      "hasProfile",
       "createdAt",
-
     ];
   }, []);
 
   // Case formatting configuration for camelCase table
   const caseConfig: CaseFormatConfig = useMemo(() => ({
-    urlFormat: 'camelCase', // URL parameters use camelCase
+
+    urlFormat: 'camelCase', // URL parameters use snake_case
     apiFormat: 'camelCase', // API parameters also use camelCase
   }), []);
 
@@ -59,9 +67,9 @@ export function useExportConfig() {
     ...row,
     // Format timestamps to human-readable format
     createdAt: formatTimestampToReadable(row.createdAt),
-    // Format currency values
-
-
+    // Format boolean values for better readability
+    emailVerified: row.emailVerified ? "Verified" : "Pending",
+    hasProfile: row.hasProfile ? "Completed" : "Pending",
     // Add any other custom transformations as needed
   }), []);
 

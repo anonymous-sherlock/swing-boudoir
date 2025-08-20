@@ -1,5 +1,3 @@
-"use client";
-
 import { DotsHorizontalIcon } from "@radix-ui/react-icons";
 import { Row, Table } from "@tanstack/react-table";
 
@@ -13,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { UserCamelCase } from "../schema";
+import { useNavigate } from "@tanstack/react-router";
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
@@ -22,6 +21,7 @@ interface DataTableRowActionsProps<TData> {
 export function DataTableRowActions<TData extends UserCamelCase>({
   row,
 }: DataTableRowActionsProps<TData>) {
+  const navigate = useNavigate();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -34,8 +34,8 @@ export function DataTableRowActions<TData extends UserCamelCase>({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[160px]">
-        <DropdownMenuItem onClick={() => console.log("View user", row.original)}>
-          View
+        <DropdownMenuItem onClick={() => navigate({ to: "/profile/$username", params: { username: row.original.username } })}>
+          View Public Profile
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => console.log("Edit user", row.original)}>

@@ -1,5 +1,4 @@
-"use client"
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
