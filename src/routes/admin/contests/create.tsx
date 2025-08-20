@@ -32,6 +32,7 @@ import { GripVertical, Plus, Trash2, Trophy, Upload, X, Loader } from "lucide-re
 import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
+import { API_CONFIG } from "@/lib/config";
 
 type ContestFormValues = z.infer<typeof ContestInsertSchema>;
 
@@ -220,7 +221,7 @@ export default function AddNewContestPage() {
                     <FormControl>
                       <div className="*:not-first:mt-2">
                         <div className="flex rounded-md shadow-xs">
-                          <span className="border-input bg-gray-200 text-black inline-flex items-center rounded-s-md border px-3 text-sm">{"https://localhost:9999/contests"}</span>
+                          <span className="border-input bg-gray-200 text-black inline-flex items-center rounded-s-md border px-3 text-sm">{API_CONFIG.API_BASE_HOST}/competitions/</span>
                           <Input className="-ms-px rounded-s-none shadow-none" placeholder="big-weekend" type="text" {...field} />
                         </div>
                       </div>

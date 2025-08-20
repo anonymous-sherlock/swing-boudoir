@@ -4,8 +4,6 @@ import * as TanStackQueryProvider from './integrations/tanstack-query/root-provi
 
 
 const TanStackQueryProviderContext = TanStackQueryProvider.getContext()
-const { queryClient } = TanStackQueryProviderContext
-
 export const router = createRouter({
   routeTree,
   context: {

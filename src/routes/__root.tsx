@@ -7,12 +7,13 @@ import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { NuqsAdapter } from "nuqs/adapters/react";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import ModalProvider from "@/providers/modal-provider";
+import { isPublicRoute } from "@/routes";
 
 function AppShell() {
   const { isLoading } = useAuth();
 
   // Show loading spinner while checking authentication
-  if (isLoading) {
+  if (isLoading && !isPublicRoute(location.pathname)) {
     return <PageLoader />;
   }
 
