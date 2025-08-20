@@ -1,18 +1,19 @@
-import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ContestJoinButton } from "@/components/global";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
+import { Contest, useContests, useJoinedContests } from "@/hooks/api/useContests";
 import { useToast } from "@/hooks/use-toast";
-import { useContests, useJoinedContests, useLeaveContest, Contest } from "@/hooks/api/useContests";
 import { formatUsdAbbrev } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
-import { Calendar, Gift, RefreshCw, Share, Trophy, Users, Clock, TrendingUp, Search } from "lucide-react";
+import { Calendar, Clock, Gift, RefreshCw, Search, Share, TrendingUp, Trophy, Users } from "lucide-react";
 import { useQueryState } from "nuqs";
-import { ContestJoinButton } from "@/components/global";
+import { useEffect, useState } from "react";
+import { getCompetitionStatus, getStatusBadge } from "./utils";
 
 export function CompetitionsPage() {
   const { toast } = useToast();
@@ -36,7 +37,6 @@ export function CompetitionsPage() {
   const { data: upcomingContestsData, isLoading: isLoadingUpcoming } = useContests(1, 100, "upcoming");
   const { data: endedContestsData, isLoading: isLoadingEnded } = useContests(1, 100, "ended");
   const { data: joinedContestsData, isLoading: isLoadingJoined } = useJoinedContests(user?.profileId || "", 1, 100);
-  const leaveContestMutation = useLeaveContest();
 
   // Debounce search query and update URL
   useEffect(() => {
@@ -58,21 +58,6 @@ export function CompetitionsPage() {
   // Extract contests from the response
   const allContests = [...(activeContestsData?.data || []), ...(upcomingContestsData?.data || []), ...(endedContestsData?.data || [])];
   const joinedContests = joinedContestsData?.data || [];
-
-  // Helper function to determine competition status
-  const getCompetitionStatus = (contest: Contest) => {
-    const now = new Date();
-    const startDate = new Date(contest.startDate);
-    const endDate = new Date(contest.endDate);
-
-    if (contest.status === "COMPLETED" || now > endDate) {
-      return "ended";
-    } else if (now >= startDate && now <= endDate) {
-      return "active";
-    } else {
-      return "coming-soon";
-    }
-  };
 
   // Filter contests by status and search
   const filterContestsBySearch = (contests: Contest[]) => {
@@ -120,36 +105,6 @@ export function CompetitionsPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleLeaveContest = async (competitionId: string, competitionName: string) => {
-    if (!user?.profileId) {
-      toast({
-        title: "Profile Required",
-        description: "Please complete your profile before leaving contests",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      await leaveContestMutation.mutateAsync({
-        contestId: competitionId,
-        profileId: user.profileId,
-      });
-
-      toast({
-        title: "Success!",
-        description: `You have left ${competitionName}`,
-      });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to leave contest. Please try again.";
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    }
-  };
-
   const formatPrize = (prizePool: number): string => formatUsdAbbrev(prizePool);
 
   const shareCompetition = async (competitionName: string) => {
@@ -162,27 +117,6 @@ export function CompetitionsPage() {
       });
     } catch (err) {
       console.error("Failed to copy link:", err);
-    }
-  };
-
-  const getStatusBadge = (contest: Contest) => {
-    // Map API status to display status
-    const status = contest.status;
-    switch (status) {
-      case "ACTIVE":
-      case "VOTING":
-      case "JUDGING":
-        return <Badge className="bg-green-500">Active</Badge>;
-      case "COMPLETED":
-        return <Badge variant="secondary">Completed</Badge>;
-      case "PUBLISHED":
-      case "DRAFT":
-        return <Badge variant="outline">Upcoming</Badge>;
-      case "CANCELLED":
-      case "SUSPENDED":
-        return <Badge variant="destructive">Cancelled</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
     }
   };
 

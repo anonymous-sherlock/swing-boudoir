@@ -6,6 +6,7 @@ import defaultImage from "@/assets/hot-girl-summer.jpg";
 import { Contest } from "@/hooks/api/useContests";
 import { Separator } from "../ui/separator";
 import { ContestJoinButton } from "@/components/global";
+import { formatPrize } from "./utils";
 
 interface CompetitionCardProps {
   contest: Contest;
@@ -13,7 +14,6 @@ interface CompetitionCardProps {
 }
 
 export const CompetitionCard: React.FC<CompetitionCardProps> = ({ contest, showJoinButton = true }) => {
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
@@ -22,19 +22,11 @@ export const CompetitionCard: React.FC<CompetitionCardProps> = ({ contest, showJ
     });
   };
 
-  const formatPrize = (prize: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-    }).format(prize);
-  };
-
   // Helper function to extract prize value from award name
   const extractPrizeValue = (awardName: string): number | null => {
     const match = awardName.match(/\$?(\d+(?:,\d+)*(?:\.\d+)?)/);
     if (match) {
-      return parseFloat(match[1].replace(/,/g, ''));
+      return parseFloat(match[1].replace(/,/g, ""));
     }
     return null;
   };
@@ -47,17 +39,11 @@ export const CompetitionCard: React.FC<CompetitionCardProps> = ({ contest, showJ
       <Card className="w-full max-w-sm overflow-hidden relative">
         <Link to="/competitions/$slug" params={{ slug: contest.slug }} className="block">
           <div className="relative cursor-pointer">
-            <img 
-              src={contest?.images?.[0]?.url || (defaultImage as unknown as string)} 
-              alt={contest.name} 
-              className="w-full h-64 object-cover" 
-            />
+            <img src={contest?.images?.[0]?.url || (defaultImage as unknown as string)} alt={contest.name} className="w-full h-64 object-cover" />
             {/* Prize Pool Overlay - Top Right */}
             <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg">
               <span className="text-xs text-muted-foreground uppercase tracking-wide block">Prize Pool</span>
-              <div className="text-lg font-bold text-green-600">
-                {formatPrize(contest.prizePool)}
-              </div>
+              <div className="text-lg font-bold text-green-600">{formatPrize(contest.prizePool)}</div>
             </div>
           </div>
         </Link>
@@ -68,20 +54,13 @@ export const CompetitionCard: React.FC<CompetitionCardProps> = ({ contest, showJ
             </Link>
           </div>
           <CardDescription className="text-sm text-muted-foreground">
-            {contest.description.length > 80 
-              ? `${contest.description.substring(0, 80)}... ` 
-              : contest.description
-            }
-            {contest.description.length > 80 && (
-              <span className="text-[#d4af37] font-medium cursor-pointer hover:underline">
-                read more
-              </span>
-            )}
+            {contest.description.length > 80 ? `${contest.description.substring(0, 80)}... ` : contest.description}
+            {contest.description.length > 80 && <span className="text-[#d4af37] font-medium cursor-pointer hover:underline">read more</span>}
           </CardDescription>
         </CardHeader>
 
         <Separator className="my-3" />
-        
+
         <CardContent className="space-y-4">
           {/* End Date */}
           {/* <div className="flex justify-between text-sm">
@@ -120,16 +99,12 @@ export const CompetitionCard: React.FC<CompetitionCardProps> = ({ contest, showJ
             </div>
           )}
         </CardContent>
-        
+
         <Separator className="my-3" />
 
         {showJoinButton && (
           <CardFooter className="flex flex-col space-y-2">
-            <ContestJoinButton 
-              contest={contest} 
-              className="w-full"
-              variant="default"
-            />
+            <ContestJoinButton contest={contest} className="w-full" variant="default" />
           </CardFooter>
         )}
       </Card>

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { hc } from '@/lib/api-client'
+import { Contest_Status, Contest_Visibility } from '@/lib/validations/contest.schema'
 
 // Types based on the API schema
 export interface Contest {
@@ -13,8 +14,8 @@ export interface Contest {
   registrationDeadline: string | null
   resultAnnounceDate: string | null
   slug: string
-  status: 'DRAFT' | 'PUBLISHED' | 'ACTIVE' | 'VOTING' | 'JUDGING' | 'COMPLETED' | 'CANCELLED' | 'SUSPENDED'
-  visibility: 'PUBLIC' | 'PRIVATE' | 'INVITE_ONLY' | 'RESTRICTED'
+  status: keyof typeof Contest_Status
+  visibility: keyof typeof Contest_Visibility
   isFeatured: boolean
   isVerified: boolean
   isVotingEnabled: boolean
@@ -96,8 +97,8 @@ export interface CreateContestData {
   prizePool: number
   endDate?: string | null
   slug?: string
-  status?: 'DRAFT' | 'PUBLISHED' | 'ACTIVE' | 'VOTING' | 'JUDGING' | 'COMPLETED' | 'CANCELLED' | 'SUSPENDED'
-  visibility?: 'PUBLIC' | 'PRIVATE' | 'INVITE_ONLY' | 'RESTRICTED'
+  status?: keyof typeof Contest_Status
+  visibility?: keyof typeof Contest_Visibility
   rules?: string | null
   requirements?: string | null
   awards: Array<{
@@ -113,8 +114,8 @@ export interface UpdateContestData {
   prizePool?: number
   endDate?: string | null
   slug?: string
-  status?: 'DRAFT' | 'PUBLISHED' | 'ACTIVE' | 'VOTING' | 'JUDGING' | 'COMPLETED' | 'CANCELLED' | 'SUSPENDED'
-  visibility?: 'PUBLIC' | 'PRIVATE' | 'INVITE_ONLY' | 'RESTRICTED'
+  status?: keyof typeof Contest_Status
+  visibility?: keyof typeof Contest_Visibility
   rules?: string | null
   requirements?: string | null
   awards?: Array<{

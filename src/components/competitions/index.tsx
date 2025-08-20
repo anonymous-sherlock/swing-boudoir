@@ -5,9 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
-import { Contest, useContests } from "@/hooks/api/useContests";
+import { useContests } from "@/hooks/api/useContests";
 import { useToast } from "@/hooks/use-toast";
-import { isAfter, isBefore, startOfDay } from "date-fns";
 import { ChevronLeft, ChevronRight, Grid3X3, List, Loader2, Search } from "lucide-react";
 import { useQueryState } from "nuqs";
 import React, { useEffect, useState } from "react";
@@ -71,43 +70,6 @@ export const CompetitionsList: React.FC = () => {
     setView(newView);
   };
 
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return "default";
-      case "VOTING":
-        return "secondary";
-      case "JUDGING":
-        return "outline";
-      case "COMPLETED":
-        return "secondary";
-      case "DRAFT":
-        return "outline";
-      case "PUBLISHED":
-        return "default";
-      default:
-        return "outline";
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return "text-green-600";
-      case "VOTING":
-        return "text-blue-600";
-      case "JUDGING":
-        return "text-yellow-600";
-      case "COMPLETED":
-        return "text-gray-600";
-      case "DRAFT":
-        return "text-gray-500";
-      case "PUBLISHED":
-        return "text-green-600";
-      default:
-        return "text-gray-600";
-    }
-  };
 
   if (error) {
     return (
@@ -147,7 +109,7 @@ export const CompetitionsList: React.FC = () => {
 
             {/* Status Filter */}
             <Select value={status || "active"} onValueChange={handleStatusChange}>
-              <SelectTrigger className="w-full sm:w-48">
+              <SelectTrigger className="w-full bg-white !h-10 sm:w-48">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
@@ -159,11 +121,11 @@ export const CompetitionsList: React.FC = () => {
             </Select>
 
             {/* View Mode Toggle */}
-            <div className="flex border rounded-md">
-              <Button variant={view === "grid" ? "default" : "ghost"} size="sm" onClick={() => handleViewChange("grid")} className="rounded-r-none">
+            <div className="flex border rounded-md bg-white h-10">
+              <Button variant={view === "grid" ? "default" : "ghost"} size="sm" onClick={() => handleViewChange("grid")} className="rounded-r-none h-full">
                 <Grid3X3 className="h-4 w-4" />
               </Button>
-              <Button variant={view === "list" ? "default" : "ghost"} size="sm" onClick={() => handleViewChange("list")} className="rounded-l-none">
+              <Button variant={view === "list" ? "default" : "ghost"} size="sm" onClick={() => handleViewChange("list")} className="rounded-l-none h-full">
                 <List className="h-4 w-4" />
               </Button>
             </div>

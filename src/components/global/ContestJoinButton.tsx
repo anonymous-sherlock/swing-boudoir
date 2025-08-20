@@ -39,6 +39,7 @@ export const ContestJoinButton: React.FC<ContestJoinButtonProps> = ({
   // Check participation status
   const { data: participation, isLoading: isChecking } = useCheckContestParticipation(contest?.id, profileId || "");
   const showLeave = participation?.hasJoined === true;
+  const isBooked = contest.status === "BOOKED";
 
   // Mutations
   const joinContestMutation = useJoinContest();
@@ -164,6 +165,10 @@ export const ContestJoinButton: React.FC<ContestJoinButtonProps> = ({
       return "Competition Ended";
     }
     
+    if (isBooked) {
+      return "Already Booked";
+    }
+    
     if (showLeave) {
       return isLeaving ? "Leaving..." : "Leave Contest";
     }
@@ -189,6 +194,7 @@ export const ContestJoinButton: React.FC<ContestJoinButtonProps> = ({
 
   const isButtonDisabled = () => {
     if (isCompetitionEnded()) return true;
+    if (isBooked) return true;
     if (showLeave) return isLeaving;
     if (!isAuthenticated || needsProfileSetup) return false;
     return isJoining || isChecking || isUploadingCover;

@@ -73,6 +73,7 @@ export function CompetitionDetails() {
       case "PUBLISHED":
         return <Badge className="bg-green-700 text-white">Active</Badge>;
       case "COMPLETED":
+      case "BOOKED":
         return <Badge variant="secondary">Completed</Badge>;
       case "DRAFT":
         return <Badge variant="outline">Upcoming</Badge>;

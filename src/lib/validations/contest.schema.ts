@@ -4,6 +4,7 @@ export const Contest_Status = {
   DRAFT: 'DRAFT',
   PUBLISHED: 'PUBLISHED',
   ACTIVE: 'ACTIVE',
+  BOOKED: 'BOOKED',
   VOTING: 'VOTING',
   JUDGING: 'JUDGING',
   COMPLETED: 'COMPLETED',

@@ -596,7 +596,7 @@ export default function AddNewContestPage() {
                     <FormLabel>Status</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select a status" />
                         </SelectTrigger>
                       </FormControl>
@@ -620,7 +620,7 @@ export default function AddNewContestPage() {
                     <FormLabel>Visibility</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select a visibility" />
                         </SelectTrigger>
                       </FormControl>

@@ -77,6 +77,15 @@ function EditNewContestPage() {
 
   React.useEffect(() => {
     if (fetchContestResponse) {
+      // Prepare awards data
+      const awardsData = fetchContestResponse.awards && fetchContestResponse.awards.length > 0 
+        ? fetchContestResponse.awards.map((award, index) => ({
+            name: award.name,
+            icon: award.icon,
+            position: index + 1,
+          }))
+        : [];
+
       form.reset({
         name: fetchContestResponse.name,
         description: fetchContestResponse.description ?? "",
@@ -85,7 +94,7 @@ function EditNewContestPage() {
         startDate: fetchContestResponse.startDate ? new Date(fetchContestResponse.startDate) : undefined,
         endDate: fetchContestResponse.endDate ? new Date(fetchContestResponse.endDate) : undefined,
         prizePool: fetchContestResponse.prizePool,
-        awards: [],
+        awards: awardsData,
         status: fetchContestResponse.status,
         visibility: fetchContestResponse.visibility,
       });
@@ -95,19 +104,7 @@ function EditNewContestPage() {
         setExistingImages(fetchContestResponse.images);
       }
     }
-  }, [fetchContestResponse, form]);
-
-  React.useEffect(() => {
-    if (fetchContestResponse && fetchContestResponse.awards && fetchContestResponse.awards.length > 0) {
-      appendAward(
-        fetchContestResponse.awards.map((award, index) => ({
-          name: award.name,
-          icon: award.icon,
-          position: index + 1,
-        }))
-      );
-    }
-  }, []);
+  }, [fetchContestResponse, form, appendAward]);
 
   React.useEffect(() => {
     const subscription = form.watch((value, { name, type }) => {
@@ -695,7 +692,7 @@ function EditNewContestPage() {
                     <FormLabel>Status</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select a status" />
                         </SelectTrigger>
                       </FormControl>
@@ -719,7 +716,7 @@ function EditNewContestPage() {
                     <FormLabel>Visibility</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select a visibility" />
                         </SelectTrigger>
                       </FormControl>
