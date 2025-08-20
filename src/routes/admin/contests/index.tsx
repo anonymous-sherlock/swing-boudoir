@@ -26,6 +26,7 @@ import { formatCurrency } from "@/utils/format";
 import { CustomDeleteAlertDailog } from "@/components/global/custom-delete-alert-dialog";
 import { useModal } from "@/providers/modal-provider";
 import { toast } from "sonner";
+import { BarChartIcon } from "@radix-ui/react-icons";
 
 export const Route = createFileRoute("/admin/contests/")({
   component: () => <ContestsPage />,
@@ -338,9 +339,21 @@ function ContestsPage() {
                 {sortedContests.map((contest) => (
                   <TableRow key={contest.id} className="hover:bg-muted/30">
                     <TableCell className="px-4 py-3">
-                      <div>
-                        <div className="font-medium text-sm">{contest.name}</div>
-                        <div className="text-xs text-muted-foreground line-clamp-1 max-w-[200px]">{contest.description}</div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1">
+                          <div className="font-medium text-sm">{contest.name}</div>
+                          <div className="text-xs text-muted-foreground line-clamp-1 max-w-[200px]">{contest.description}</div>
+                        </div>
+                        <Button asChild size="icon" variant="ghost" className="h-6 w-6 bg-blue-100 hover:bg-blue-100">
+                          <Link to={`/competitions/$slug`} params={{ slug: contest.slug }} title={`View ${contest.name}`}>
+                            <Eye className="w-3 h-3" />
+                          </Link>
+                        </Button>
+                        <Button asChild size="icon" variant="ghost" className="h-6 w-6 bg-green-100 hover:bg-green-100">
+                          <Link to={`/admin/contests/$id/leaderboard`} params={{ id: contest.id }} title={`View ${contest.name} leaderboard`}>
+                            <BarChartIcon className="w-3 h-3" />
+                          </Link>
+                        </Button>
                       </div>
                     </TableCell>
                     <TableCell className="px-4 py-3">

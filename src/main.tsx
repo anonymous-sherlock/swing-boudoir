@@ -12,6 +12,6 @@ createRoot(document.getElementById("root")!).render(
   <TanStackQueryProvider {...TanStackQueryProviderContext}>
     <RouterProvider router={router} />
     <ReactQueryDevtools initialIsOpen={false} />
-    <TanStackRouterDevtools router={router} />
+    <TanStackRouterDevtools router={router} position="top-right" />
   </TanStackQueryProvider>
 );

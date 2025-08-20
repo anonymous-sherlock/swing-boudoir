@@ -128,7 +128,7 @@ export const CompetitionsList: React.FC = () => {
   }
 
   return (
-    <main className="pt-16 pb-16">
+    <main className="pt-16 pb-16 bg-[#FBFCFC]">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
