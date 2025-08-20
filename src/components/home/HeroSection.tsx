@@ -1,15 +1,17 @@
 import { Button } from "@/components/ui/button";
-import { ChevronRight, Trophy, Users, DollarSign, TrophyIcon } from "lucide-react";
+import { ChevronRight, Trophy, Users, DollarSign, TrophyIcon, ArrowRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { useAuth } from "@/contexts/AuthContext";
 import heroDesktop from "@/assets/hero-desktop.jpg";
 import heroMobile from "@/assets/hero-mobile.jpg";
 
 const HeroSection = () => {
+  const { isAuthenticated } = useAuth();
 
   const stats = [
-    { icon: DollarSign, label: "Prize Pool", value: "$500,000+" },
+    { icon: DollarSign, label: "Prize Pool", value: "$100,000+" },
     { icon: Trophy, label: "Active Competitions", value: "12" },
-    { icon: Users, label: "Models Registered", value: "25,000+" },
+    { icon: Users, label: "Models Registered", value: "5,000+" },
   ];
 
   return (
@@ -30,12 +32,12 @@ const HeroSection = () => {
             {/* Badge */}
             <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-medium mb-8 animate-fade-in">
               <TrophyIcon className="w-4 h-4 mr-2" />
-              Join competitions for your chance to win
+              {isAuthenticated ? "Welcome back! Ready to compete?" : "Join competitions for your chance to win"}
             </div>
 
             {/* Main Headline */}
             <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-6 animate-slide-up">
-              Over <span className="bg-gradient-luxury bg-clip-text text-transparent">$500,000</span> in prizes
+              Over <span className="bg-gradient-luxury bg-clip-text text-transparent">$100,000</span> in prizes
             </h1>
 
             <h2 className="font-display text-2xl md:text-4xl lg:text-5xl font-semibold text-white mb-8 animate-slide-up" style={{ animationDelay: "0.2s" }}>
@@ -44,20 +46,35 @@ const HeroSection = () => {
 
             {/* Description */}
             <p className="text-lg md:text-xl text-white/90 mb-10 max-w-2xl mx-auto leading-relaxed animate-fade-in" style={{ animationDelay: "0.4s" }}>
-              Become a Swing Boudoir content creator and compete with models from around the world. Enter exclusive competitions and win amazing prizes.
+              {isAuthenticated 
+                ? "You're all set! Browse active competitions, join contests, and start competing for amazing prizes."
+                : "Become a Swing Boudoir content creator and compete with models from around the world. Enter exclusive competitions and win amazing prizes."
+              }
             </p>
 
-            {/* CTA Button */}
+            {/* CTA Buttons */}
             <div className="mb-16 animate-scale-in" style={{ animationDelay: "0.6s" }}>
-              <Link to="/auth/$id" params={{ id: "sign-in" }}>
-                <Button
-                  size="lg"
-                  className="bg-gradient-competition text-competition-foreground hover:opacity-90 transition-luxury text-lg px-8 py-4 h-auto shadow-glow"
-                >
-                  Register Now
-                  <ChevronRight className="w-5 h-5 ml-2" />
-                </Button>
-              </Link>
+              {isAuthenticated ? (
+                <Link to="/dashboard">
+                  <Button
+                    size="lg"
+                    className="bg-gradient-competition text-competition-foreground hover:opacity-90 transition-luxury text-sm px-6 py-3 h-auto shadow-glow"
+                  >
+                    Go to Dashboard
+                    <ChevronRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </Link>
+              ) : (
+                <Link to="/auth/$id" params={{ id: "sign-in" }}>
+                  <Button
+                    size="lg"
+                    className="bg-gradient-competition text-competition-foreground hover:opacity-90 transition-luxury text-lg px-8 py-4 h-auto shadow-glow"
+                  >
+                    Register Now
+                    <ChevronRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </Link>
+              )}
             </div>
 
             {/* Stats */}
