@@ -2,45 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { hc } from '@/lib/api-client'
 import { Contest_Status, Contest_Visibility } from '@/lib/validations/contest.schema'
+import { Award, Contest, UpdateContestData } from '@/types/contest.types'
 
-// Types based on the API schema
-export interface Contest {
-  id: string
-  name: string
-  description: string
-  prizePool: number
-  startDate: string
-  endDate: string
-  registrationDeadline: string | null
-  resultAnnounceDate: string | null
-  slug: string
-  status: keyof typeof Contest_Status
-  visibility: keyof typeof Contest_Visibility
-  isFeatured: boolean
-  isVerified: boolean
-  isVotingEnabled: boolean
-  rules: string | null
-  requirements: string | null
-  winnerProfileId: string | null
-  createdAt: string
-  updatedAt: string
-  awards: Award[]
-  images?: ContestImage[] | null
-}
-
-export interface Award {
-  id: string
-  name: string
-  icon: string
-  contestId: string
-}
-
-export interface ContestImage {
-  id: string
-  key: string
-  caption: string | null
-  url: string
-}
 
 // Contest Participation Types based on API documentation
 export interface ContestParticipationCoverImage {
@@ -107,21 +70,12 @@ export interface CreateContestData {
   }>
 }
 
-export interface UpdateContestData {
-  name?: string
-  description?: string
-  startDate?: string | null
-  prizePool?: number
-  endDate?: string | null
-  slug?: string
-  status?: keyof typeof Contest_Status
-  visibility?: keyof typeof Contest_Visibility
-  rules?: string | null
-  requirements?: string | null
-  awards?: Array<{
-    name: string
-    icon: string
-  }>
+
+export interface ContestAnalytics {
+  total: number
+  active: number
+  upcoming: number
+  prizePool: number
 }
 
 export interface ContestStats {
@@ -359,13 +313,30 @@ export function useDeleteContest() {
     },
   })
 }
-
+// hook for getting contests stats
+export function useContestsAnalytics() {
+  return useQuery({
+    queryKey: ['contests', 'analytics'],
+    queryFn: async (): Promise<ContestAnalytics> => {
+      const response = await api.get<ContestAnalytics>(`/api/v1/analytics/contests`)
+      if (!response.success) {
+        return {
+          "total": 0,
+          "active": 0,
+          "upcoming": 0,
+          "prizePool": 0
+        }
+      }
+      return response.data
+    },
+  })
+}
 // Hook for creating contest awards
 export function useCreateContestAwards() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ contestId, awards }: { contestId: string; awards: Array<{ name: string; icon: string }> }): Promise<Award[]> => {
+    mutationFn: async ({ contestId, awards }: { contestId: string; awards: Array<Pick<Award, "name" | "icon">> }): Promise<Award[]> => {
       const response = await api.post(`/api/v1/contest/${contestId}/awards`, awards)
       return response.data
     },
@@ -382,7 +353,7 @@ export function useUpdateAward() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: { name?: string; icon?: string } }): Promise<Award> => {
+    mutationFn: async ({ id, data }: { id: string; data: Pick<Award, "name" | "icon"> }): Promise<Award> => {
       const response = await api.patch(`/api/v1/awards/${id}`, data)
       return response.data
     },

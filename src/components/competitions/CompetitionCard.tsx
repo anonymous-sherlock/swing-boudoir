@@ -1,11 +1,10 @@
-import React from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Link } from "@tanstack/react-router";
 import defaultImage from "@/assets/hot-girl-summer.jpg";
-import { Contest } from "@/hooks/api/useContests";
-import { Separator } from "../ui/separator";
 import { ContestJoinButton } from "@/components/global";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Contest } from "@/types/contest.types";
+import { Link } from "@tanstack/react-router";
+import React from "react";
+import { Separator } from "../ui/separator";
 import { formatPrize } from "./utils";
 
 interface CompetitionCardProps {

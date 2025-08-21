@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from 'axios';
 
 // Base API configuration
@@ -421,7 +422,7 @@ export const triggerRandomDailyNotification = async (
     let action = 'view_profile';
     
     if (message.includes('leaderboard')) {
-      icon = NOTIFICATION_ICONS.CONTEST;
+      icon = "LIGHTBULB";
       action = 'view_leaderboard';
     } else if (message.includes('trending')) {
       icon = NOTIFICATION_ICONS.MOTIVATION;

@@ -6,7 +6,7 @@ import { useNotifications } from "@/contexts/NotificationContext";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useRef, useEffect, useState } from "react";
 import { getUserInitials } from "@/lib/utils";
 
 interface HeaderProps {
@@ -15,11 +15,28 @@ interface HeaderProps {
 
 const Header = ({ onSidebarToggle }: HeaderProps) => {
   const location = useLocation();
+  const mobileMenuContainerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { user, isAuthenticated, handleLogout } = useAuth();
   const { unreadCount } = useNotifications();
   const isDashboardPage = location.pathname.startsWith("/dashboard");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (mobileMenuContainerRef.current) {
+      const handleClickOutside = (e: MouseEvent) => {
+        if (isMobileMenuOpen && e.target instanceof Node && !mobileMenuContainerRef.current?.contains(e.target)) {
+          setIsMobileMenuOpen(false);
+        }
+      };
+
+      document.body.addEventListener("click", handleClickOutside);
+
+      return () => {
+        document.body.removeEventListener("click", handleClickOutside);
+      };
+    }
+  }, [isMobileMenuOpen]);
 
   const handleLogoutClick = async () => {
     try {
@@ -190,7 +207,7 @@ const Header = ({ onSidebarToggle }: HeaderProps) => {
                   <Button size="sm">Sign Up</Button>
                 </Link>
               </div>
-                        )}
+            )}
           </div>
         </div>
       </div>
@@ -198,7 +215,7 @@ const Header = ({ onSidebarToggle }: HeaderProps) => {
       {/* Mobile Menu Overlay - Show for all pages on mobile */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-50 bg-black bg-opacity-50 md:hidden">
-          <div className="fixed left-0 top-0 h-full w-80 bg-white border-r border-border shadow-lg">
+          <div ref={mobileMenuContainerRef} className="fixed left-0 top-0 h-full min-h-screen w-80 bg-white border-r border-border shadow-lg">
             <div className="p-4 border-b border-border">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-foreground">Menu</h2>

@@ -78,6 +78,20 @@ export const ContestInsertSchema = ContestSchema.pick({
     })
   ),
   images: z.array(z.any()).min(1, "At least one image is required"),
+}).refine((data) => {
+  return data.endDate > data.startDate;
+}, {
+  message: "End date cannot be before start date",
+  path: ["endDate"],
 });
 
-export const ContestEditSchema = ContestSchema.partial();
+export const ContestEditSchema = ContestSchema.partial().refine((data) => {
+  // Only validate if both dates are provided
+  if (data.startDate && data.endDate) {
+    return data.endDate > data.startDate;
+  }
+  return true;
+}, {
+  message: "End date cannot be before start date",
+  path: ["endDate"],
+});

@@ -106,7 +106,7 @@ export function Settings() {
   const tabs = [
     { id: "account", label: "Account", icon: User },
     { id: "edit-profile", label: "Edit Profile", icon: Edit },
-    { id: "notifications", label: "Notifications", icon: Bell },
+    // { id: "notifications", label: "Notifications", icon: Bell },
     // { id: "privacy", label: "Privacy", icon: Shield },
     // { id: "preferences", label: "Preferences", icon: SettingsIcon },
     { id: "security", label: "Security", icon: Lock },
@@ -206,6 +206,7 @@ export function Settings() {
                 key={tab.id}
                 onClick={() => {
                   if (tab.id === "edit-profile") {
+                    setActiveTab("edit-profile");
                     setShowEditProfile(true);
                   } else {
                     setActiveTab(tab.id);
@@ -572,7 +573,7 @@ export function Settings() {
                 </>
               )}
 
-              {activeTab === "notifications" && (
+              {/* {activeTab === "notifications" && (
                 <>
                   <Card>
                     <CardHeader>
@@ -622,7 +623,7 @@ export function Settings() {
                     </CardContent>
                   </Card>
                 </>
-              )}
+              )} */}
 
               {activeTab === "privacy" && (
                 <>

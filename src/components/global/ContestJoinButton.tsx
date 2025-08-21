@@ -1,10 +1,11 @@
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { Contest, useCheckContestParticipation, useJoinContest, useLeaveContest } from "@/hooks/api/useContests";
 import { useContestParticipation } from "@/hooks/api/useContestParticipation";
+import { useCheckContestParticipation, useJoinContest, useLeaveContest } from "@/hooks/api/useContests";
 import { useToast } from "@/hooks/use-toast";
 import { notificationService } from "@/lib/notificationService";
+import { Contest } from "@/types/contest.types";
 import React, { useState } from "react";
 import { ContestJoinImageDialog } from "./ContestJoinImageDialog";
 
@@ -166,7 +167,7 @@ export const ContestJoinButton: React.FC<ContestJoinButtonProps> = ({
     }
     
     if (isBooked) {
-      return "Already Booked";
+      return "Maximum Participants Reached";
     }
     
     if (showLeave) {

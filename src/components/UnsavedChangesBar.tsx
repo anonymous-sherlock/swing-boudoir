@@ -16,7 +16,7 @@ export function UnsavedChangesBar({ isVisible, onSave, onReset, isSaving = false
   return (
     <div
       className={cn(
-        "fixed bottom-4 left-1/2 -translate-x-1/2 max-w-xl rounded-lg right-0 z-50 bg-black/95 backdrop-blur-lg text-white shadow-xl border-t border-black",
+        "fixed bottom-4 left-1/2 -translate-x-1/2 w-[90%]  md:max-w-xl rounded-lg right-0 z-50 bg-black/95 backdrop-blur-lg text-white shadow-xl border-t border-black",
         "transform transition-transform duration-300 ease-in-out",
         isVisible ? "translate-y-0" : "translate-y-full",
         className

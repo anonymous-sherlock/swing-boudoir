@@ -2,7 +2,7 @@ import identityImage from "@/assets/onboarding-identity.jpg";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { CalendarIcon, ChevronRight, MapPin, User, User2 } from "lucide-react";
+import { CalendarIcon, ChevronRight, MapPin, Phone, User, User2 } from "lucide-react";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -16,6 +16,7 @@ import { Textarea } from "../ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { FormData } from "./index";
+import { PhoneInput } from "../ui/phone-input";
 
 interface IdentitySceneProps {
   formData: FormData;
@@ -66,15 +67,17 @@ const FormSchema = z.object({
       required_error: "Zipcode is required",
     })
     .min(3, "Zipcode must be at least 3 characters"),
-  hobbiesAndPassions: z
-    .string()
-    .max(300, "Hobbies and passions must be at most 300 characters")
-    .optional(),
+  hobbiesAndPassions: z.string().max(300, "Hobbies and passions must be at most 300 characters").optional(),
   experienceLevel: z
     .string({
       required_error: "Experience level is required",
     })
     .min(1, "Experience level is required"),
+  phone: z
+    .string({
+      required_error: "Phone number is required",
+    })
+    .min(1, "Phone number is required"),
 });
 
 const IdentityScene: React.FC<IdentitySceneProps> = ({ formData, updateFormData, onNext }) => {
@@ -135,32 +138,58 @@ const IdentityScene: React.FC<IdentitySceneProps> = ({ formData, updateFormData,
                 </div>
 
                 {/* Experience Level Section */}
-                <FormField
-                  control={form.control}
-                  name="experienceLevel"
-                  render={({ field }) => (
-                    <FormItem className="mb-8">
-                      <FormLabel className="flex gap-2 items-center justify-start text-sm font-medium mb-2">
-                        <User2 className="w-4 h-4" />
-                        Experience Level
-                      </FormLabel>
-                      <FormControl>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger className="w-full bg-black/50 border border-gray-800 text-white/80 placeholder:text-muted-foreground focus:ring-[#D4AF37] focus:ring-1 focus:ring-offset-1 focus:ring-offset-transparent focus-visible:ring-[#D4AF37] focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent">
-                            <SelectValue placeholder="Select experience level" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="beginner">Beginner (0-1 years)</SelectItem>
-                            <SelectItem value="intermediate">Intermediate (2-4 years)</SelectItem>
-                            <SelectItem value="experienced">Experienced (5-9 years)</SelectItem>
-                            <SelectItem value="professional">Professional (10+ years)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="form-grid-2">
+                  <FormField
+                    control={form.control}
+                    name="experienceLevel"
+                    render={({ field }) => (
+                      <FormItem className="mb-8">
+                        <FormLabel className="flex gap-2 items-center justify-start text-sm font-medium mb-2">
+                          <User2 className="w-4 h-4" />
+                          Experience Level
+                        </FormLabel>
+                        <FormControl>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <SelectTrigger className="w-full bg-black/50 border border-gray-800 text-white/80 placeholder:text-muted-foreground focus:ring-[#D4AF37] focus:ring-1 focus:ring-offset-1 focus:ring-offset-transparent focus-visible:ring-[#D4AF37] focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent">
+                              <SelectValue placeholder="Select experience level" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="beginner">Beginner (0-1 years)</SelectItem>
+                              <SelectItem value="intermediate">Intermediate (2-4 years)</SelectItem>
+                              <SelectItem value="experienced">Experienced (5-9 years)</SelectItem>
+                              <SelectItem value="professional">Professional (10+ years)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem className="mb-8">
+                        <FormLabel className="flex gap-2 items-center justify-start text-sm font-medium mb-2">
+                          <Phone className="w-4 h-4" />
+                          Phone Number
+                        </FormLabel>
+                        <FormControl>
+                          <PhoneInput 
+                          defaultCountry="US"
+                          classNames={{
+                            triggerStyle: "bg-black/50 border border-gray-800 text-white/80 placeholder:text-muted-foreground focus:!ring-[#D4AF37] focus:ring-1 focus:ring-offset-1 focus:ring-offset-transparent focus-visible:!ring-[#D4AF37] focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent focus-visible:outline-none",
+                            inputStyle: "bg-black/50 border border-gray-800 text-white/80 placeholder:text-muted-foreground focus:!ring-[#D4AF37] focus:ring-1 focus:ring-offset-1 focus:ring-offset-transparent focus-visible:!ring-[#D4AF37] focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent focus-visible:outline-none"
+                          }}
+                          {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <div className="space-y-6">
                   <div className="form-grid-2">
