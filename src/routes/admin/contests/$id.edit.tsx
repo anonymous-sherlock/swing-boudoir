@@ -64,6 +64,7 @@ function EditNewContestPage() {
       status: "DRAFT",
       visibility: "PRIVATE",
     },
+    shouldFocusError:true,
   });
 
   const {
@@ -78,13 +79,14 @@ function EditNewContestPage() {
   React.useEffect(() => {
     if (fetchContestResponse) {
       // Prepare awards data
-      const awardsData = fetchContestResponse.awards && fetchContestResponse.awards.length > 0 
-        ? fetchContestResponse.awards.map((award, index) => ({
-            name: award.name,
-            icon: award.icon,
-            position: index + 1,
-          }))
-        : [];
+      const awardsData =
+        fetchContestResponse.awards && fetchContestResponse.awards.length > 0
+          ? fetchContestResponse.awards.map((award, index) => ({
+              name: award.name,
+              icon: award.icon,
+              position: index + 1,
+            }))
+          : [];
 
       form.reset({
         name: fetchContestResponse.name,
@@ -743,7 +745,21 @@ function EditNewContestPage() {
       </form>
 
       {/* Unsaved Changes Bar */}
-      <UnsavedChangesBar isVisible={hasUnsavedChanges} onSave={form.handleSubmit(onSubmit)} onReset={handleReset} isSaving={isLoading} />
+      <UnsavedChangesBar
+        isVisible={hasUnsavedChanges}
+        onSave={
+          form.formState.errors
+            ? form.handleSubmit(onSubmit)
+            : () => {
+                console.log(form.formState.errors);
+                toast.error("Please fill in all required fields", {
+                  description: form.formState.errors.root?.message,
+                });
+              }
+        }
+        onReset={handleReset}
+        isSaving={isLoading}
+      />
     </Form>
   );
 }

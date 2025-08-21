@@ -1,6 +1,7 @@
 import { api } from '@/lib/api';
 import type { ProfileSelectSchemaType } from '@/lib/validations/profile.schema';
 import { ProfileInsertSchema } from '@/lib/validations/profile.schema';
+import { ContestParticipation } from '@/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import z from 'zod';
 
@@ -58,6 +59,7 @@ export interface Profile {
     name: string;
     displayName: string;
     username: string;
+    email: string;
   };
 }
 
@@ -139,6 +141,8 @@ export const profileKeys = {
   byUsername: (username: string) => [...profileKeys.details(), 'username', username] as const,
   stats: () => [...profileKeys.all, 'stats'] as const,
   statsByProfileId: (profileId: string) => [...profileKeys.stats(), profileId] as const,
+  activeParticipation: () => [...profileKeys.all, 'active-participation'] as const,
+  activeParticipationByProfileId: (profileId: string) => [...profileKeys.activeParticipation(), profileId] as const,
 };
 
 // Profile API functions
@@ -246,6 +250,20 @@ const profileApi = {
     const response = await api.get(`/api/v1/profile/${profileId}/stats`);
     return response.data;
   },
+
+  // Get active participation by profile ID
+  getActiveParticipation: async (
+    profileId: string,
+    params: { search?: string; page?: number; limit?: number } = {}
+  ): Promise<PaginatedResponse<ContestParticipation>> => {
+    const searchParams = new URLSearchParams();
+    if (params.search) searchParams.append('search', params.search);
+    if (params.page) searchParams.append('page', params.page.toString());
+    if (params.limit) searchParams.append('limit', params.limit.toString());
+
+    const response = await api.get(`/api/v1/profile/${profileId}/active-participation?${searchParams.toString()}`);
+    return response.data;
+  },
 };
 
 // Main useProfile hook
@@ -288,6 +306,17 @@ export const useProfile = () => {
     return useQuery({
       queryKey: profileKeys.statsByProfileId(profileId),
       queryFn: () => profileApi.getProfileStats(profileId),
+      enabled: !!profileId,
+    });
+  };
+
+  const useActiveParticipation = (
+    profileId: string,
+    params: { search?: string; page?: number; limit?: number } = {}
+  ) => {
+    return useQuery({
+      queryKey: profileKeys.activeParticipationByProfileId(profileId),
+      queryFn: () => profileApi.getActiveParticipation(profileId, params),
       enabled: !!profileId,
     });
   };
@@ -363,6 +392,7 @@ export const useProfile = () => {
     useProfileByUserId,
     useProfileByUsername,
     useProfileStats,
+    useActiveParticipation,
 
     // Profile mutations
     createProfile,

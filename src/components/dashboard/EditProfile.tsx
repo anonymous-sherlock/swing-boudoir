@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/api/useProfile";
 import { useToast } from "@/hooks/use-toast";
 import { isValidSocialMediaUsername } from "@/utils/social-media";
-import { Camera, Edit, Globe, Heart, MapPin, MessageSquare, Phone, Save, Upload, User, X } from "lucide-react";
+import { Camera, Cross, Edit, Globe, Heart, MapPin, MessageSquare, Phone, Save, Upload, User, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { LinkedInLogoIcon } from "@radix-ui/react-icons";
 import { CountryDropdown } from "../ui/country-dropdown";
@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { UnsavedChangesBar } from "../UnsavedChangesBar";
 
 // Validation schema
 const profileSchema = z.object({
@@ -138,7 +139,7 @@ export function EditProfile() {
       setProfileImages(profileData.profilePhotos || []);
       setBannerImage(profileData.bannerImage || null);
       setCoverImage(profileData.coverImage || null);
-      setHasPhotoChanges(false); // Reset photo changes when profile loads
+      // Don't reset hasPhotoChanges here - only reset it after successful save
     }
   }, [profileData, reset]);
 
@@ -201,6 +202,7 @@ export function EditProfile() {
       });
 
       setIsEditing(false);
+      setHasPhotoChanges(false); // Reset photo changes after successful save
       toast({
         title: "Profile Updated!",
         description: "Your profile has been saved successfully.",
@@ -263,6 +265,7 @@ export function EditProfile() {
     } catch (error) {
       // Remove failed images from uploading state
       setUploadingImages((prev) => prev.filter((img) => !newUploadingImages.some((newImg) => newImg.id === img.id)));
+      setHasPhotoChanges(false); // Reset photo changes on error
 
       toast({
         title: "Upload Failed",
@@ -307,6 +310,7 @@ export function EditProfile() {
     } catch (error) {
       // Remove failed cover image from uploading state
       setUploadingCover(null);
+      setHasPhotoChanges(false); // Reset photo changes on error
 
       toast({
         title: "Upload Failed",
@@ -351,6 +355,7 @@ export function EditProfile() {
     } catch (error) {
       // Remove failed banner from uploading state
       setUploadingBanner(null);
+      setHasPhotoChanges(false); // Reset photo changes on error
 
       toast({
         title: "Upload Failed",
@@ -390,6 +395,7 @@ export function EditProfile() {
     } catch (error) {
       // Dismiss loading toast and show error
       loadingToast.dismiss();
+      setHasPhotoChanges(false); // Reset photo changes on error
       toast({
         title: "Error",
         description: "Failed to remove image. Please try again.",
@@ -445,21 +451,21 @@ export function EditProfile() {
               <p className="text-muted-foreground">Manage your profile information and preferences</p>
             </div>
             <Button
-              onClick={isEditing ? handleSubmit(onSubmit) : () => setIsEditing(true)}
+              onClick={() => setIsEditing((prev) => !prev)}
               className="flex items-center gap-2 px-6 py-2 text-sm font-medium transition-all duration-200 hover:scale-105"
-              disabled={isSaving || isUploading || updateProfile.isPending || (isEditing && !hasChanges)}
+              disabled={isSaving || isUploading || updateProfile.isPending}
               size="lg"
             >
-              {isEditing ? <Save className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
-              {isEditing ? (isSaving ? "Saving Changes..." : "Save Changes") : "Edit Profile"}
+              {isEditing ? <X className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
+              {isEditing ? "Cancel" : "Edit Profile"}
             </Button>
           </div>
           {isEditing && (
             <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/50 rounded-lg border border-blue-200 dark:border-blue-800">
               <p className="text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2">
                 <Edit className="h-4 w-4" />
-                You are currently in edit mode. {hasChanges && "You have unsaved changes!"}
-                {!hasChanges && "Don't forget to save your changes!"}
+                You are currently in edit mode. {(isDirty || hasPhotoChanges) && "You have unsaved changes!"}
+                {!isDirty && !hasPhotoChanges && "Don't forget to save your changes!"}
               </p>
             </div>
           )}
@@ -1384,7 +1390,7 @@ export function EditProfile() {
           </Card>
 
           {/* Save Button at Bottom */}
-          {isEditing && (
+          {/* {isEditing && (
             <Card className="shadow-lg border-0 bg-gradient-to-r from-primary/5 to-primary/10">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -1399,7 +1405,7 @@ export function EditProfile() {
                     </Button>
                     <Button
                       onClick={handleSubmit(onSubmit)}
-                      disabled={isSaving || isUploading || updateProfile.isPending || !hasChanges}
+                      disabled={isSaving || isUploading || updateProfile.isPending || !isDirty}
                       className="transition-all duration-200 hover:scale-105 px-6"
                       size="lg"
                     >
@@ -1410,11 +1416,13 @@ export function EditProfile() {
                 </div>
               </CardContent>
             </Card>
-          )}
+          )} */}
         </div>
       </div>
 
       {/* Lightbox */}
+      <UnsavedChangesBar isVisible={isDirty || hasPhotoChanges} onSave={form.handleSubmit(onSubmit)} onReset={() => {}} isSaving={isUploading} />
+
       {lightboxImage && <Lightbox image={lightboxImage} onClose={() => setLightboxImage(null)} />}
     </div>
   );

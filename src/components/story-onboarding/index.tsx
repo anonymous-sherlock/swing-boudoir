@@ -38,7 +38,7 @@ export interface FormData {
   bio: string;
   experienceLevel: string;
   categories: string[];
-  
+
   // Social Media
   instagram: string;
   twitter: string;
@@ -84,12 +84,12 @@ function App() {
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   const scenes = [
-    "Welcome to your modeling journey", 
-    "Tell us about yourself", 
+    "Welcome to your modeling journey",
+    "Tell us about yourself",
     // "Your measurements matter",
-    "Show us your portfolio", 
-    "Ready for the spotlight"
-    ];
+    "Show us your portfolio",
+    "Ready for the spotlight",
+  ];
 
   // Validation functions for each scene
   const validateScene = (sceneIndex: number): boolean => {
@@ -104,14 +104,11 @@ function App() {
           formData.city &&
           formData.address &&
           formData.zipcode &&
-          formData.experienceLevel
+          formData.experienceLevel &&
+          formData.phone
         );
       case 2: // Portfolio scene
-        return !!(
-          formData.bio &&
-          formData.bio.length >= 50 &&
-          formData.categories.length > 0
-        );
+        return !!(formData.bio && formData.bio.length >= 50 && formData.categories.length > 0);
       case 3: // Final scene - always valid
         return true;
       default:
@@ -186,17 +183,15 @@ function App() {
 
   return (
     <div className="onboarding-app">
-      <ProgressIndicator 
-        scenes={scenes} 
-        currentScene={currentScene} 
+      <ProgressIndicator
+        scenes={scenes}
+        currentScene={currentScene}
         onNext={() => nextScene(false)}
         onPrevious={previousScene}
         canGoNext={canGoNext}
         canGoPrevious={canGoPrevious}
       />
-      <main className={`scene-container ${isTransitioning ? "transitioning" : ""}`}>
-        {renderCurrentScene()}
-      </main>
+      <main className={`scene-container ${isTransitioning ? "transitioning" : ""}`}>{renderCurrentScene()}</main>
     </div>
   );
 }

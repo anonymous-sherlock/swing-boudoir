@@ -1,8 +1,9 @@
 import defaultImage from "@/assets/hot-girl-summer.jpg";
-import { Contest } from "@/hooks/api/useContests";
+import { ContestJoinButton } from "@/components/global";
 import { api } from "@/lib/api";
 import { Contest_Status } from "@/lib/validations/contest.schema";
 import { Route } from "@/routes/_public/competitions/$slug";
+import { Contest } from "@/types/contest.types";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
 import { format } from "date-fns";
@@ -11,7 +12,6 @@ import { toast } from "sonner";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { ContestJoinButton } from "@/components/global";
 
 const formatDate = (date: string | Date) => {
   return format(new Date(date), "MMM dd, yyyy");

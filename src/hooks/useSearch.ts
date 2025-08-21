@@ -7,6 +7,7 @@ export interface SearchParams {
   page?: number;
   limit?: number;
   query?: string;
+  search?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }
@@ -19,11 +20,13 @@ export interface ProfileSearchParams extends SearchParams {
 }
 
 export interface ContestSearchParams extends SearchParams {
-  status?: 'active' | 'upcoming' | 'ended';
+  status?: 'active' | 'upcoming' | 'ended' | 'all' | "booked";
   minPrizePool?: number;
   maxPrizePool?: number;
   startDate?: string;
   endDate?: string;
+  sortBy?: 'name' | 'startDate' | 'endDate' | 'prizePool' | 'createdAt';
+  sortOrder?: 'asc' | 'desc';
 }
 
 export interface UserSearchParams extends SearchParams {
@@ -73,6 +76,8 @@ export interface ContestSearchResult {
   createdAt: string;
   updatedAt: string;
   status: 'active' | 'upcoming' | 'ended';
+  slug: string;
+  isVotingEnabled: boolean;
 }
 
 export interface UserSearchResult {
@@ -111,7 +116,7 @@ export interface UseSearchReturn<T> {
 // Search functions
 const searchProfiles = async (params: ProfileSearchParams): Promise<SearchResponse<ProfileSearchResult>> => {
   const searchParams = new URLSearchParams();
-  
+
   if (params.page) searchParams.append('page', params.page.toString());
   if (params.limit) searchParams.append('limit', params.limit.toString());
   if (params.query) searchParams.append('query', params.query);
@@ -128,7 +133,7 @@ const searchProfiles = async (params: ProfileSearchParams): Promise<SearchRespon
 
 const searchContests = async (params: ContestSearchParams): Promise<SearchResponse<ContestSearchResult>> => {
   const searchParams = new URLSearchParams();
-  
+
   if (params.page) searchParams.append('page', params.page.toString());
   if (params.limit) searchParams.append('limit', params.limit.toString());
   if (params.query) searchParams.append('query', params.query);
@@ -146,7 +151,7 @@ const searchContests = async (params: ContestSearchParams): Promise<SearchRespon
 
 const searchUsers = async (params: UserSearchParams): Promise<SearchResponse<UserSearchResult>> => {
   const searchParams = new URLSearchParams();
-  
+
   if (params.page) searchParams.append('page', params.page.toString());
   if (params.limit) searchParams.append('limit', params.limit.toString());
   if (params.query) searchParams.append('query', params.query);

@@ -85,14 +85,14 @@ export function Lightbox({ image, onClose }: LightboxProps) {
 
         {/* Caption */}
         {image.caption && (
-          <div className="mt-4 bg-white/10 backdrop-blur-sm rounded-lg px-6 py-3 text-white text-center max-w-2xl">
-            <p className="text-lg font-medium">{image.caption}</p>
+          <div className="mt-2 mb-2 border-none outline-none overflow-visible bg-white/10 backdrop-blur-lg rounded-lg px-6 py-2 text-white text-center max-w-2xl">
+            <p className="text-xs font-medium">{image.caption}</p>
           </div>
         )}
       </div>
 
       {/* Navigation hint */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white/70 text-sm">Press ESC to close • Click outside to close</div>
+      <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 text-white/70 text-sm">Press ESC to close • Click outside to close</div>
     </div>
   );
 }

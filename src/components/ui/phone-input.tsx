@@ -21,24 +21,67 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
+// Context for managing country selection state
+interface CountrySelectContextType {
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
+  searchValue: string;
+  setSearchValue: (value: string) => void;
+  selectedCountry: RPNInput.Country;
+  onChange: (country: RPNInput.Country) => void;
+}
+
+const CountrySelectContext = React.createContext<CountrySelectContextType | null>(null);
+
+const useCountrySelect = () => {
+  const context = React.useContext(CountrySelectContext);
+  if (!context) {
+    throw new Error("useCountrySelect must be used within a CountrySelectProvider");
+  }
+  return context;
+};
+
 type PhoneInputProps = Omit<
   React.ComponentProps<"input">,
   "onChange" | "value" | "ref"
 > &
   Omit<RPNInput.Props<typeof RPNInput.default>, "onChange"> & {
     onChange?: (value: RPNInput.Value) => void;
+    classNames?: {
+      triggerStyle?: string;
+      inputStyle?: string;
+    };
   };
 
 const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> =
   React.forwardRef<React.ElementRef<typeof RPNInput.default>, PhoneInputProps>(
-    ({ className, onChange, value, ...props }, ref) => {
+    ({ className, onChange, value, classNames, ...props }, ref) => {
+      // Create dynamic components based on classNames
+      const CustomInputComponent = React.useMemo(() => {
+        return React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
+          ({ className: inputClassName, ...inputProps }, inputRef) => (
+            <Input
+              className={cn("rounded-e-lg rounded-s-none", classNames?.inputStyle, inputClassName)}
+              {...inputProps}
+              ref={inputRef}
+            />
+          )
+        );
+      }, [classNames?.inputStyle]);
+
+      const CustomCountrySelect = React.useMemo(() => {
+        return (props: CountrySelectProps) => (
+          <CountrySelect {...props} className={cn(props.className, classNames?.triggerStyle)} />
+        );
+      }, [classNames?.triggerStyle]);
+
       return (
         <RPNInput.default
           ref={ref}
           className={cn("flex", className)}
           flagComponent={FlagComponent}
-          countrySelectComponent={CountrySelect}
-          inputComponent={InputComponent}
+          countrySelectComponent={CustomCountrySelect}
+          inputComponent={CustomInputComponent}
           smartCaret={false}
           value={value || undefined}
           /**
@@ -77,6 +120,7 @@ type CountrySelectProps = {
   value: RPNInput.Country;
   options: CountryEntry[];
   onChange: (country: RPNInput.Country) => void;
+  className?: string;
 };
 
 const CountrySelect = ({
@@ -84,6 +128,7 @@ const CountrySelect = ({
   value: selectedCountry,
   options: countryList,
   onChange,
+  className,
 }: CountrySelectProps) => {
   const scrollAreaRef = React.useRef<HTMLDivElement>(null);
   const [searchValue, setSearchValue] = React.useState("");
@@ -95,15 +140,16 @@ const CountrySelect = ({
       modal
       onOpenChange={(open) => {
         setIsOpen(open);
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        open && setSearchValue("");
+        if (open) {
+          setSearchValue("");
+        }
       }}
     >
       <PopoverTrigger asChild>
         <Button
           type="button"
           variant="outline"
-          className="flex gap-1 rounded-e-none rounded-s-lg border-r-0 px-3 focus:z-10 bg-gray-600/50"
+          className={cn("flex gap-1 rounded-e-none rounded-s-lg border-r-0 px-3 focus:z-10", className)}
           disabled={disabled}
         >
           <FlagComponent

@@ -1,39 +1,69 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { Contest, useContests, useDeleteContest } from "@/hooks/api/useContests";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Plus, Edit, Trash2, Eye, ChevronLeft, ChevronRight, Calendar, Trophy, Users, TrendingUp, SortAsc, SortDesc, MoreHorizontal, Loader2 } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { format } from "date-fns";
-import { Link } from "@tanstack/react-router";
-import { api } from "@/lib/api";
-import { formatCurrency } from "@/utils/format";
 import { CustomDeleteAlertDailog } from "@/components/global/custom-delete-alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useDeleteContest, useUpdateContest } from "@/hooks/api/useContests";
+import { api } from "@/lib/api";
 import { useModal } from "@/providers/modal-provider";
-import { toast } from "sonner";
+import { Contest } from "@/types/contest.types";
+import { formatCurrency } from "@/utils/format";
 import { BarChartIcon } from "@radix-ui/react-icons";
+import { createFileRoute, Link, useLocation } from "@tanstack/react-router";
+import { format } from "date-fns";
+import { Calendar, ChevronLeft, ChevronRight, Edit, Eye, Loader2, MoreHorizontal, Plus, Search, SortAsc, SortDesc, Trash2, TrendingUp, Trophy, Users } from "lucide-react";
+import { parseAsInteger, parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import z from "zod";
+
+const searchSchema = z.object({
+  page: z.coerce.number().optional().default(1),
+  limit: z.coerce.number().optional().default(20),
+  search: z.string().optional().default(""),
+  status: z.enum(["all", "upcoming", "active", "ended", "booked"]).optional().default("all"),
+  sortBy: z.enum(["name", "startDate", "endDate", "prizePool", "createdAt"]).optional().default("createdAt"),
+  sortOrder: z.enum(["asc", "desc"]).optional().default("desc"),
+});
+type SearchParams = z.infer<typeof searchSchema>;
 
 export const Route = createFileRoute("/admin/contests/")({
   component: () => <ContestsPage />,
-  loader: async () => {
-    const response = await api.get("/api/v1/analytics/contests");
+  validateSearch: (search): SearchParams => searchSchema.parse(search),
+  loaderDeps: ({ search }) => ({
+    page: search.page,
+    limit: search.limit,
+    searchTerm: search.search,
+    status: search.status,
+    sortBy: search.sortBy,
+    sortOrder: search.sortOrder,
+  }),
 
-    return response.data as ContestResponse;
+  loader: async ({ deps }) => {
+    const { page, limit, searchTerm, status, sortBy, sortOrder } = deps;
+
+    // Build query string for contests API
+    const queryParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      search: searchTerm,
+      status,
+      sortBy: sortBy,
+      sortOrder: sortOrder,
+    });
+
+    // your API requests
+    const analyticsResponse = await api.get("/api/v1/analytics/contests");
+    const contestsResponse = await api.get(`/api/v1/search/contests?${queryParams}`);
+
+    return {
+      analytics: analyticsResponse.data as ContestResponse,
+      contests: contestsResponse.data,
+    };
   },
 });
 
@@ -43,24 +73,56 @@ type ContestResponse = {
   upcoming: number;
   prizePool: number;
 };
+
 type SortField = "name" | "startDate" | "endDate" | "prizePool" | "createdAt";
 type SortOrder = "asc" | "desc";
+type StatusFilter = "all" | "upcoming" | "active" | "ended" | "booked";
 
 function ContestsPage() {
-  const [page, setPage] = useState(1);
-  const [limit] = useState(20);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [sortField, setSortField] = useState<SortField>("createdAt");
-  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+  const navigate = Route.useNavigate();
+  const pathname = useLocation().pathname;
+  const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
+  const [limit] = useQueryState("limit", parseAsInteger.withDefault(20));
+  const [searchTerm, setSearchTerm] = useQueryState("search", { defaultValue: "" });
+  const [statusFilter, setStatusFilter] = useQueryState<StatusFilter>("status", parseAsStringLiteral(["all", "upcoming", "active", "ended", "booked"]).withDefault("all"));
+  const [sortField, setSortField] = useQueryState<SortField>("sortBy", parseAsStringLiteral(["name", "startDate", "endDate", "prizePool", "createdAt"]).withDefault("createdAt"));
+  const [sortOrder, setSortOrder] = useQueryState<SortOrder>("sortOrder", parseAsStringLiteral(["asc", "desc"]).withDefault("desc"));
   const [contestToDelete, setContestToDelete] = useState<Contest | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [searchInputValue, setSearchInputValue] = useState("");
   const { setOpen: setModalOpen, setClose } = useModal();
 
-  const contestResponse = Route.useLoaderData();
-
-  const { data: contestsData, isLoading, error } = useContests(page, limit);
+  const { analytics, contests } = Route.useLoaderData();
   const { mutateAsync: deleteContestMutateAsync, isPending: isDeleting } = useDeleteContest();
+  const { mutateAsync: updateContestMutateAsync, isPending: isUpdating } = useUpdateContest();
+
+  const handleToggleVoting = async (contestId: string, currentVotingStatus: boolean) => {
+    try {
+      await updateContestMutateAsync({
+        id: contestId,
+        data: {
+          isVotingEnabled: !currentVotingStatus,
+        },
+      });
+
+      navigate({
+        to: pathname,
+        search: {
+          page: Number(page),
+          limit: Number(limit),
+          search: searchInputValue || "",
+          status: statusFilter,
+          sortBy: sortField,
+          sortOrder: sortOrder,
+        },
+      });
+
+      toast.success(`Voting ${!currentVotingStatus ? "enabled" : "disabled"} successfully`);
+    } catch (error) {
+      toast.error("Failed to toggle voting status");
+      console.error("Failed to toggle voting:", error);
+    }
+  };
 
   const handleDeleteContest = async () => {
     if (!contestToDelete) return;
@@ -82,6 +144,7 @@ function ContestsPage() {
   };
 
   const getContestStatus = (contest: Contest) => {
+    if (contest.status === "BOOKED") return "booked";
     const now = new Date();
     const startDate = new Date(contest.startDate);
     const endDate = new Date(contest.endDate);
@@ -94,6 +157,12 @@ function ContestsPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
+      case "booked":
+        return (
+          <Badge variant="outline" className="bg-gray-100 text-gray-800 text-xs px-2 py-1">
+            Booked
+          </Badge>
+        );
       case "upcoming":
         return (
           <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs px-2 py-1">
@@ -102,7 +171,7 @@ function ContestsPage() {
         );
       case "active":
         return (
-          <Badge variant="default" className="bg-green-100 text-green-800 text-xs px-2 py-1">
+          <Badge variant="default" className="bg-green-100 hover:bg-green-100 text-green-800 text-xs px-2 py-1">
             Active
           </Badge>
         );
@@ -121,100 +190,43 @@ function ContestsPage() {
     }
   };
 
-  const filteredContests =
-    contestsData?.data.filter((contest) => {
-      const matchesSearch = contest.name.toLowerCase().includes(searchTerm.toLowerCase()) || contest.description.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const matchesStatus = statusFilter === "all" || getContestStatus(contest) === statusFilter;
-
-      return matchesSearch && matchesStatus;
-    }) || [];
-
-  const sortedContests = [...filteredContests].sort((a, b) => {
-    let aValue: string | number | Date;
-    let bValue: string | number | Date;
-
-    switch (sortField) {
-      case "name":
-        aValue = a.name.toLowerCase();
-        bValue = b.name.toLowerCase();
-        break;
-      case "startDate":
-        aValue = new Date(a.startDate);
-        bValue = new Date(b.startDate);
-        break;
-      case "endDate":
-        aValue = new Date(a.endDate);
-        bValue = new Date(b.endDate);
-        break;
-      case "prizePool":
-        aValue = a.prizePool;
-        bValue = b.prizePool;
-        break;
-      case "createdAt":
-        aValue = new Date(a.createdAt);
-        bValue = new Date(b.createdAt);
-        break;
-      default:
-        aValue = a[sortField] as string | number | Date;
-        bValue = b[sortField] as string | number | Date;
-    }
-
-    if (sortOrder === "asc") {
-      return aValue > bValue ? 1 : -1;
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
-      return aValue < bValue ? 1 : -1;
+      setSortField(field);
+      setSortOrder("desc");
     }
-  });
+  };
+
+  // Debounced search effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchTerm(searchInputValue || null);
+      setPage(1); // Reset to first page when searching
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timer);
+  }, [searchInputValue, setSearchTerm, setPage]);
+
+  // Initialize search input value from URL
+  useEffect(() => {
+    setSearchInputValue(searchTerm || "");
+  }, [searchTerm]);
+
+  const handleClearFilters = () => {
+    setSearchInputValue("");
+    setSearchTerm("");
+    setStatusFilter("all");
+    setSortField("createdAt");
+    setSortOrder("desc");
+    setPage(1);
+  };
 
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) return <SortAsc className="w-3 h-3 ml-1 opacity-50" />;
     return sortOrder === "asc" ? <SortAsc className="w-3 h-3 ml-1" /> : <SortDesc className="w-3 h-3 ml-1" />;
   };
-
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Contests</h1>
-            <p className="text-sm text-muted-foreground">Manage all contests and competitions in the system.</p>
-          </div>
-        </div>
-        <Card>
-          <CardContent className="pt-4">
-            <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="flex items-center space-x-4">
-                  <div className="h-3 bg-muted rounded w-1/4 animate-pulse"></div>
-                  <div className="h-3 bg-muted rounded w-1/6 animate-pulse"></div>
-                  <div className="h-3 bg-muted rounded w-1/6 animate-pulse"></div>
-                  <div className="h-3 bg-muted rounded w-1/6 animate-pulse"></div>
-                  <div className="h-3 bg-muted rounded w-1/6 animate-pulse"></div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="space-y-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Contests</h1>
-          <p className="text-sm text-muted-foreground">Manage all contests and competitions in the system.</p>
-        </div>
-        <Card>
-          <CardContent className="pt-4">
-            <div className="text-center text-red-600 text-sm">Error loading contests. Please try again.</div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">
@@ -222,7 +234,7 @@ function ContestsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Contests</h1>
-          <p className="text-sm text-muted-foreground">Manage all contests and competitions in the system. Total: {contestsData?.pagination.total || 0}</p>
+          <p className="text-sm text-muted-foreground">Manage all contests and competitions in the system. Total: {contests?.pagination.total || 0}</p>
         </div>
         <Button asChild size="sm">
           <Link to="/admin/contests/create">
@@ -238,28 +250,28 @@ function ContestsPage() {
           <Trophy className="h-4 w-4 text-muted-foreground" />
           <div>
             <p className="text-xs font-medium text-muted-foreground">Total</p>
-            <p className="text-lg font-semibold">{contestResponse.total}</p>
+            <p className="text-lg font-semibold">{analytics.total}</p>
           </div>
         </div>
         <div className="flex items-center space-x-2 p-3 bg-muted/50 rounded-lg">
           <Calendar className="h-4 w-4 text-muted-foreground" />
           <div>
             <p className="text-xs font-medium text-muted-foreground">Active</p>
-            <p className="text-lg font-semibold">{contestResponse.active}</p>
+            <p className="text-lg font-semibold">{analytics.active}</p>
           </div>
         </div>
         <div className="flex items-center space-x-2 p-3 bg-muted/50 rounded-lg">
           <Users className="h-4 w-4 text-muted-foreground" />
           <div>
             <p className="text-xs font-medium text-muted-foreground">Upcoming</p>
-            <p className="text-lg font-semibold">{contestResponse.upcoming}</p>
+            <p className="text-lg font-semibold">{analytics.upcoming}</p>
           </div>
         </div>
         <div className="flex items-center space-x-2 p-3 bg-muted/50 rounded-lg">
           <TrendingUp className="h-4 w-4 text-muted-foreground" />
           <div>
             <p className="text-xs font-medium text-muted-foreground">Prize Pool</p>
-            <p className="text-lg font-semibold">{formatCurrency(contestResponse.prizePool).toString().slice(0, -3)}</p>
+            <p className="text-lg font-semibold">{formatCurrency(analytics.prizePool).toString().slice(0, -3)}</p>
           </div>
         </div>
       </div>
@@ -268,9 +280,9 @@ function ContestsPage() {
       <div className="flex gap-3 items-center">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-          <Input placeholder="Search contests..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 h-9 text-sm" />
+          <Input placeholder="Search contests..." value={searchInputValue} onChange={(e) => setSearchInputValue(e.target.value)} className="pl-10 h-9 text-sm" />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter || "all"} onValueChange={(value) => setStatusFilter(value === "all" ? "all" : (value as StatusFilter))}>
           <SelectTrigger className="w-[140px] h-9">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
@@ -279,19 +291,10 @@ function ContestsPage() {
             <SelectItem value="upcoming">Upcoming</SelectItem>
             <SelectItem value="active">Active</SelectItem>
             <SelectItem value="ended">Ended</SelectItem>
+            <SelectItem value="booked">Booked</SelectItem>
           </SelectContent>
         </Select>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            setSearchTerm("");
-            setStatusFilter("all");
-            setSortField("createdAt");
-            setSortOrder("desc");
-          }}
-          className="h-9"
-        >
+        <Button variant="outline" size="sm" onClick={handleClearFilters} className="h-9">
           Clear
         </Button>
       </div>
@@ -307,36 +310,42 @@ function ContestsPage() {
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead className="h-10 px-4 text-xs font-medium">
-                    <div className="flex items-center">
+                    <Button variant="ghost" className="h-auto p-0 font-medium hover:bg-transparent" onClick={() => handleSort("name")}>
                       Contest Name
                       <SortIcon field="name" />
-                    </div>
+                    </Button>
                   </TableHead>
                   <TableHead className="h-10 px-4 text-xs font-medium">
-                    <div className="flex items-center">
+                    <Button variant="ghost" className="h-auto p-0 font-medium hover:bg-transparent" onClick={() => handleSort("startDate")}>
                       Start Date
                       <SortIcon field="startDate" />
-                    </div>
+                    </Button>
                   </TableHead>
                   <TableHead className="h-10 px-4 text-xs font-medium">
-                    <div className="flex items-center">
+                    <Button variant="ghost" className="h-auto p-0 font-medium hover:bg-transparent" onClick={() => handleSort("endDate")}>
                       End Date
                       <SortIcon field="endDate" />
-                    </div>
+                    </Button>
                   </TableHead>
                   <TableHead className="h-10 px-4 text-xs font-medium">
-                    <div className="flex items-center">
+                    <Button variant="ghost" className="h-auto p-0 font-medium hover:bg-transparent" onClick={() => handleSort("prizePool")}>
                       Prize Pool
                       <SortIcon field="prizePool" />
-                    </div>
+                    </Button>
                   </TableHead>
                   <TableHead className="h-10 px-4 text-xs font-medium">Status</TableHead>
-                  <TableHead className="h-10 px-4 text-xs font-medium">Created</TableHead>
+                  <TableHead className="h-10 px-4 text-xs font-medium">Voting</TableHead>
+                  <TableHead className="h-10 px-4 text-xs font-medium">
+                    <Button variant="ghost" className="h-auto p-0 font-medium hover:bg-transparent" onClick={() => handleSort("createdAt")}>
+                      Created
+                      <SortIcon field="createdAt" />
+                    </Button>
+                  </TableHead>
                   <TableHead className="h-10 px-4 text-xs font-medium text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedContests.map((contest) => (
+                {contests?.data.map((contest) => (
                   <TableRow key={contest.id} className="hover:bg-muted/30">
                     <TableCell className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -366,6 +375,13 @@ function ContestsPage() {
                       <div className="font-medium text-sm">${contest.prizePool.toLocaleString()}</div>
                     </TableCell>
                     <TableCell className="px-4 py-3">{getStatusBadge(getContestStatus(contest))}</TableCell>
+                    <TableCell className="px-4 py-3">
+                      <Switch
+                        checked={contest.isVotingEnabled}
+                        onCheckedChange={(checked) => handleToggleVoting(contest.id, contest.isVotingEnabled)}
+                        aria-label={`Toggle voting for ${contest.name}`}
+                      />
+                    </TableCell>
                     <TableCell className="px-4 py-3">
                       <div className="text-xs text-muted-foreground">{format(new Date(contest.createdAt), "MMM dd, yyyy")}</div>
                     </TableCell>
@@ -435,20 +451,20 @@ function ContestsPage() {
       </Card>
 
       {/* Pagination */}
-      {contestsData && contestsData.pagination.totalPages > 1 && (
+      {contests && contests.pagination.totalPages > 1 && (
         <div className="flex items-center justify-between text-sm">
           <p className="text-muted-foreground">
-            Showing {(page - 1) * limit + 1} to {Math.min(page * limit, contestsData.pagination.total)} of {contestsData.pagination.total} results
+            Showing {(page - 1) * limit + 1} to {Math.min(page * limit, contests.pagination.total)} of {contests.pagination.total} results
           </p>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setPage(page - 1)} disabled={!contestsData.pagination.hasPreviousPage} className="h-8">
+            <Button variant="outline" size="sm" onClick={() => setPage(page - 1)} disabled={!contests.pagination.hasPreviousPage} className="h-8">
               <ChevronLeft className="w-3 h-3 mr-1" />
               Previous
             </Button>
             <span className="text-sm px-3">
-              Page {page} of {contestsData.pagination.totalPages}
+              Page {page} of {contests.pagination.totalPages}
             </span>
-            <Button variant="outline" size="sm" onClick={() => setPage(page + 1)} disabled={!contestsData.pagination.hasNextPage} className="h-8">
+            <Button variant="outline" size="sm" onClick={() => setPage(page + 1)} disabled={!contests.pagination.hasNextPage} className="h-8">
               Next
               <ChevronRight className="w-3 h-3 ml-1" />
             </Button>

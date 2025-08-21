@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
-import { Contest, useContests, useJoinedContests } from "@/hooks/api/useContests";
+import { useContests, useJoinedContests } from "@/hooks/api/useContests";
 import { useToast } from "@/hooks/use-toast";
 import { formatUsdAbbrev } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
@@ -14,6 +14,7 @@ import { Calendar, Clock, Gift, RefreshCw, Search, Share, TrendingUp, Trophy, Us
 import { useQueryState } from "nuqs";
 import { useEffect, useState } from "react";
 import { getCompetitionStatus, getStatusBadge } from "./utils";
+import { Contest } from "@/types/contest.types";
 
 export function CompetitionsPage() {
   const { toast } = useToast();

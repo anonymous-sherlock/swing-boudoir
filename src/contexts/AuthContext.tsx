@@ -97,6 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (!token) {
       // No token means no session - immediately set auth state
+      queryClient.removeQueries({ queryKey: ["session"] });
       setSession(null);
       setUser(null);
       setIsAuthenticated(false);
@@ -123,6 +124,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const token = localStorage.getItem(AUTH_TOKEN_KEY);
     if (!token) {
       // No token means no auth needed - set loading to false immediately
+      queryClient.removeQueries({ queryKey: ["session"] });
       setIsLoading(false);
       return;
     }
@@ -203,7 +205,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Redirect to callback URL if provided, otherwise go to dashboard
       const redirectTo = callbackURL || DEFAULT_AFTER_LOGIN_REDIRECT;
       console.log("AuthContext - Email login redirect:", { callbackURL, redirectTo, DEFAULT_AFTER_LOGIN_REDIRECT });
-      
+
       // Use setTimeout to ensure navigation happens after state updates
       setTimeout(() => {
         console.log("AuthContext - Executing navigation to:", redirectTo);
@@ -264,7 +266,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Redirect to callback URL if provided, otherwise go to dashboard
       const redirectTo = callbackURL || DEFAULT_AFTER_LOGIN_REDIRECT;
       console.log("AuthContext - Username login redirect:", { callbackURL, redirectTo, DEFAULT_AFTER_LOGIN_REDIRECT });
-      
+
       // Use setTimeout to ensure navigation happens after state updates
       setTimeout(() => {
         console.log("AuthContext - Executing navigation to:", redirectTo);

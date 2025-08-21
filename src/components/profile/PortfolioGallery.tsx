@@ -17,7 +17,7 @@ export const PortfolioGallery = ({ photos, onImageClick }: PortfolioGalleryProps
   const [hoveredPhoto, setHoveredPhoto] = useState<string | null>(null);
 
   return (
-    <div>
+    <div className="py-12">
       <div className="text-center mb-12">
         <h2 className="text-4xl font-bold text-gray-900 mb-4">Portfolio</h2>
         <p className="text-xl text-gray-600 max-w-2xl mx-auto">A curated collection of professional photography showcasing versatility and style</p>
