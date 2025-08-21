@@ -31,7 +31,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           source: "dist/*"
-          target: "/var/www/swing-frontend/*"
+          target: "/var/www/swing-frontend/"
 
       - name: Restart Nginx (optional)
         uses: appleboy/ssh-action@v1.0.3
