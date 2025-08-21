@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useDeleteContest, useUpdateContest } from "@/hooks/api/useContests";
+import { useDeleteContest, useToggleVoting } from "@/hooks/api/useContests";
 import { api } from "@/lib/api";
 import { useModal } from "@/providers/modal-provider";
 import { Contest } from "@/types/contest.types";
@@ -94,15 +94,13 @@ function ContestsPage() {
 
   const { analytics, contests } = Route.useLoaderData();
   const { mutateAsync: deleteContestMutateAsync, isPending: isDeleting } = useDeleteContest();
-  const { mutateAsync: updateContestMutateAsync, isPending: isUpdating } = useUpdateContest();
+  const { mutateAsync: toggleVotingMutateAsync, isPending: isUpdating } = useToggleVoting();
 
   const handleToggleVoting = async (contestId: string, currentVotingStatus: boolean) => {
     try {
-      await updateContestMutateAsync({
-        id: contestId,
-        data: {
-          isVotingEnabled: !currentVotingStatus,
-        },
+      await toggleVotingMutateAsync({
+        contestId,
+        isVotingEnabled: !currentVotingStatus,
       });
 
       navigate({

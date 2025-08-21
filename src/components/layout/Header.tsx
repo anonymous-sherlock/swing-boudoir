@@ -23,19 +23,17 @@ const Header = ({ onSidebarToggle }: HeaderProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    if (mobileMenuContainerRef.current) {
-      const handleClickOutside = (e: MouseEvent) => {
-        if (isMobileMenuOpen && e.target instanceof Node && !mobileMenuContainerRef.current?.contains(e.target)) {
-          setIsMobileMenuOpen(false);
-        }
-      };
+    const handleClickOutside = (e: MouseEvent) => {
+      if (isMobileMenuOpen && e.target instanceof Node && !mobileMenuContainerRef.current?.contains(e.target)) {
+        setIsMobileMenuOpen(false);
+      }
+    };
 
-      document.body.addEventListener("click", handleClickOutside);
+    document.body.addEventListener("click", handleClickOutside);
 
-      return () => {
-        document.body.removeEventListener("click", handleClickOutside);
-      };
-    }
+    return () => {
+      document.body.removeEventListener("click", handleClickOutside);
+    };
   }, [isMobileMenuOpen]);
 
   const handleLogoutClick = async () => {
@@ -67,7 +65,19 @@ const Header = ({ onSidebarToggle }: HeaderProps) => {
         {/* Mobile Layout: Hamburger | Logo | Profile */}
         <div className="flex md:hidden w-full items-center justify-between">
           {/* Hamburger Menu - Top Left */}
-          <Button variant="ghost" size="sm" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (isDashboardPage && onSidebarToggle) {
+                onSidebarToggle();
+              } else {
+                setIsMobileMenuOpen(!isMobileMenuOpen);
+              }
+            }}
+            className="p-2"
+          >
             <Menu className="w-5 h-5" />
           </Button>
 

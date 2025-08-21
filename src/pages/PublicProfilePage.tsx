@@ -112,37 +112,6 @@ export default function PublicProfilePage() {
   //   return () => clearInterval(timer);
   // }, [activeParticipations]);
 
-  const handlePaidVoteSuccess = async (votes: number) => {
-    if (!username || !modelProfile?.id || !user?.profileId || activeParticipations.length === 0) return;
-
-    try {
-      await paidVoteMutation.mutateAsync({
-        voteeId: modelProfile.id,
-        voterId: user.profileId,
-        contestId: activeParticipations[0].contestId,
-        voteCount: votes,
-      });
-
-      const newVoteCount = userVotes + votes;
-      const votesKey = `votes_${username}`;
-      localStorage.setItem(votesKey, newVoteCount.toString());
-
-      setUserVotes(newVoteCount);
-      setShowPaidVoteOptions(false);
-
-      toast({
-        title: "Paid Votes Added!",
-        description: `You've successfully added ${votes} votes!`,
-      });
-    } catch (error) {
-      toast({
-        title: "Purchase Failed",
-        description: "Failed to purchase votes. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleBuyVotesClick = () => {
     window.location.href = "/voters/buy-votes";
   };

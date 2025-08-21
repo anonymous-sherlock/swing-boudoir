@@ -292,6 +292,24 @@ export function useUpdateContest() {
   })
 }
 
+// Hook for toggling voting status
+export function useToggleVoting() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ contestId, isVotingEnabled }: { contestId: string; isVotingEnabled: boolean }): Promise<Contest> => {
+      const response = await api.patch(`/api/v1/contest/${contestId}/toggle-voting`, { isVotingEnabled })
+      return response.data
+    },
+    onSuccess: (data) => {
+      // Invalidate and refetch specific contest and contests list
+      queryClient.invalidateQueries({ queryKey: ['contest', data.id] })
+      queryClient.invalidateQueries({ queryKey: ['contests'] })
+      queryClient.invalidateQueries({ queryKey: ['contests', 'upcoming'] })
+    },
+  })
+}
+
 // Hook for deleting a contest
 export function useDeleteContest() {
   const queryClient = useQueryClient()

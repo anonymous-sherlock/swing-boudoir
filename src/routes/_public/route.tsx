@@ -13,7 +13,7 @@ function HomeLayout() {
 
       <Outlet />
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }
