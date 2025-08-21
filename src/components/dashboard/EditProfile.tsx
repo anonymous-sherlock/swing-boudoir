@@ -107,10 +107,8 @@ export function EditProfile() {
   // Populate form data when profile is loaded
   useEffect(() => {
     if (profileData) {
-      console.log("Profile data received:", profileData);
-      console.log("Profile photos:", profileData.profilePhotos);
-      console.log("Banner image:", profileData.bannerImage);
-      console.log("Cover image:", profileData.coverImage);
+      console.log("Date of bort:", profileData.dateOfBirth);
+
 
       // Reset form with profile data
       reset({
@@ -124,7 +122,7 @@ export function EditProfile() {
         city: profileData.city || "",
         country: profileData.country || "",
         postalCode: profileData.postalCode || "",
-        dateOfBirth: profileData.dateOfBirth || "",
+        dateOfBirth: profileData.dateOfBirth ? new Date(profileData.dateOfBirth).toISOString() : "",
         gender: profileData.gender || "",
         instagram: profileData.instagram || "",
         tiktok: profileData.tiktok || "",
@@ -203,6 +201,7 @@ export function EditProfile() {
 
       setIsEditing(false);
       setHasPhotoChanges(false); // Reset photo changes after successful save
+      form.reset(data); // Reset form to mark it as not dirty
       toast({
         title: "Profile Updated!",
         description: "Your profile has been saved successfully.",
@@ -447,8 +446,8 @@ export function EditProfile() {
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2">Edit Profile</h1>
-              <p className="text-muted-foreground">Manage your profile information and preferences</p>
+              <h1 className="text-2xl font-bold text-foreground mb-2">Edit Profile</h1>
+              <p className="text-muted-foreground text-sm">Manage your profile information and preferences</p>
             </div>
             <Button
               onClick={() => setIsEditing((prev) => !prev)}
@@ -1085,6 +1084,8 @@ export function EditProfile() {
                         id="dateOfBirth"
                         type="date"
                         disabled={!isEditing}
+                        value={field.value ? new Date(field.value).toISOString().split("T")[0] : ""}
+                        onChange={(e) => field.onChange(e.target.value)}
                         className={cn(
                           !isEditing ? "bg-muted/50 cursor-not-allowed" : "transition-all duration-200 focus:ring-2 focus:ring-primary/20",
                           errors.dateOfBirth && "border-red-500 focus:ring-red-500/20"
@@ -1337,7 +1338,7 @@ export function EditProfile() {
                 <Label htmlFor="voterMessage" className="text-sm font-medium mb-2 block text-blue-800 dark:text-blue-200">
                   Message for Paid Voters
                 </Label>
-                <p className="text-xs text-blue-600 dark:text-blue-300 mb-3">This message will be shown to voters who purchased MAXIM Next votes from your profile</p>
+                <p className="text-xs text-blue-600 dark:text-blue-300 mb-3">This message will be shown to voters who purchased Swing Cover Girl votes from your profile</p>
                 <Controller
                   name="voterMessage"
                   control={control}

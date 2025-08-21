@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Trophy, Calendar, Users, Image as ImageIcon, Gift, Clock, Heart, Star, Timer, BarChart3, TrendingUp, Eye } from "lucide-react";
 import { formatUsdAbbrev } from "@/lib/utils";
 import { ContestParticipation } from "@/types/competitions.types";
-import { Profile } from "@/hooks/api/useProfile";
+import { Profile, useProfile } from "@/hooks/api/useProfile";
 import { Contest_Status } from "@/lib/validations/contest.schema";
 import { useState, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
@@ -14,6 +14,9 @@ import { Lightbox } from "../Lightbox";
 import FlipClockCountdown from "@leenguyen/react-flip-clock-countdown";
 import "@leenguyen/react-flip-clock-countdown/dist/index.css";
 import VoteModal from "./VoteModal";
+import { useFreeVote, useFreeVoteAvailability } from "@/hooks/api/useVotes";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ContestsParticipationSectionProps {
   participations: ContestParticipation[];
@@ -58,13 +61,78 @@ const getStatusBadge = (status: keyof typeof Contest_Status) => {
   }
 };
 
+// Utility function to calculate time remaining for next vote
+const getTimeRemainingForNextVote = (lastVoteAt: string): { canVote: boolean; timeRemaining: string; hoursRemaining: number } => {
+  const lastVote = new Date(lastVoteAt);
+  const now = new Date();
+  const timeDiff = now.getTime() - lastVote.getTime();
+  const hoursDiff = timeDiff / (1000 * 60 * 60);
+
+  if (hoursDiff >= 24) {
+    return { canVote: true, timeRemaining: "", hoursRemaining: 0 };
+  }
+
+  const remainingHours = 24 - hoursDiff;
+  const hours = Math.floor(remainingHours);
+  const minutes = Math.floor((remainingHours - hours) * 60);
+
+  let timeRemaining = "";
+  if (hours > 0) {
+    timeRemaining = `${hours}h ${minutes}m`;
+  } else {
+    timeRemaining = `${minutes}m`;
+  }
+
+  return { canVote: false, timeRemaining, hoursRemaining: remainingHours };
+};
+
 export function ContestsParticipationSection({ profile, participations, onVoteSuccess }: ContestsParticipationSectionProps) {
+  const { user } = useAuth();
+  const { useProfileByUserId } = useProfile();
+  const { data: voterProfile } = useProfileByUserId(user?.id || "");
   const [lightboxImage, setLightboxImage] = useState<{ url: string; caption: string } | null>(null);
   const [isVoteModalOpen, setIsVoteModalOpen] = useState(false);
   const [selectedParticipation, setSelectedParticipation] = useState<ContestParticipation | null>(null);
+  const { data: freeVoteAvailability, mutate: checkFreeVoteAvailability } = useFreeVoteAvailability();
+  const { mutateAsync: castFreeVote } = useFreeVote();
+  const [isFreeVoteAvailable, setIsFreeVoteAvailable] = useState(false);
+
+
+  useEffect(() => {
+    if (freeVoteAvailability?.available) {
+      setIsFreeVoteAvailable(true);
+    }
+  }, [freeVoteAvailability]);
+
+  useEffect(() => {
+    if (voterProfile?.lastFreeVoteAt) {
+      const { canVote, timeRemaining, hoursRemaining } = getTimeRemainingForNextVote(voterProfile.lastFreeVoteAt);
+      setIsFreeVoteAvailable(canVote);
+    }
+  }, [voterProfile]);
+
+  useEffect(() => {
+    checkFreeVoteAvailability({ profileId: profile.id });
+  }, [checkFreeVoteAvailability, profile.id]);
+
   const closeLightbox = () => {
     setLightboxImage(null);
   };
+
+  async function giveFreeVote({ contestId, voteeId, voterId, voteeName }: { contestId: string; voteeId: string; voterId: string; voteeName: string }) {
+    const res = await castFreeVote({
+      contestId,
+      voteeId,
+      voterId,
+      comment: "",
+    });
+    if (res && res?.id) {
+      setIsFreeVoteAvailable(true);
+      toast.success("Vote cast successfully", {
+        description: `You have cast your free vote for ${voteeName}`,
+      });
+    }
+  }
 
   if (!participations || participations.length === 0) {
     return (
@@ -76,9 +144,9 @@ export function ContestsParticipationSection({ profile, participations, onVoteSu
           <h3 className="text-xl font-bold text-gray-900 mb-3">No Contest Participations</h3>
           <p className="text-gray-600 mb-6 max-w-md mx-auto text-base leading-relaxed">This profile hasn't joined any contests yet. Check back soon for exciting opportunities!</p>
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100 inline-block">
-            <p className="text-sm text-blue-700">
+            <div className="text-sm text-blue-700">
               <strong>💡 Tip:</strong> Contest participations will appear here once they join contests.
-            </p>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -158,15 +226,15 @@ export function ContestsParticipationSection({ profile, participations, onVoteSu
 
                   {/* Countdown Timer */}
                   {participation.contest?.endDate && (
-                    <div className="mb-6 bg-gray-100 p-2 flex gap-2 justify-between items-center px-6">
+                    <div className="mb-6 bg-gray-100 p-2 flex flex-col md:flex-row text-center md:text-left  gap-2 justify-between items-center px-6">
                       <div>
-                        <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Time left for</span>
+                        <span className="text-xs text-gray-500 font-medium uppercase tracking-wide text-center md:text-left">Time left for</span>
                         <div className="font-bold text-gray-700 text-sm">{participation.contest?.name || "This Contest"}</div>
                       </div>
                       <FlipClockCountdown
                         to={new Date(participation.contest?.endDate)}
                         labelStyle={{ fontSize: 10, fontWeight: 500, textTransform: "uppercase" }}
-                        digitBlockStyle={{ width: 20, height: 40, fontSize: 18 }}
+                        digitBlockStyle={{ width: 22, height: 38, fontSize: 20 }}
                         duration={0.5}
                       />
                     </div>
@@ -234,7 +302,7 @@ export function ContestsParticipationSection({ profile, participations, onVoteSu
 
                   {/* Call-to-Action Banner */}
                   <div className="bg-gradient-to-r from-red-50 to-pink-50 rounded-xl border border-red-100 p-2 text-xs">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between flex-col md:flex-row gap-2 md:gap-0">
                       <div className="flex items-center space-x-4">
                         {/* Red Bar Chart Icon */}
                         <div className="bg-red-100 rounded-lg p-2">
@@ -265,17 +333,35 @@ export function ContestsParticipationSection({ profile, participations, onVoteSu
                   {/* Voting Button Section */}
                   <div className="pt-3 mt-3 border-t border-gray-100">
                     <div className="">
-                      <Button
-                        size="lg"
-                        className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white py-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-                        onClick={() => {
-                          setSelectedParticipation(participation);
-                          setIsVoteModalOpen(true);
-                        }}
-                      >
-                        <Heart className="w-5 h-5 mr-2" />
-                        Vote for {profile.user?.name || "this model"}
-                      </Button>
+                      {isFreeVoteAvailable ? (
+                        <Button
+                          size="lg"
+                          className="w-full text-sm md:text-base bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white py-3 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                          onClick={() => {
+                            giveFreeVote({
+                              contestId: participation.contest.id,
+                              voteeId: profile.id,
+                              voteeName: profile.user?.name || "",
+                              voterId: user?.profileId || "",
+                            });
+                          }}
+                        >
+                          <Heart className="w-5 h-5 mr-2" />
+                          Vote for {profile.user?.name || "this model"}
+                        </Button>
+                      ) : (
+                        <Button
+                          size="lg"
+                          className="w-full text-sm md:text-base bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white py-3 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                          onClick={() => {
+                            setSelectedParticipation(participation);
+                            setIsVoteModalOpen(true);
+                          }}
+                        >
+                          <Heart className="w-5 h-5 mr-2" />
+                          Vote for {profile.user?.name || "this model"}
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -285,7 +371,7 @@ export function ContestsParticipationSection({ profile, participations, onVoteSu
         ))}
       </div>
 
-      <VoteModal open={isVoteModalOpen} onOpenChange={setIsVoteModalOpen} participation={selectedParticipation ?? {} as ContestParticipation} profile={profile} />
+      <VoteModal open={isVoteModalOpen} onOpenChange={setIsVoteModalOpen} participation={selectedParticipation ?? ({} as ContestParticipation)} profile={profile} />
       {/* Lightbox */}
       {lightboxImage && <Lightbox image={lightboxImage} onClose={closeLightbox} />}
     </div>

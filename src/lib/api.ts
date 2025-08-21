@@ -10,6 +10,7 @@
  * - Generic type support for all API calls
  */
 
+import { SignInWithEmailRequest, SignInWithUsernameRequest, SignUpWithEmailRequest } from '@/types';
 import { AUTH_TOKEN_KEY } from './auth';
 import { getApiUrl, getAuthUrl } from './config';
 
@@ -69,18 +70,8 @@ export interface ApiRequestOptions extends Omit<RequestInit, 'body'> {
 }
 
 // Common request/response data types
-export interface LoginCredentials {
-  email: string;
-  password: string;
-  callbackURL?: string;
-}
 
-export interface RegisterCredentials {
-  name: string;
-  email: string;
-  password: string;
-  username: string;
-}
+
 
 export interface UserProfile {
   id: string;
@@ -233,13 +224,13 @@ export const api = {
  * Authentication-specific API calls with generic response types
  */
 export const authApi = {
-  register: <T = any>(userData: RegisterCredentials) =>
+  register: <T = any>(userData: SignUpWithEmailRequest) =>
     api.post<T>('/sign-up/email', userData, { baseUrl: 'auth', requireAuth: false }),
 
-  login: <T = any>(credentials: LoginCredentials) =>
+  login: <T = any>(credentials: SignInWithEmailRequest) =>
     api.post<T>('/sign-in/email', credentials, { baseUrl: 'auth', requireAuth: false }),
 
-  loginWithUsername: <T = any>(credentials: { username: string; password: string; rememberMe?: boolean; callbackURL?: string }) =>
+  loginWithUsername: <T = any>(credentials: SignInWithUsernameRequest) =>
     api.post<T>('/sign-in/username', credentials, { baseUrl: 'auth', requireAuth: false }),
 
   logout: <T = any>() =>

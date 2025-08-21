@@ -8,19 +8,19 @@ const Footer = () => {
       { label: "Active Competitions", href: "/competitions" },
       { label: "How to Enter", href: "/how-to-enter" },
       { label: "Competition Rules", href: "/rules" },
-      { label: "Past Winners", href: "/winners" }
+      // { label: "Past Winners", href: "/winners" }
     ],
     "Support": [
       { label: "FAQ", href: "/faq" },
       { label: "Contact Us", href: "/contact" },
-      { label: "Technical Support", href: "/support" },
+      // { label: "Technical Support", href: "/support" },
       { label: "Guidelines", href: "/guidelines" }
     ],
     "Legal": [
       { label: "Terms of Service", href: "/terms" },
       { label: "Privacy Policy", href: "/privacy" },
-      { label: "Cookie Policy", href: "/cookies" },
-      { label: "Contest Rules", href: "/contest-rules" }
+      // { label: "Cookie Policy", href: "/cookies" },
+      // { label: "Contest Rules", href: "/contest-rules" }
     ]
   };
 

@@ -1,6 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
 import Dashboard from "@/pages/Dashboard";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { createFileRoute } from "@tanstack/react-router";
 
 export const dashboardSections = [
   "edit-profile",
@@ -32,9 +31,9 @@ export const Route = createFileRoute("/dashboard/$section")({
     },
   },
   component: () => (
-    <ProtectedRoute>
+    <>
       <Dashboard />
-    </ProtectedRoute>
+    </>
   ),
 });
 

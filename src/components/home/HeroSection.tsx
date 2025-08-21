@@ -19,21 +19,21 @@ const HeroSection = () => {
 
   return (
     <>
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
         {/* Background Images */}
         <div className="absolute inset-0 z-0">
           <picture>
             <source media="(min-width: 768px)" srcSet={heroDesktop} />
             <img src={heroMobile} alt="Swing Boudoir Competition" className="w-full h-full object-cover" />
           </picture>
-          <div className="absolute inset-0 bg-gradient-overlay"></div>
+          <div className="absolute inset-0 bg-gradient-overlay bg-gradient-to-b from-black/30 to-black/90"></div>
         </div>
 
         {/* Content */}
-        <div className="relative z-10 container mx-auto px-4 text-center mb-10  ">
+        <div className="relative z-10 container mx-auto px-4 text-center mb-10">
           <div className="max-w-4xl mx-auto">
             {/* Badge */}
-            <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-medium mb-8 animate-fade-in">
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-medium mb-2 animate-fade-in">
               <TrophyIcon className="w-4 h-4 mr-2" />
               {isAuthenticated ? "Welcome back! Ready to compete?" : "Join competitions for your chance to win"}
             </div>

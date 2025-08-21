@@ -32,7 +32,7 @@ const Contact = () => {
     {
       icon: Mail,
       title: "Email Us",
-      details: ["support@maximcovergirl.com", "press@maximcovergirl.com"],
+      details: ["support@swingboudoirmag.com"],
       description: "Get detailed answers to your questions"
     },
     {

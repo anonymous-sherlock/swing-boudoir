@@ -7,22 +7,30 @@ import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { NuqsAdapter } from "nuqs/adapters/react";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import ModalProvider from "@/providers/modal-provider";
-import { isPublicRoute } from "@/routes";
+import { authRoutes, isPublicRoute } from "@/routes";
+import { CheckCircleIcon, XCircleIcon } from "lucide-react";
 
 function AppShell() {
   const { isLoading } = useAuth();
 
   // Show loading spinner while checking authentication
-  if (isLoading && !isPublicRoute(location.pathname)) {
+  if (isLoading && !isPublicRoute(location.pathname) && !authRoutes.includes(location.pathname)) {
     return <PageLoader />;
   }
 
   // Always render the app - authentication is handled by individual components
   return (
-    <div className="App">
+    <div className="App" vaul-drawer-wrapper="">
       <Outlet />
       <Toaster />
-      <SonnerToaster />
+      <SonnerToaster
+        closeButton
+        invert
+        icons={{
+          success: <CheckCircleIcon className="w-4 h-4" />,
+          error: <XCircleIcon className="w-4 h-4" />,
+        }}
+      />
     </div>
   );
 }

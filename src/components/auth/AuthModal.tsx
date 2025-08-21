@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import React, { useState } from "react";
 import { LoginForm } from "./LoginForm";
 import { RegisterForm } from "./RegisterForm";
+import { useRouter } from "@tanstack/react-router";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -22,10 +23,14 @@ interface AuthModalProps {
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
+  const router = useRouter();
 
   const handleClose = () => {
     onClose();
   };
+
+  // Get current page URL for callback
+  const currentPath = router.state.location.pathname;
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -41,11 +46,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           </TabsList>
 
           <TabsContent value="login" className="space-y-4">
-            <LoginForm />
+            <LoginForm callbackURL={currentPath} onSuccess={onSuccess} />
           </TabsContent>
 
           <TabsContent value="register" className="space-y-4">
-            <RegisterForm />
+            <RegisterForm callbackURL={currentPath} onSuccess={onSuccess} />
           </TabsContent>
         </Tabs>
       </DialogContent>

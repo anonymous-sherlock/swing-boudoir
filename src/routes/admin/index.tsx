@@ -115,7 +115,7 @@ export default function Page() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
         <p className="text-muted-foreground">
-          Welcome to the Swing Boudior admin panel. Manage competitions, users, and settings.
+          Welcome to the Swing Boudoir admin panel. Manage competitions, users, and settings.
         </p>
       </div>
 

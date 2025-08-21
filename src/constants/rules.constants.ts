@@ -65,5 +65,5 @@ export const prizeTerms = [
     "Travel prizes must be claimed within 12 months",
     "Winners responsible for taxes on prize values",
     "Photo shoots and experiences non-transferable",
-    "Maxim reserves right to substitute prizes of equal value",
+    "Swing Boudoir reserves right to substitute prizes of equal value",
 ];

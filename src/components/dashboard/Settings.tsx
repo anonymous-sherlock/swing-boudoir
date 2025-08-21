@@ -187,8 +187,6 @@ export function Settings() {
     }
   };
 
-
-
   return (
     <div className="max-w-6xl mx-auto space-y-6 sm:p-4">
       <div className="mb-6">
@@ -270,27 +268,35 @@ export function Settings() {
                         <>
                           <div className="relative w-full aspect-[4/1] bg-gray-100 rounded-lg overflow-hidden">
                             <img src={`${userProfile?.bannerImage?.url}`} alt="Banner" className="w-full h-full object-cover" />
-                                    </div>
+                          </div>
                           <div className="flex items-center space-x-4">
                             <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center overflow-hidden">
                               {userProfile?.coverImage ? (
                                 <img src={`${userProfile.coverImage.url}`} alt="Profile" className="w-full h-full object-cover" />
-                            ) : (
-                              <User className="h-6 w-6 text-muted-foreground" />
-                            )}
+                              ) : (
+                                <User className="h-6 w-6 text-muted-foreground" />
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-medium">{userProfile?.user?.name || user?.name || "Unknown User"}</p>
+                              <p className="text-sm text-muted-foreground">{user?.email}</p>
+                              {userProfile?.user?.username && <p className="text-xs text-muted-foreground">@{userProfile.user.username}</p>}
+                            </div>
+                            <div className="ml-auto">
+                              <Badge variant="secondary">Active</Badge>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-medium">{userProfile?.user?.name || user?.name || "Unknown User"}</p>
-                            <p className="text-sm text-muted-foreground">{user?.email}</p>
-                            {userProfile?.user?.username && <p className="text-xs text-muted-foreground">@{userProfile.user.username}</p>}
-                          </div>
-                          <div className="ml-auto">
-                            <Badge variant="secondary">Active</Badge>
-                          </div>
-                        </div>
                         </>
                       )}
-                      <Button variant="outline" size="sm" onClick={() => setShowEditProfile(true)} disabled={isProfileLoading}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setActiveTab("edit-profile");
+                          setShowEditProfile(true);
+                        }}
+                        disabled={isProfileLoading}
+                      >
                         <User className="h-4 w-4 mr-2" />
                         Edit Profile
                       </Button>

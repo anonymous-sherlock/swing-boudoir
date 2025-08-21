@@ -2,11 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Maxim Covergirl Design System - Luxury modeling competition aesthetic */
+/* Swing Covergirl Design System - Luxury modeling competition aesthetic */
 html body[data-scroll-locked] {
   --removed-body-scroll-bar-size: 0 !important;
   margin-right: 0 !important;
   overflow-y: scroll !important;
+}
+* {
+  scrollbar-width: thin; /* For Firefox */
 }
 
 @layer base {
@@ -23,7 +26,7 @@ html body[data-scroll-locked] {
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 5%;
 
-    /* Primary - Maxim signature black */
+    /* Primary - Swing signature black */
     --primary: 0 0% 5%;
     --primary-foreground: 0 0% 98%;
 
@@ -138,7 +141,9 @@ html body[data-scroll-locked] {
 
   body {
     @apply bg-background text-foreground font-body;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
   }
 
   /* Typography classes */
@@ -199,7 +204,11 @@ html body[data-scroll-locked] {
     width: 50px;
     height: 50px;
     --pc: radial-gradient(farthest-side, #fbd051 92%, #0000);
-    background: var(--pc) 50% 0, var(--pc) 50% 100%, var(--pc) 100% 50%, var(--pc) 0 50%;
+    background:
+      var(--pc) 50% 0,
+      var(--pc) 50% 100%,
+      var(--pc) 100% 50%,
+      var(--pc) 0 50%;
     background-size: 10px 10px;
     background-repeat: no-repeat;
     animation: spin 1.5s linear infinite;
@@ -215,8 +224,6 @@ html body[data-scroll-locked] {
     border-radius: 50%;
   }
 }
-
-
 
 @layer base {
   * {

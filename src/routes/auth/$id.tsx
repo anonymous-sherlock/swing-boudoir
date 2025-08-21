@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import Auth from "@/pages/AuthPage";
+import NotFound from "@/pages/NotFound";
 
 // Define valid auth route IDs
 type AuthRouteId = "sign-in" | "sign-up";
@@ -11,6 +12,8 @@ interface AuthSearchParams {
 
 export const Route = createFileRoute("/auth/$id")({
   component: AuthPage,
+  errorComponent: NotFound,
+  notFoundComponent: NotFound,
   validateSearch: (search: Record<string, unknown>): AuthSearchParams => {
     return {
       callback: typeof search.callback === "string" ? search.callback : undefined,

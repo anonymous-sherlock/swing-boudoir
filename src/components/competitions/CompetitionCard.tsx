@@ -35,10 +35,10 @@ export const CompetitionCard: React.FC<CompetitionCardProps> = ({ contest, showJ
   }
   return (
     <>
-      <Card className="w-full max-w-sm overflow-hidden relative">
+      <Card className="w-full w-full overflow-hidden relative">
         <Link to="/competitions/$slug" params={{ slug: contest.slug }} className="block">
           <div className="relative cursor-pointer">
-            <img src={contest?.images?.[0]?.url || (defaultImage as unknown as string)} alt={contest.name} className="w-full h-64 object-cover" />
+            <img src={contest?.images?.[0]?.url || (defaultImage as unknown as string)} alt={contest.name} className="w-full object-cover aspect-video" />
             {/* Prize Pool Overlay - Top Right */}
             <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg">
               <span className="text-xs text-muted-foreground uppercase tracking-wide block">Prize Pool</span>

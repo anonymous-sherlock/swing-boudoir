@@ -18,7 +18,7 @@ const Rules = () => {
             Competition Guidelines
           </div>
           <h1 className="font-display text-4xl md:text-6xl font-bold text-white mb-4">Competition Rules</h1>
-          <p className="text-lg text-white/90 max-w-2xl mx-auto">Please read and understand all rules before participating in any Maxim Covergirl competition</p>
+          <p className="text-lg text-white/90 max-w-2xl mx-auto">Please read and understand all rules before participating in any Swing Boudoir Covergirl competition</p>
         </div>
       </section>
 
@@ -116,7 +116,7 @@ const Rules = () => {
             <h2 className="font-display text-2xl font-bold text-foreground mb-6">Legal Notice</h2>
             <div className="text-muted-foreground space-y-4 text-sm leading-relaxed">
               <p>
-                By participating in any Maxim Covergirl competition, you agree to abide by these rules and the platform's Terms of Service. Maxim reserves the right to modify rules
+                By participating in any Swing Boudoir Covergirl competition, you agree to abide by these rules and the platform's Terms of Service. Swing Boudoir reserves the right to modify rules
                 and disqualify participants who violate guidelines.
               </p>
               <p>

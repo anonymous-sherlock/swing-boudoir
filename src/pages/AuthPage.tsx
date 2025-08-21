@@ -18,6 +18,11 @@ import { Shield, Trophy } from "lucide-react";
 import React, { useEffect } from "react";
 import { useParams, useRouter } from "@tanstack/react-router";
 import { LoginForm, RegisterForm } from "@/components/auth";
+import img1 from "@/assets/testimonials/img-1.jpg";
+import img2 from "@/assets/testimonials/img-2.jpg";
+import img3 from "@/assets/testimonials/img-3.jpg";
+import img4 from "@/assets/testimonials/img-4.jpg";
+import img5 from "@/assets/testimonials/img-5.jpg";
 
 const Auth: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -33,8 +38,8 @@ const Auth: React.FC = () => {
 
   const isSignIn = id === "sign-in";
   const cardTitle = isSignIn ? "Welcome Back" : "Get Started";
-  const cardDescription = isSignIn 
-    ? "Sign in to your account to continue your journey" 
+  const cardDescription = isSignIn
+    ? "Sign in to your account to continue your journey"
     : "Create an account to access the Swing Boudoir Magazine and compete for life-changing opportunities.";
 
   return (
@@ -64,8 +69,16 @@ const Auth: React.FC = () => {
           <div className="pt-8">
             <div className="flex items-center space-x-4 text-white/70">
               <div className="flex -space-x-2">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="w-8 h-8 rounded-full bg-gradient-to-r from-accent to-accent/80 border-2 border-white" />
+                {[img1, img2, img3, img4, img5].map((i) => (
+                  <div
+                    key={i}
+                    className="w-8 h-8 rounded-full bg-gradient-to-r from-accent to-accent/80 border-2 border-white"
+                    style={{
+                      backgroundImage: `url(${i})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }}
+                  />
                 ))}
               </div>
               <span className="text-sm">Join 25,000+ models worldwide</span>
@@ -87,7 +100,7 @@ const Auth: React.FC = () => {
             <CardContent className="space-y-6">
               {/* Render the appropriate form based on route parameter */}
               {isSignIn ? <LoginForm /> : <RegisterForm />}
-              
+
               {/* Security Notice */}
               <div className="text-center space-y-3">
                 <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">

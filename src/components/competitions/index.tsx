@@ -155,7 +155,7 @@ export const CompetitionsList: React.FC = () => {
         {/* Competitions Grid/List */}
         {!isLoading && contests.length > 0 && (
           <>
-            <div className={view === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8" : "space-y-4 mb-8"}>
+            <div className={view === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 mb-8" : "space-y-4 mb-8"}>
               {contests.map((contest) => (
                 <div key={contest.id}>{view === "grid" ? <CompetitionCard contest={contest} /> : <CompetitionListItem competition={contest} />}</div>
               ))}

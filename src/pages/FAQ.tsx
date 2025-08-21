@@ -9,14 +9,14 @@ const FAQ = () => {
   const faqs = [
     {
       id: "eligibility",
-      question: "Who can participate in Maxim Covergirl competitions?",
+      question: "Who can participate in Swing Boudoir Covergirl competitions?",
       answer:
         "All models aged 18 and above can participate in our competitions. You must be legally able to enter contracts and travel internationally if you win. No prior modeling experience is required.",
     },
     {
       id: "entry-fee",
       question: "Is there an entry fee to join competitions?",
-      answer: "No, all Maxim Covergirl competitions are completely free to enter. We believe talent should be accessible to everyone, regardless of financial background.",
+      answer: "No, all Swing Boudoir Covergirl competitions are completely free to enter. We believe talent should be accessible to everyone, regardless of financial background.",
     },
     {
       id: "submission-requirements",
@@ -38,7 +38,7 @@ const FAQ = () => {
     {
       id: "photo-rights",
       question: "What happens to my submitted photos?",
-      answer: "You retain ownership of your photos. By submitting, you grant Maxim limited rights to use your photos for competition promotion and marketing purposes.",
+      answer: "You retain ownership of your photos. By submitting, you grant Swing Boudoir limited rights to use your photos for competition promotion and marketing purposes.",
     },
     {
       id: "multiple-competitions",
@@ -58,7 +58,7 @@ const FAQ = () => {
     {
       id: "technical-issues",
       question: "What if I experience technical issues during submission?",
-      answer: "Contact our support team immediately at support@maximcovergirl.com with details about the issue. We'll help resolve problems before competition deadlines.",
+      answer: "Contact our support team immediately at submit@swingboudoirmag.com with details about the issue. We'll help resolve problems before competition deadlines.",
     },
   ];
 
@@ -67,7 +67,7 @@ const FAQ = () => {
       icon: Mail,
       title: "Email Support",
       description: "Get detailed answers to your questions",
-      contact: "support@maximcovergirl.com",
+      contact: "submit@swingboudoirmag.com",
       responseTime: "Within 24 hours",
     },
     {
@@ -96,7 +96,7 @@ const FAQ = () => {
             Help Center
           </div>
           <h1 className="font-display text-4xl md:text-6xl font-bold text-white mb-4">Frequently Asked Questions</h1>
-          <p className="text-lg text-white/90 max-w-2xl mx-auto">Find answers to the most common questions about Maxim Covergirl competitions</p>
+          <p className="text-lg text-white/90 max-w-2xl mx-auto">Find answers to the most common questions about Swing Boudoir Covergirl competitions</p>
         </div>
       </section>
 

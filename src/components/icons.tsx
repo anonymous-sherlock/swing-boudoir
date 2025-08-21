@@ -2,11 +2,11 @@ import { LucideProps } from "lucide-react";
 
 export const Icons = {
   youtube: (props: LucideProps) => (
-    <svg role="img" viewBox="0 0 24 24" className="w-5 h-5 fill-red-500" xmlns="http://www.w3.org/20000/svg" {...props}>
+    <svg role="img" viewBox="0 0 24 24" className="w-5 h-5 fill-current" xmlns="http://www.w3.org/20000/svg" {...props}>
       <title>YouTube</title>
       <path
         color="currentColor"
-        className="fill-red-500"
+        className="fill-current"
         d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"
       />
     </svg>
@@ -38,8 +38,8 @@ export const Icons = {
   barGraphChart: (props: LucideProps) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 43 43" height="44" {...props}>
       <rect width="42" height="42" x="0.059" y="0.054" fill="#fff" rx="8"></rect>
-      <rect width="41" height="41" x="0.559" y="0.554" stroke="#CE1C1C" stroke-opacity="0.23" rx="7.5"></rect>
-      <g fill="#CE1C1C" clip-path="url(#bar-graph-white-bg-icon_svg__a)">
+      <rect width="41" height="41" x="0.559" y="0.554" stroke="#CE1C1C" strokeOpacity="0.23" rx="7.5"></rect>
+      <g fill="#CE1C1C" clipPath="url(#bar-graph-white-bg-icon_svg__a)">
         <path d="M32.9 26.837v2.566h-3.122v-2.566zM16.161 19.45v9.953H13.04V19.45zm5.58 2.83v7.124h-3.12v-7.124zm5.578 1.858v5.265H24.2v-5.265z"></path>
         <path d="M10.277 11.708v19.717h23.831v2.86H8.901c-.76 0-1.378-.642-1.378-1.431V11.708zm6.18-.365L16.23 13.2c-.07.572-.573.976-1.125.906-.551-.073-.94-.596-.872-1.169l.582-4.706c.03-.331.213-.641.512-.815a.97.97 0 0 1 .852-.061l4.364 1.746c.519.207.776.812.576 1.35-.2.54-.782.806-1.3.599l-1.49-.596a24.1 24.1 0 0 0 5.7 5.72c3.04 2.156 6.393 3.423 9.56 3.66.555.041.973.541.933 1.119-.04.577-.52 1.01-1.076.97-3.514-.258-7.218-1.65-10.554-4.017-2.4-1.7-4.612-3.91-6.433-6.564"></path>
       </g>

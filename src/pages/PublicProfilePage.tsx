@@ -1,25 +1,19 @@
-import { useState, useEffect, useMemo } from "react";
-import { useParams } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Share, Star, User, Trophy, Calendar, Users, AlertCircle, Image as ImageIcon, Heart, Clock, Gift, DollarSign, Eye, Menu } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { useProfile } from "@/hooks/api/useProfile";
 import { useContestLeaderboard } from "@/hooks/api/useContests";
+import { useProfile } from "@/hooks/api/useProfile";
 import { useFreeVote, usePaidVote } from "@/hooks/api/useVotes";
+import { useToast } from "@/hooks/use-toast";
+import { useParams } from "@tanstack/react-router";
+import { AlertCircle, DollarSign, Menu, Share } from "lucide-react";
+import { useMemo, useState } from "react";
 
-import { formatUsdAbbrev } from "@/lib/utils";
-import { PortfolioGallery } from "@/components/profile/PortfolioGallery";
 import { Lightbox } from "@/components/Lightbox";
 import { BioSection } from "@/components/profile/BioSection";
-import { PublicProfileHeroSection } from "@/components/profile/ProfileMain";
 import { ContestsParticipationSection } from "@/components/profile/ContestsParticipationSection";
-
-interface TimeLeft {
-  [key: string]: string;
-}
+import { PortfolioGallery } from "@/components/profile/PortfolioGallery";
+import { PublicProfileHeroSection } from "@/components/profile/ProfileMain";
+import { shareProfile } from "@/utils";
 
 const PAID_VOTE_PACKAGES = [
   {
@@ -48,12 +42,9 @@ const PAID_VOTE_PACKAGES = [
 export default function PublicProfilePage() {
   const { username } = useParams({ from: "/_public/profile/$username" });
 
-  const [userVotes, setUserVotes] = useState(0);
-
   const [showPaidVoteOptions, setShowPaidVoteOptions] = useState(false);
-  const [showMobileMenu, setShowMobileMenu] = useState(true);
-  const { toast } = useToast();
-  const { user } = useAuth();
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+
   const [lightboxImage, setLightboxImage] = useState<{ url: string; caption: string } | null>(null);
 
   // API hooks
@@ -80,68 +71,6 @@ export default function PublicProfilePage() {
     console.log("All participations (no filtering):", filtered);
     return filtered;
   }, [participations]);
-
-  // Countdown timer for competitions
-  // useEffect(() => {
-  //   const timer = setInterval(() => {
-  //     const newTimeLeft: TimeLeft = {};
-
-  //     activeParticipations.forEach((participation) => {
-  //       if (participation.contest?.endDate) {
-  //         const now = new Date().getTime();
-  //         const end = new Date(participation.contest.endDate).getTime();
-  //         const difference = end - now;
-
-  //         if (difference > 0) {
-  //           const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-  //           const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  //           const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-  //           const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-
-  //           newTimeLeft[participation.contestId] =
-  //             `${days.toString().padStart(2, "0")} : ${hours.toString().padStart(2, "0")} : ${minutes.toString().padStart(2, "0")} : ${seconds.toString().padStart(2, "0")}`;
-  //         } else {
-  //           newTimeLeft[participation.contestId] = "Ended";
-  //         }
-  //       }
-  //     });
-
-  //     setTimeLeft(newTimeLeft);
-  //   }, 1000);
-
-  //   return () => clearInterval(timer);
-  // }, [activeParticipations]);
-
-  const handleBuyVotesClick = () => {
-    window.location.href = "/voters/buy-votes";
-  };
-
-  const shareProfile = async () => {
-    const url = window.location.href;
-    try {
-      await navigator.clipboard.writeText(url);
-      toast({
-        title: "Link Copied!",
-        description: "Profile link has been copied to clipboard.",
-      });
-    } catch (err) {
-      console.error("Failed to copy link:", err);
-      toast({
-        title: "Copy Failed",
-        description: "Failed to copy link to clipboard.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
 
   // Get leaderboard data for the first contest to show model rank and total participants
   const { data: leaderboardData } = useContestLeaderboard(activeParticipations[0]?.contestId || "", 1, 100);
@@ -238,7 +167,7 @@ export default function PublicProfilePage() {
               <DollarSign className="w-4 h-4 mr-1" />
               Buy More Votes
             </Button>
-            <Button onClick={shareProfile} variant="outline" size="sm" className="text-gray-600 hover:text-gray-800 border-gray-300 hidden sm:flex">
+            <Button onClick={() => shareProfile(username)} variant="outline" size="sm" className="text-gray-600 hover:text-gray-800 border-gray-300 hidden sm:flex">
               <Share className="w-4 h-4 mr-1" />
               Share Profile
             </Button>
@@ -279,7 +208,7 @@ export default function PublicProfilePage() {
 
           <ContestsParticipationSection profile={modelProfile} participations={activeParticipations || []} onVoteSuccess={() => {}} />
 
-          <PortfolioGallery photos={modelProfile.profilePhotos || []} onImageClick={handleImageClick} />
+          {modelProfile?.profilePhotos && modelProfile.profilePhotos.length > 0 ? <PortfolioGallery photos={modelProfile.profilePhotos} onImageClick={handleImageClick} /> : null}
         </div>
       </div>
 
@@ -287,11 +216,11 @@ export default function PublicProfilePage() {
       {showMobileMenu && (
         <div className="fixed top-16 left-0 right-0 z-40 bg-white border-b border-gray-200 shadow-lg sm:hidden">
           <div className="p-4 space-y-3">
-            <Button onClick={handleBuyVotesClick} variant="outline" size="sm" className="w-full text-gray-600 hover:text-gray-800 border-gray-300">
+            <Button onClick={() => setShowPaidVoteOptions(true)} variant="outline" size="sm" className="w-full text-gray-600 hover:text-gray-800 border-gray-300">
               <DollarSign className="w-4 h-4 mr-2" />
               Buy More Votes
             </Button>
-            <Button onClick={shareProfile} variant="outline" size="sm" className="w-full text-gray-600 hover:text-gray-800 border-gray-300">
+            <Button onClick={() => shareProfile(username)} variant="outline" size="sm" className="w-full text-gray-600 hover:text-gray-800 border-gray-300">
               <Share className="w-4 h-4 mr-2" />
               Share Profile
             </Button>

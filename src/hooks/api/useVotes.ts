@@ -93,11 +93,14 @@ export interface TopVoter {
 // Hook for giving a free vote
 export function useFreeVote() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: async (data: { voterId: string; voteeId: string; contestId: string; comment?: string }) => {
-      const response = await api.post('/api/v1/contest/vote/free', data)
-      return response.data
+      const response = await api.post<Vote>('/api/v1/contest/vote/free', data)
+      if (response.success) {
+        return response.data
+      }
+      return null
     },
     onSuccess: () => {
       // Invalidate relevant queries
@@ -111,7 +114,7 @@ export function useFreeVote() {
 // Hook for giving a paid vote
 export function usePaidVote() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: async (data: { voteeId: string; voterId: string; contestId: string; voteCount: number }) => {
       const response = await api.post('/api/v1/contest/vote/pay', data)

@@ -7,11 +7,12 @@ import { Contest } from "@/types/contest.types";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
 import { format } from "date-fns";
-import { Calendar, Clock, DollarSign, Share2, Trophy, Users } from "lucide-react";
+import { Calendar, Clock, DollarSign, Share2, Trophy, Users, User } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { useAuth } from "@/contexts/AuthContext";
 
 const formatDate = (date: string | Date) => {
   return format(new Date(date), "MMM dd, yyyy");
@@ -20,6 +21,7 @@ const formatDate = (date: string | Date) => {
 export function CompetitionDetails() {
   const { slug } = useParams({ from: "/_public/competitions/$slug" });
   const initialData = Route.useLoaderData();
+  const { user } = useAuth();
 
   const {
     data: competition,
@@ -97,12 +99,34 @@ export function CompetitionDetails() {
     }
   };
 
+  const shareProfile = async () => {
+    if (!user?.username) {
+      toast.error("Profile not available", {
+        description: "Unable to share profile at this time.",
+      });
+      return;
+    }
+    
+    const url = `${window.location.origin}/profile/${user.username}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Profile Link Copied!", {
+        description: "Your profile link has been copied to clipboard.",
+      });
+    } catch (err) {
+      console.error("Failed to copy profile link:", err);
+      toast.error("Copy Failed", {
+        description: "Failed to copy profile link to clipboard.",
+      });
+    }
+  };
+
   return (
     <>
       <div className="container mx-auto px-4 py-8 pt-20">
         {/* Hero Section with Image and Title */}
         <div className="relative">
-          <div className="relative h-[420px] rounded-2xl overflow-hidden mb-6">
+          <div className="relative h-[520px] rounded-2xl overflow-hidden mb-6">
             <img src={getImageUrl(competition?.images ?? [])} alt={competition.name} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
             <div className="absolute top-0 right-0 py-6 px-8">
@@ -119,6 +143,17 @@ export function CompetitionDetails() {
                   <Share2 className="w-4 h-4 mr-2" />
                   Share
                 </Button>
+                {user?.username && (
+                  <Button
+                    onClick={shareProfile}
+                    variant="outline"
+                    size="sm"
+                    className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-secondary hover:text-black"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Share Profile
+                  </Button>
+                )}
               </div>
             </div>
             <div className="absolute bottom-0 left-0 p-8 pr-40">
@@ -260,6 +295,12 @@ export function CompetitionDetails() {
                 <Button variant="outline" className="w-full" size="lg" onClick={shareCompetition}>
                   Share Competition
                 </Button>
+                {user?.username && (
+                  <Button variant="outline" className="w-full" size="lg" onClick={shareProfile}>
+                    <User className="w-4 h-4 mr-2" />
+                    Share Profile
+                  </Button>
+                )}
               </CardContent>
             </Card>
           </div>

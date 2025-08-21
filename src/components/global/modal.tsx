@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogProps, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
+import { ScrollArea } from "../ui/scroll-area";
 
 interface BaseProps extends DialogProps {
   children: React.ReactNode;
@@ -74,7 +75,7 @@ const ModalContent = ({ className, children, ...props }: ModalProps) => {
 
   return (
     <ModalContent className={className} {...props}>
-      {children}
+      {!isDesktop ? <ScrollArea className="overflow-y-auto">{children}</ScrollArea> : children}
     </ModalContent>
   );
 };

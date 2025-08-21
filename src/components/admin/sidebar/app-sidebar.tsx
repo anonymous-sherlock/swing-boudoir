@@ -112,7 +112,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Prepare user data for NavUser component
   const userData = {
     name: user.name || "Admin User",
-    email: user.email || "admin@swingboudior.com",
+    email: user.email || "admin@swingBoudoir.com",
     avatar: user.image || "/avatars/admin.jpg",
   };
 
@@ -127,7 +127,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <Command className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Swing Boudior</span>
+                  <span className="truncate font-semibold">Swing Boudoir</span>
                   <span className="truncate text-xs">Admin Panel</span>
                 </div>
               </Link>

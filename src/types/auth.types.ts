@@ -1,5 +1,6 @@
 
 export type User_Role = "USER" | "MODERATOR" | "ADMIN";
+export type User_Type = "MODEL" | "VOTER";
 export interface User {
   id: string;
   name: string;
@@ -8,7 +9,8 @@ export interface User {
   emailVerified: boolean;
   username: string;
   displayUsername?: string;
-  role: User_Role
+  role: User_Role;
+  type: User_Type
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -25,6 +27,7 @@ export interface Session {
   userAgent: string;
   userId: string;
   role: User_Role
+  type: User_Type
   profileId?: string
 }
 
@@ -33,6 +36,7 @@ export interface SignUpWithEmailRequest {
   email: string
   password: string
   username: string
+  type?: User_Type
   image?: string | undefined
   callbackURL?: string | null
   rememberMe?: boolean | undefined
@@ -42,6 +46,13 @@ export interface SignInWithEmailRequest {
   email: string,
   password: string,
   callbackURL?: string | null,
+  rememberMe?: boolean | undefined
+}
+export interface SignInWithUsernameRequest {
+  username: string
+  password: string
+  callbackURL?: string | null
+  rememberMe?: boolean | undefined
 }
 
 export interface SignInWithEmailResponse {

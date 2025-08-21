@@ -95,6 +95,7 @@ const IdentityScene: React.FC<IdentitySceneProps> = ({ formData, updateFormData,
       zipcode: formData.zipcode || "",
       hobbiesAndPassions: formData.hobbiesAndPassions || "",
       experienceLevel: formData.experienceLevel || "",
+      phone: formData.phone || "",
     },
   });
 
@@ -110,6 +111,7 @@ const IdentityScene: React.FC<IdentitySceneProps> = ({ formData, updateFormData,
       zipcode: data.zipcode,
       hobbiesAndPassions: data.hobbiesAndPassions,
       experienceLevel: data.experienceLevel,
+      phone: data.phone,
     });
 
     toast.success("About information saved successfully!");

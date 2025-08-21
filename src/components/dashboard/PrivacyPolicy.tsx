@@ -115,7 +115,7 @@ export function PrivacyPolicy() {
                 <li>Withdraw consent for non-essential marketing communications.</li>
               </ul>
               <p className="mt-2">
-                To exercise these rights, contact us at privacy@swingboudoir.com
+                To exercise these rights, contact us at submit@swingboudoirmag.com
               </p>
             </div>
           </section>
@@ -143,8 +143,8 @@ export function PrivacyPolicy() {
             <p className="text-muted-foreground">
               If you have questions about this Privacy Policy or our data handling practices:
             </p>
-            <p className="text-muted-foreground">Email: privacy@swingboudoir.com</p>
-            <p className="text-muted-foreground">Competition Support: support@swingboudoir.com</p>
+            <p className="text-muted-foreground">Email: submit@swingboudoirmag.com</p>
+            <p className="text-muted-foreground">Competition Support: submit@swingboudoirmag.com</p>
             <p className="text-muted-foreground">Swing Boudoir Magazine<br/>
             [Business Address]<br/>
             [City, State, ZIP Code]</p>

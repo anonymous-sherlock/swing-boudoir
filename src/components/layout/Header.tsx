@@ -8,6 +8,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useRef, useEffect, useState } from "react";
 import { getUserInitials } from "@/lib/utils";
+import { VoterOnlyMenu } from "./VoterOnlyMenu";
+import { ModelOnlyMenu } from "./ModelOnlyMenu";
 
 interface HeaderProps {
   onSidebarToggle?: () => void;
@@ -21,6 +23,8 @@ const Header = ({ onSidebarToggle }: HeaderProps) => {
   const { unreadCount } = useNotifications();
   const isDashboardPage = location.pathname.startsWith("/dashboard");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isVoterMenuOpen, setIsVoterMenuOpen] = useState(false);
+  const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -45,20 +49,6 @@ const Header = ({ onSidebarToggle }: HeaderProps) => {
     }
   };
 
-  // Mobile menu items for dashboard pages
-  const mobileMenuItems = [
-    { id: "notifications", label: "Notifications", icon: Bell, onClick: () => navigate({ to: "/dashboard/$section", params: { section: "notifications" } }) },
-    { id: "competitions", label: "Competitions", icon: Trophy, onClick: () => navigate({ to: "/competitions" }) },
-    { id: "public-profile", label: "Public Profile", icon: Users, onClick: () => navigate({ to: "/dashboard/$section", params: { section: "profile" } }) },
-    { id: "votes", label: "Votes", icon: Vote, onClick: () => navigate({ to: "/dashboard/$section", params: { section: "votes" } }) },
-    // { id: "prize-history", label: "Prize History", icon: Gift, onClick: () => navigate({ to: "/dashboard/$section", params: { section: "prize-history" } }) },
-    { id: "leaderboard", label: "Leaderboard", icon: TrendingUp, onClick: () => navigate({ to: "/leaderboard" }) },
-    { id: "support", label: "Support", icon: HelpCircle, onClick: () => navigate({ to: "/dashboard/$section", params: { section: "support" } }) },
-    { id: "official-rules", label: "Official Rules", icon: FileText, onClick: () => navigate({ to: "/rules" }) },
-    { id: "privacy", label: "Privacy Policy", icon: Lock, onClick: () => navigate({ to: "/dashboard/$section", params: { section: "privacy" } }) },
-    { id: "settings", label: "Settings", icon: SettingsIcon, onClick: () => navigate({ to: "/dashboard/$section", params: { section: "settings" } }) },
-  ];
-
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -70,8 +60,12 @@ const Header = ({ onSidebarToggle }: HeaderProps) => {
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              if (isDashboardPage && onSidebarToggle) {
+              if (isDashboardPage && onSidebarToggle && user?.type === "MODEL") {
                 onSidebarToggle();
+              } else if (user?.type === "VOTER") {
+                setIsVoterMenuOpen(!isVoterMenuOpen);
+              } else if (user?.type === "MODEL") {
+                setIsModelMenuOpen(!isModelMenuOpen);
               } else {
                 setIsMobileMenuOpen(!isMobileMenuOpen);
               }
@@ -91,7 +85,7 @@ const Header = ({ onSidebarToggle }: HeaderProps) => {
 
           {/* Profile/Auth - Top Right */}
           <div className="flex items-center">
-            {isAuthenticated && user ? (
+            {isAuthenticated && user && user.type === "MODEL" ? (
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0">
@@ -125,6 +119,10 @@ const Header = ({ onSidebarToggle }: HeaderProps) => {
                   </div>
                 </PopoverContent>
               </Popover>
+            ) : isAuthenticated && user && user.type === "VOTER" ? (
+              <Button variant="ghost" size="sm" className="text-sm" onClick={handleLogoutClick}>
+                Log out
+              </Button>
             ) : (
               <Link to="/auth/$id" params={{ id: "sign-in" }}>
                 <Button variant="ghost" size="sm" className="text-sm">
@@ -145,17 +143,24 @@ const Header = ({ onSidebarToggle }: HeaderProps) => {
             </Link>
           </div>
 
+          {/* Navigation - Center */}
+          <nav className="flex items-center space-x-2">
+            <Link to="/competitions">
+              <Button variant="ghost" size="sm" className="text-sm">
+                Competitions
+              </Button>
+            </Link>
+            <Link to="/leaderboard">
+              <Button variant="ghost" size="sm" className="text-sm">
+                Leaderboard
+              </Button>
+            </Link>
+          </nav>
+
           {/* Right side - Profile menu and actions */}
           <div className="flex items-center space-x-4">
-            {/* Dashboard Sidebar Toggle - Only show on dashboard pages */}
-            {isDashboardPage && (
-              <Button variant="ghost" size="sm" onClick={onSidebarToggle} className="hidden lg:flex">
-                <Menu className="w-5 h-5" />
-              </Button>
-            )}
-
             {/* Profile Menu - Show when authenticated */}
-            {isAuthenticated && user && (
+            {isAuthenticated && user && user.type === "MODEL" && (
               <>
                 {/* Notifications Icon - Desktop Only */}
                 <Button variant="ghost" size="sm" className="relative h-8 w-8 rounded-full p-0 hidden lg:flex">
@@ -205,6 +210,13 @@ const Header = ({ onSidebarToggle }: HeaderProps) => {
               </>
             )}
 
+            {/* Voter Logout - Show when authenticated as VOTER */}
+            {isAuthenticated && user && user.type === "VOTER" && (
+              <Button variant="ghost" size="sm" onClick={handleLogoutClick}>
+                Log out
+              </Button>
+            )}
+
             {/* Auth Buttons - Show when not authenticated */}
             {!isAuthenticated && (
               <div className="flex items-center space-x-4">
@@ -236,50 +248,6 @@ const Header = ({ onSidebarToggle }: HeaderProps) => {
             </div>
 
             <nav className="flex-1 p-4 space-y-2">
-              {/* Show additional items when authenticated */}
-              {isAuthenticated && (
-                <>
-                  {mobileMenuItems
-                    .filter((item) => !["competitions", "leaderboard"].includes(item.id))
-                    .map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <Button
-                          key={item.id}
-                          variant="ghost"
-                          className="w-full justify-start h-12"
-                          onClick={() => {
-                            item.onClick();
-                            setIsMobileMenuOpen(false);
-                          }}
-                        >
-                          <Icon className="mr-3 h-5 w-5" />
-                          <span className="text-base">{item.label}</span>
-                          {item.id === "notifications" && unreadCount > 0 && (
-                            <Badge variant="destructive" className="ml-auto h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center">
-                              {unreadCount > 99 ? "99+" : unreadCount}
-                            </Badge>
-                          )}
-                        </Button>
-                      );
-                    })}
-
-                  <div className="pt-4 border-t border-border">
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start h-12 text-red-600 hover:text-red-700 hover:bg-red-50"
-                      onClick={() => {
-                        handleLogoutClick();
-                        setIsMobileMenuOpen(false);
-                      }}
-                    >
-                      <LogOut className="mr-3 h-5 w-5" />
-                      <span className="text-base">Log out</span>
-                    </Button>
-                  </div>
-                </>
-              )}
-
               {/* Show auth options when not authenticated */}
               {!isAuthenticated && (
                 <div className="pt-4 border-t border-border space-y-2">
@@ -310,6 +278,12 @@ const Header = ({ onSidebarToggle }: HeaderProps) => {
           </div>
         </div>
       )}
+
+      {/* Voter Only Menu */}
+      <VoterOnlyMenu isOpen={isVoterMenuOpen} onClose={() => setIsVoterMenuOpen(false)} />
+
+      {/* Model Only Menu */}
+      <ModelOnlyMenu isOpen={isModelMenuOpen} onClose={() => setIsModelMenuOpen(false)} onLogout={handleLogoutClick} />
     </header>
   );
 };

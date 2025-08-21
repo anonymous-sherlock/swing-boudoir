@@ -11,16 +11,16 @@
  * @version 1.0.0
  */
 
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { useRouter } from "@tanstack/react-router";
-import { getAuthUrl, getCallbackUrl } from "../lib/config";
-import { authApi } from "@/lib/api";
-import { GetSessionResponse, Session, SignInWithEmailRequest, SignInWithEmailResponse, SignUpWithEmailRequest, User } from "@/types/auth.types";
-import { authPages, DEFAULT_AFTER_LOGIN_REDIRECT, DEFAULT_AFTER_LOGOUT_REDIRECT } from "@/routes";
-import { AUTH_TOKEN_KEY } from "@/lib/auth";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageLoader } from "@/components/PageLoader";
 import { toast } from "@/components/ui/use-toast";
+import { authApi } from "@/lib/api";
+import { AUTH_TOKEN_KEY } from "@/lib/auth";
+import { authPages, DEFAULT_AFTER_LOGIN_REDIRECT, DEFAULT_AFTER_LOGOUT_REDIRECT } from "@/routes";
+import { GetSessionResponse, Session, SignInWithEmailRequest, SignInWithEmailResponse, SignInWithUsernameRequest, SignUpWithEmailRequest, User } from "@/types/auth.types";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "@tanstack/react-router";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { getAuthUrl, getCallbackUrl } from "../lib/config";
 
 interface AuthContextType {
   user: User | null;
@@ -31,8 +31,16 @@ interface AuthContextType {
 
   // Authentication methods
   handleRegister: (data: SignUpWithEmailRequest) => Promise<void>;
+  handleRegisterAsVoter: (data: {
+    name: string;
+    email: string;
+    password: string;
+    username: string;
+    rememberMe?: boolean;
+    callbackURL?: string;
+  }) => Promise<{ token: string; user: User; username: string }>;
   handleLoginWithEmail: (data: SignInWithEmailRequest) => Promise<void>;
-  handleLoginWithUsername: (data: { username: string; password: string; rememberMe?: boolean; callbackURL?: string }) => Promise<void>;
+  handleLoginWithUsername: (data: SignInWithUsernameRequest) => Promise<void>;
   handleLogout: () => Promise<void>;
   checkUserNeedsOnboarding: () => boolean;
 
@@ -140,7 +148,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Register user
   const handleRegister = async (data: SignUpWithEmailRequest) => {
-    const { name, email, password, username } = data;
+    const { name, email, password, username, type } = data;
     setIsLoading(true);
     setError(null);
     try {
@@ -149,6 +157,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email,
         password,
         username,
+        type: type || "MODEL",
       });
 
       if (!response.success) {
@@ -171,6 +180,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       // Ensure no data is stored on error
       setUser(null);
+      throw error; // Re-throw to be handled by component
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Register as voter without automatic login
+  const handleRegisterAsVoter = async (data: { name: string; email: string; password: string; username: string; rememberMe?: boolean; callbackURL?: string }) => {
+    const { name, email, password, username, rememberMe, callbackURL } = data;
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await authApi.register<{ token: string; user: User; session: Session }>({
+        name,
+        email,
+        password,
+        username,
+        type: "VOTER",
+        rememberMe,
+      });
+
+      if (!response.success) {
+        console.error("Voter register error response:", response.error);
+        throw new Error(response.error || "Voter registration failed");
+      }
+
+      if (!response.data?.user || !response.data?.token) {
+        throw new Error("Invalid response from server");
+      }
+
+      // Store token and user data
+      localStorage.setItem(AUTH_TOKEN_KEY, response.data.token);
+      queryClient.invalidateQueries({ queryKey: ["session"] });
+      const redirectTo = callbackURL || DEFAULT_AFTER_LOGIN_REDIRECT;
+      setTimeout(() => {
+        console.log("AuthContext - Executing navigation to:", redirectTo);
+        router.navigate({ to: redirectTo, replace: true });
+      }, 100);
+
+      return {
+        token: response.data.token,
+        user: response.data.user,
+        username: username
+      };
+    } catch (error: unknown) {
+      console.error("Voter register error:", error);
+      if (error instanceof Error) {
+        setError(error.message || "Voter registration failed");
+      } else {
+        setError("Voter registration failed");
+      }
+      // Ensure no data is stored on error
+      setUser(null);
+      setSession(null);
+      setIsAuthenticated(false);
       throw error; // Re-throw to be handled by component
     } finally {
       setIsLoading(false);
@@ -238,7 +303,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Login with username
-  const handleLoginWithUsername = async (data: { username: string; password: string; rememberMe?: boolean; callbackURL?: string }) => {
+  const handleLoginWithUsername = async (data: SignInWithUsernameRequest) => {
     const { username, password, rememberMe = true, callbackURL } = data;
     setIsLoading(true);
     setError(null);
@@ -649,6 +714,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isLoading,
     error,
     handleRegister,
+    handleRegisterAsVoter,
     handleLoginWithEmail,
     handleLoginWithUsername,
     handleLogout,

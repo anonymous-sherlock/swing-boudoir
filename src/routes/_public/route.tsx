@@ -7,13 +7,16 @@ export const Route = createFileRoute("/_public")({
 });
 
 function HomeLayout() {
+  const pathname = location.pathname;
+  const publicProfilePage = pathname.startsWith("/profile");
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
 
       <Outlet />
 
-      {/* <Footer /> */}
+      {!publicProfilePage && <Footer />}
     </div>
   );
 }

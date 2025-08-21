@@ -1,2 +1,5 @@
 export { LoginForm } from './LoginForm'
 export { RegisterForm } from './RegisterForm'
+export { VoterAuthModal } from './VoterAuthModal'
+export { VoterLoginForm } from './VoterLoginForm'
+export { VoterRegisterForm } from './VoterRegisterForm'
