@@ -45,13 +45,13 @@ export function getColumns(handleRowDeselection?: ((rowId: string) => void) | nu
         const getStatusColor = (status: string) => {
           switch (status) {
             case "COMPLETED":
-              return "bg-green-100 text-green-800";
+              return "bg-green-100 text-green-800 hover:bg-green-100";
             case "PENDING":
-              return "bg-yellow-100 text-yellow-800";
+              return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
             case "FAILED":
-              return "bg-red-100 text-red-800";
+              return "bg-red-100 text-red-800 hover:bg-red-100";
             default:
-              return "bg-gray-100 text-gray-800";
+              return "bg-gray-100 text-gray-800 hover:bg-gray-100";
           }
         };
         return <Badge className={getStatusColor(status)}>{status}</Badge>;

@@ -1,21 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { 
-  XCircle, 
-  AlertTriangle, 
-  RefreshCw, 
-  ArrowLeft, 
-  CreditCard,
-  HelpCircle,
-  Mail,
-  Phone,
-  MessageCircle
-} from 'lucide-react';
-import { Link, useSearch } from '@tanstack/react-router';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import React, { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { XCircle, AlertTriangle, RefreshCw, ArrowLeft, CreditCard, HelpCircle, Mail, Phone, MessageCircle } from "lucide-react";
+import { Link, useSearch } from "@tanstack/react-router";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface PaymentError {
   code: string;
@@ -27,7 +17,7 @@ interface PaymentError {
 export function PaymentFailure() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const searchParams = useSearch({ strict:false,shouldThrow:false}) as {
+  const searchParams = useSearch({ strict: false, shouldThrow: false }) as {
     callback?: string;
     error_code?: string;
     error_message?: string;
@@ -48,10 +38,10 @@ export function PaymentFailure() {
 
         if (errorCode || errorMessage) {
           setPaymentError({
-            code: errorCode || 'payment_failed',
-            message: errorMessage || 'Payment processing failed',
+            code: errorCode || "payment_failed",
+            message: errorMessage || "Payment processing failed",
             declineCode: declineCode || undefined,
-            paymentIntentId: paymentIntentId || undefined
+            paymentIntentId: paymentIntentId || undefined,
           });
         }
 
@@ -59,10 +49,10 @@ export function PaymentFailure() {
         toast({
           title: "Payment Failed",
           description: errorMessage || "There was an issue processing your payment.",
-          variant: "destructive"
+          variant: "destructive",
         });
       } catch (error) {
-        console.error('Error parsing payment error:', error);
+        console.error("Error parsing payment error:", error);
       } finally {
         setIsLoading(false);
       }
@@ -73,40 +63,40 @@ export function PaymentFailure() {
 
   const getErrorMessage = (code: string, declineCode?: string) => {
     switch (code) {
-      case 'card_declined':
+      case "card_declined":
         switch (declineCode) {
-          case 'insufficient_funds':
-            return 'Your card has insufficient funds. Please try a different payment method.';
-          case 'card_not_supported':
-            return 'This card type is not supported. Please use a different card.';
-          case 'expired_card':
-            return 'Your card has expired. Please update your payment information.';
+          case "insufficient_funds":
+            return "Your card has insufficient funds. Please try a different payment method.";
+          case "card_not_supported":
+            return "This card type is not supported. Please use a different card.";
+          case "expired_card":
+            return "Your card has expired. Please update your payment information.";
           default:
-            return 'Your card was declined. Please check your card details and try again.';
+            return "Your card was declined. Please check your card details and try again.";
         }
-      case 'expired_card':
-        return 'Your card has expired. Please update your payment information.';
-      case 'incorrect_cvc':
-        return 'The security code (CVC) is incorrect. Please check and try again.';
-      case 'processing_error':
-        return 'There was an error processing your payment. Please try again.';
-      case 'rate_limit':
-        return 'Too many payment attempts. Please wait a moment and try again.';
-      case 'invalid_request':
-        return 'Invalid payment information. Please check your details and try again.';
+      case "expired_card":
+        return "Your card has expired. Please update your payment information.";
+      case "incorrect_cvc":
+        return "The security code (CVC) is incorrect. Please check and try again.";
+      case "processing_error":
+        return "There was an error processing your payment. Please try again.";
+      case "rate_limit":
+        return "Too many payment attempts. Please wait a moment and try again.";
+      case "invalid_request":
+        return "Invalid payment information. Please check your details and try again.";
       default:
-        return 'Payment processing failed. Please try again or contact support.';
+        return "Payment processing failed. Please try again or contact support.";
     }
   };
 
   const getErrorIcon = (code: string) => {
     switch (code) {
-      case 'card_declined':
-      case 'expired_card':
-      case 'incorrect_cvc':
+      case "card_declined":
+      case "expired_card":
+      case "incorrect_cvc":
         return <CreditCard className="w-6 h-6 text-red-500" />;
-      case 'processing_error':
-      case 'rate_limit':
+      case "processing_error":
+      case "rate_limit":
         return <RefreshCw className="w-6 h-6 text-orange-500" />;
       default:
         return <AlertTriangle className="w-6 h-6 text-red-500" />;
@@ -115,11 +105,11 @@ export function PaymentFailure() {
 
   const handleRetryPayment = () => {
     // Redirect back to buy votes page
-    window.location.href = '/voters/buy-votes';
+    window.location.href = "/voters/buy-votes";
   };
 
   const handleContactSupport = () => {
-    const subject = encodeURIComponent('Payment Failed - Need Help');
+    const subject = encodeURIComponent("Payment Failed - Need Help");
     const body = encodeURIComponent(`
 Hi Support Team,
 
@@ -134,9 +124,14 @@ Please help me resolve this issue.
 Best regards,
 ${user?.name}
     `);
-    
-    window.location.href = `mailto:support@swingboudoir.com?subject=${subject}&body=${body}`;
+
+    window.location.href = `mailto:submit@swingboudoirmag.com?subject=${subject}&body=${body}`;
   };
+
+
+  function clickToCall() {
+    window.location.href = "tel:+447878619356";
+  }
 
   if (isLoading) {
     return (
@@ -150,20 +145,18 @@ ${user?.name}
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
+    <div className="max-w-4xl min-h-screen flex flex-col items-center justify-center mx-auto p-6 space-y-6">
       {/* Error Header */}
       <div className="text-center space-y-4">
         <div className="mx-auto w-20 h-20 bg-red-100 rounded-full flex items-center justify-center">
           <XCircle className="w-12 h-12 text-red-600" />
         </div>
         <h1 className="text-4xl font-bold text-foreground">Payment Failed</h1>
-        <p className="text-xl text-muted-foreground">
-          We couldn't process your payment. Don't worry, you haven't been charged.
-        </p>
+        <p className="text-xl text-muted-foreground">We couldn't process your payment. Don't worry, you haven't been charged.</p>
       </div>
 
       {/* Error Details */}
-      <Card className="bg-gradient-to-r from-red-50 to-orange-50 border-red-200">
+      {/* <Card className="bg-gradient-to-r from-red-50 to-orange-50 border-red-200">
         <CardHeader>
           <CardTitle className="flex items-center text-red-800">
             <AlertTriangle className="w-5 h-5 mr-2" />
@@ -230,7 +223,7 @@ ${user?.name}
             </div>
           )}
 
-          {/* Action Buttons */}
+          Action Buttons
           <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-red-200">
             <Button 
               onClick={handleRetryPayment}
@@ -257,10 +250,10 @@ ${user?.name}
             </Button>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Common Solutions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="hover:shadow-lg transition-shadow">
           <CardContent className="p-6 text-center">
             <CreditCard className="w-8 h-8 text-blue-500 mx-auto mb-3" />
@@ -311,24 +304,22 @@ ${user?.name}
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
 
       {/* Support Information */}
       <Card className="bg-gray-50">
         <CardContent className="p-6">
           <div className="text-center space-y-4">
             <h3 className="font-semibold">Need Immediate Help?</h3>
-            <p className="text-sm text-muted-foreground">
-              Our support team is available 24/7 to help you resolve payment issues.
-            </p>
+            <p className="text-sm text-muted-foreground">Our support team is available 24/7 to help you resolve payment issues.</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-center justify-center space-x-2">
+              <div className="flex items-center justify-center space-x-2 cursor-pointer" onClick={handleContactSupport}>
                 <Mail className="w-4 h-4 text-blue-500" />
-                <span className="text-sm">support@swingboudoir.com</span>
+                <span className="text-sm">submit@swingboudoirmag.com</span>
               </div>
-              <div className="flex items-center justify-center space-x-2">
+              <div className="flex items-center justify-center space-x-2 cursor-pointer" onClick={clickToCall}>
                 <Phone className="w-4 h-4 text-green-500" />
-                <span className="text-sm">+1 (555) 123-4567</span>
+                <span className="text-sm">+44 78 7861 9356</span>
               </div>
               <div className="flex items-center justify-center space-x-2">
                 <MessageCircle className="w-4 h-4 text-purple-500" />
@@ -340,7 +331,7 @@ ${user?.name}
       </Card>
 
       {/* Alternative Actions */}
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle>What Would You Like to Do?</CardTitle>
         </CardHeader>
@@ -376,7 +367,7 @@ ${user?.name}
             </Button>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
     </div>
   );
 }

@@ -9,3 +9,4 @@ export * from './common.types';
 export * from './notifications.types';
 export * from './competitions.types';
 export * from './auth.types';
+export * from './votes.types';

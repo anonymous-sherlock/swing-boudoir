@@ -8,6 +8,7 @@ import { notificationService } from "@/lib/notificationService";
 import { Contest } from "@/types/contest.types";
 import React, { useState } from "react";
 import { ContestJoinImageDialog } from "./ContestJoinImageDialog";
+import { useNavigate } from "@tanstack/react-router";
 
 interface ContestJoinButtonProps {
   contest: Contest;
@@ -55,10 +56,14 @@ export const ContestJoinButton: React.FC<ContestJoinButtonProps> = ({
 
   const needsProfileSetup = isAuthenticated && checkUserNeedsOnboarding();
 
+  const navigate = useNavigate();
+
   const handleJoinClick = () => {
     if (!isAuthenticated) {
       if (showAuthModal) {
         setIsAuthModalOpen(true);
+        // navigate({ to: "/auth/$id" , params: { id: "sign-up" } });
+
       }
       return;
     }

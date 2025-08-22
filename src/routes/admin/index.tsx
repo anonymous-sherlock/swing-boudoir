@@ -84,18 +84,18 @@ export default function Page() {
       subtext: 'Votes purchased by users',
       icon: <CreditCard className="h-8 w-8 text-indigo-600" />,
     },
-    {
-      label: 'Active Competitions',
-      value: dashboardResponse.activeCompetitions,
-      subtext: 'Currently running contests',
-      icon: <PlayCircle className="h-8 w-8 text-red-600" />,
-    },
-    {
-      label: 'Completed Competitions',
-      value: dashboardResponse.completedCompetitions,
-      subtext: 'Finished competitions',
-      icon: <CheckCircle className="h-8 w-8 text-green-600" />,
-    },
+    // {
+    //   label: 'Active Competitions',
+    //   value: dashboardResponse.activeCompetitions,
+    //   subtext: 'Currently running contests',
+    //   icon: <PlayCircle className="h-8 w-8 text-red-600" />,
+    // },
+    // {
+    //   label: 'Completed Competitions',
+    //   value: dashboardResponse.completedCompetitions,
+    //   subtext: 'Finished competitions',
+    //   icon: <CheckCircle className="h-8 w-8 text-green-600" />,
+    // },
     {
       label: 'Total Participants',
       value: dashboardResponse.totalParticipants,
@@ -104,7 +104,7 @@ export default function Page() {
     },
     { 
       label: 'Total Revenue', 
-      value: dashboardResponse.totalRevenue, 
+      value: formatCurrency(dashboardResponse.totalRevenue, 'USD'), 
       subtext: 'Revenue in USD',
       icon: <TrendingUp className="h-8 w-8 text-teal-600" />,
     },

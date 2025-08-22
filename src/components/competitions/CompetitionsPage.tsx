@@ -487,8 +487,11 @@ export function CompetitionsPage() {
             <>
               <div className="grid grid-cols-1 gap-6">
                 {paginatedCompetitions.map((contest) => (
-                  <Card key={contest.id} className="border border-gray-200 hover:shadow-md transition-shadow">
-                    <CardContent className="p-6">
+                  <Card key={contest.id} className="border relative border-gray-200 hover:shadow-md transition-shadow">
+                    <div className="absolute top-1/2 w-full  -translate-y-1/2 right-0 h-4 bg-white/70 backdrop-blur-sm min-h-10 flex items-center justify-center text-xl font-medium text-gray-600" >
+                    Completed</div>
+                    <CardContent className="p-6 ">
+
                       <div className="flex flex-col lg:flex-row gap-6">
                         <div className="flex-1 space-y-4">
                           <div className="flex items-center justify-between">
@@ -499,7 +502,7 @@ export function CompetitionsPage() {
                             {getStatusBadge(contest)}
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="relative grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                               <p className="text-gray-900 font-semibold">{formatPrize(contest.prizePool)} Prize Pool</p>
                               <div className="flex items-center text-sm text-gray-600">
@@ -513,11 +516,11 @@ export function CompetitionsPage() {
                                 </div>
                               )}
                             </div>
-                            <div className="text-center p-4 bg-primary/10 rounded-lg">
+                            {/* <div className="text-center p-4 bg-primary/10 rounded-lg">
                               <Trophy className="mx-auto h-8 w-8 text-primary mb-2" />
                               <p className="font-semibold">Competition Completed</p>
                               <p className="text-sm text-muted-foreground">Final results available</p>
-                            </div>
+                            </div> */}
                           </div>
 
                           <div className="flex gap-2">

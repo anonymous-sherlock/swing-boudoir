@@ -134,10 +134,6 @@ const apiRequest = async <T = any>(
   }
 
   try {
-    // console.log(`API Request: ${fetchOptions.method || 'GET'} ${url}`, {
-    //   headers: { ...headers, Authorization: headers['Authorization'] ? '[HIDDEN]' : undefined },
-    //   body: body instanceof FormData ? '[FormData]' : body
-    // });
 
     const response = await fetch(url, requestConfig);
 

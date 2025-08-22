@@ -1,176 +1,250 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api } from '@/lib/api'
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { api, extractApiError, isApiSuccess } from "@/lib/api";
+import {
+  Vote,
+  FreeVoteRequest,
+  PaidVoteRequest,
+  FreeVoteAvailabilityRequest,
+  FreeVoteAvailabilityResponse,
+  LatestVotesResponse,
+  ProfileVotesResponse,
+  TopVoter,
+  VoteMultiplierPeriod,
+  CreateVoteMultiplierRequest,
+  UpdateVoteMultiplierRequest,
+} from "@/types/votes.types";
+import { toast } from "sonner";
 
-// Types based on the API schema
-export interface Vote {
-  id: string
-  type: 'FREE' | 'PAID'
-  voterId: string
-  voteeId: string
-  contestId: string
-  count: number
-  paymentId: string | null
-  comment: string | null
-  createdAt: string
-  updatedAt: string
-}
+// API endpoint functions for dynamic parameters
+const VOTES_ENDPOINTS = {
+  freeVote: () => "/api/v1/contest/vote/free",
+  paidVote: () => "/api/v1/contest/vote/pay",
+  checkFreeVoteAvailability: () => "/api/v1/votes/is-free-vote-available",
+  latestVotes: () => "/api/v1/votes/latest-votes",
+  profileVotes: (profileId: string) => `/api/v1/votes/${profileId}`,
+  topVoters: (profileId: string) => `/api/v1/votes/${profileId}/top-voters`,
+  voteMultipliers: () => "/api/v1/vote-multiplier-periods",
+  activeVoteMultiplier: () => "/api/v1/vote-multiplier-periods/active",
+} as const;
 
-export interface VoteResponse {
-  data: Vote[]
-  pagination: {
-    total: number
-    totalPages: number
-    hasNextPage: boolean
-    hasPreviousPage: boolean
-    nextPage: number | null
-    previousPage: number | null
-  }
-}
-
-export interface FreeVoteAvailability {
-  available: boolean
-  nextAvailableAt: string
-}
-
-export interface LatestVote {
-  votee: {
-    id: string
-    name: string
-    profilePicture: string
-  } | null
-  voter: {
-    id: string
-    name: string
-    profilePicture: string
-  } | null
-  totalVotes: number | null
-  comment: string | null
-  createdAt: string
-}
-
-export interface LatestVotesResponse {
-  data: LatestVote[]
-  pagination: {
-    total: number
-    totalPages: number
-    hasNextPage: boolean
-    hasPreviousPage: boolean
-    nextPage: number | null
-    previousPage: number | null
-  }
-}
-
-export interface VoteHistoryEntry {
-  profileId: string
-  userName: string
-  contestName: string
-  votedOn: string
-  count: number
-}
-
-export interface VoteHistoryResponse {
-  data: VoteHistoryEntry[]
-  pagination: {
-    total: number
-    totalPages: number
-    hasNextPage: boolean
-    hasPreviousPage: boolean
-    nextPage: number | null
-    previousPage: number | null
-  }
-}
-
-export interface TopVoter {
-  rank: number
-  profileId: string
-  userName: string
-  profilePicture: string
-  totalVotesGiven: number
-  comment: string | null
-  lastVoteAt: string
-}
-
-// Hook for giving a free vote
-export function useFreeVote() {
-  const queryClient = useQueryClient()
+// Cast a free vote
+export const useCastFreeVote = () => {
+  const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { voterId: string; voteeId: string; contestId: string; comment?: string }) => {
-      const response = await api.post<Vote>('/api/v1/contest/vote/free', data)
-      if (response.success) {
-        return response.data
+    mutationFn: async (voteData: FreeVoteRequest): Promise<Vote> => {
+      const response = await api.post<Vote>(VOTES_ENDPOINTS.freeVote(), voteData);
+      if (!isApiSuccess(response)) {
+        throw new Error(extractApiError(response) || "An unknown error occurred");
       }
-      return null
+      return response.data;
     },
-    onSuccess: () => {
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ['votes'] })
-      queryClient.invalidateQueries({ queryKey: ['leaderboard'] })
-      queryClient.invalidateQueries({ queryKey: ['contest', 'leaderboard'] })
+    onSuccess: (data, variables) => {
+      // Invalidate relevant queries - be more specific to prevent unnecessary refetches
+      queryClient.invalidateQueries({ queryKey: ["votes"] });
+      queryClient.invalidateQueries({ queryKey: ["freeVoteAvailability", variables.voterId] });
+      // Only invalidate the specific voter's profile, not all profiles
+      queryClient.invalidateQueries({ queryKey: ["profile", "detail", "user", variables.voterId] });
+      queryClient.invalidateQueries({ queryKey: ["contest"] });
     },
-  })
-}
+    onError: (error) => {
+      toast.error("Failed to cast free vote", {
+        description: error instanceof Error ? error.message : "An unexpected error occurred. Please try again.",
+      });
+    },
+  });
+};
 
-// Hook for giving a paid vote
-export function usePaidVote() {
-  const queryClient = useQueryClient()
+// Cast a paid vote (returns payment URL)
+export const useCastPaidVote = () => {
+  const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { voteeId: string; voterId: string; contestId: string; voteCount: number }) => {
-      const response = await api.post('/api/v1/contest/vote/pay', data)
-      return response.data
+    mutationFn: async (voteData: PaidVoteRequest): Promise<{ url: string }> => {
+      const response = await api.post<{ url: string }>(VOTES_ENDPOINTS.paidVote(), voteData);
+      if (!isApiSuccess(response)) {
+        throw new Error(extractApiError(response) || "An unknown error occurred");
+      }
+      return response.data;
     },
-    onSuccess: () => {
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ['votes'] })
-      queryClient.invalidateQueries({ queryKey: ['leaderboard'] })
-      queryClient.invalidateQueries({ queryKey: ['contest', 'leaderboard'] })
+    onSuccess: (data, variables) => {
+      // Invalidate relevant queries - be more specific to prevent unnecessary refetches
+      queryClient.invalidateQueries({ queryKey: ["votes"] });
+      queryClient.invalidateQueries({ queryKey: ["freeVoteAvailability", variables.voterId] });
+      // Only invalidate the specific voter's profile, not all profiles
+      queryClient.invalidateQueries({ queryKey: ["profile", "detail", "user", variables.voterId] });
+      queryClient.invalidateQueries({ queryKey: ["contest"] });
     },
-  })
-}
+  });
+};
 
-// Hook for checking free vote availability
-export function useFreeVoteAvailability() {
-  return useMutation({
-    mutationFn: async (data: { profileId: string }): Promise<FreeVoteAvailability> => {
-      const response = await api.post('/api/v1/votes/is-free-vote-available', data)
-      return response.data
-    },
-  })
-}
-
-// Hook for getting latest votes
-export function useLatestVotes(page: number = 1, limit: number = 20) {
+// Check if free vote is available
+export const useCheckFreeVoteAvailability = (params: FreeVoteAvailabilityRequest) => {
   return useQuery({
-    queryKey: ['votes', 'latest', page, limit],
+    queryKey: ["freeVoteAvailability", params.profileId],
+    queryFn: async (): Promise<FreeVoteAvailabilityResponse> => {
+      const response = await api.post<FreeVoteAvailabilityResponse>(
+        VOTES_ENDPOINTS.checkFreeVoteAvailability(),
+        params
+      );
+      if (!isApiSuccess(response)) {
+        throw new Error(extractApiError(response) || "An unknown error occurred");
+      }
+      return response.data;
+    },
+    enabled: !!params.profileId,
+  });
+};
+
+// Get latest votes
+export const useLatestVotes = (params: { search?: string; page?: number; limit?: number } = {}) => {
+  return useQuery({
+    queryKey: ["latestVotes", params],
     queryFn: async (): Promise<LatestVotesResponse> => {
-      // Try without any query parameters first to see if the API works
-      const response = await api.get(`/api/v1/votes/latest-votes`)
-      return response.data
-    },
-  })
-}
+      const queryParams = new URLSearchParams();
+      if (params.search) queryParams.append("search", params.search);
+      if (params.page) queryParams.append("page", params.page.toString());
+      if (params.limit) queryParams.append("limit", params.limit.toString());
 
-// Hook for getting vote history by profile ID
-export function useVoteHistory(profileId: string, page: number = 1, limit: number = 20) {
+      const response = await api.get<LatestVotesResponse>(
+        `${VOTES_ENDPOINTS.latestVotes()}?${queryParams.toString()}`
+      );
+      if (!isApiSuccess(response)) {
+        throw new Error(extractApiError(response) || "An unknown error occurred");
+      }
+      return response.data;
+    },
+  });
+};
+
+// Get votes by profile ID
+export const useProfileVotes = (
+  profileId: string,
+  params: { search?: string; page?: number; limit?: number,onlyPaid?:boolean } = {}
+) => {
   return useQuery({
-    queryKey: ['votes', 'history', profileId, page, limit],
-    queryFn: async (): Promise<VoteHistoryResponse> => {
-      const response = await api.get(`/api/v1/votes/${profileId}?page=${Number(page)}&limit=${Number(limit)}`)
-      return response.data
+    queryKey: ["profileVotes", profileId, params],
+    queryFn: async (): Promise<ProfileVotesResponse> => {
+      const queryParams = new URLSearchParams();
+      if (params.search) queryParams.append("search", params.search);
+      if (params.page) queryParams.append("page", params.page.toString());
+      if (params.limit) queryParams.append("limit", params.limit.toString());
+      if (params.onlyPaid) queryParams.append("onlyPaid", params.onlyPaid.toString());
+      const response = await api.get<ProfileVotesResponse>(
+        `${VOTES_ENDPOINTS.profileVotes(profileId)}?${queryParams.toString()}`
+      );
+      if (!isApiSuccess(response)) {
+        throw new Error(extractApiError(response) || "An unknown error occurred");
+      }
+
+      console.log("response.data", response.data);
+      return response.data;
     },
     enabled: !!profileId,
-  })
-}
+  });
+};
 
-// Hook for getting top voters for a specific profile
-export function useTopVoters(profileId: string) {
+// Get top voters for a profile
+export const useTopVoters = (profileId: string) => {
   return useQuery({
-    queryKey: ['votes', 'top-voters', profileId],
+    queryKey: ["topVoters", profileId],
     queryFn: async (): Promise<TopVoter[]> => {
-      const response = await api.get<TopVoter[]>(`/api/v1/votes/${profileId}/top-voters`)
-      return response.data
+      const response = await api.get<TopVoter[]>(VOTES_ENDPOINTS.topVoters(profileId));
+      if (!isApiSuccess(response)) {
+        throw new Error(extractApiError(response) || "An unknown error occurred");
+      }
+      return response.data;
     },
     enabled: !!profileId,
-  })
-}
+  });
+};
+
+// Vote multiplier periods (admin only)
+export const useVoteMultipliers = (params: { search?: string; page?: number; limit?: number } = {}) => {
+  return useQuery({
+    queryKey: ["voteMultipliers", params],
+    queryFn: async (): Promise<{ data: VoteMultiplierPeriod[]; pagination: { total: number; totalPages: number; hasNextPage: boolean; hasPreviousPage: boolean; nextPage: number | null; previousPage: number | null } }> => {
+      const queryParams = new URLSearchParams();
+      if (params.search) queryParams.append("search", params.search);
+      if (params.page) queryParams.append("page", params.page.toString());
+      if (params.limit) queryParams.append("limit", params.limit.toString());
+
+      const response = await api.get(`${VOTES_ENDPOINTS.voteMultipliers()}?${queryParams.toString()}`);
+      if (!isApiSuccess(response)) {
+        throw new Error(extractApiError(response) || "An unknown error occurred");
+      }
+      return response.data;
+    },
+  });
+};
+
+// Get active vote multiplier
+export const useActiveVoteMultiplier = () => {
+  return useQuery({
+    queryKey: ["activeVoteMultiplier"],
+    queryFn: async (): Promise<VoteMultiplierPeriod | null> => {
+      const response = await api.get<VoteMultiplierPeriod | null>(VOTES_ENDPOINTS.activeVoteMultiplier());
+      if (!isApiSuccess(response)) {
+        throw new Error(extractApiError(response) || "An unknown error occurred");
+      }
+      return response.data;
+    },
+  });
+};
+
+// Create vote multiplier period
+export const useCreateVoteMultiplier = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: CreateVoteMultiplierRequest): Promise<VoteMultiplierPeriod> => {
+      const response = await api.post<VoteMultiplierPeriod>(VOTES_ENDPOINTS.voteMultipliers(), data);
+      if (!isApiSuccess(response)) {
+        throw new Error(extractApiError(response) || "An unknown error occurred");
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["voteMultipliers"] });
+      queryClient.invalidateQueries({ queryKey: ["activeVoteMultiplier"] });
+    },
+  });
+};
+
+// Update vote multiplier period
+export const useUpdateVoteMultiplier = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateVoteMultiplierRequest }): Promise<VoteMultiplierPeriod> => {
+      const response = await api.put<VoteMultiplierPeriod>(`${VOTES_ENDPOINTS.voteMultipliers()}/${id}`, data);
+      if (!isApiSuccess(response)) {
+        throw new Error(extractApiError(response) || "An unknown error occurred");
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["voteMultipliers"] });
+      queryClient.invalidateQueries({ queryKey: ["activeVoteMultiplier"] });
+    },
+  });
+};
+
+// Delete vote multiplier period
+export const useDeleteVoteMultiplier = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string): Promise<{ message: string }> => {
+      const response = await api.delete<{ message: string }>(`${VOTES_ENDPOINTS.voteMultipliers()}/${id}`);
+      if (!isApiSuccess(response)) {
+        throw new Error(extractApiError(response) || "An unknown error occurred");
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["voteMultipliers"] });
+      queryClient.invalidateQueries({ queryKey: ["activeVoteMultiplier"] });
+    },
+  });
+};

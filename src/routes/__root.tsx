@@ -9,6 +9,7 @@ import { NotificationProvider } from "@/contexts/NotificationContext";
 import ModalProvider from "@/providers/modal-provider";
 import { authRoutes, isPublicRoute } from "@/routes";
 import { CheckCircleIcon, XCircleIcon } from "lucide-react";
+import FloatingChatButton from "@/components/layout/floating-chat-btn";
 
 function AppShell() {
   const { isLoading } = useAuth();
@@ -23,14 +24,8 @@ function AppShell() {
     <div className="App" vaul-drawer-wrapper="">
       <Outlet />
       <Toaster />
-      <SonnerToaster
-        closeButton
-        invert
-        icons={{
-          success: <CheckCircleIcon className="w-4 h-4" />,
-          error: <XCircleIcon className="w-4 h-4" />,
-        }}
-      />
+      <SonnerToaster />
+      <FloatingChatButton />
     </div>
   );
 }

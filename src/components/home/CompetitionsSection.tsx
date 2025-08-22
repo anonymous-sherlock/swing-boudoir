@@ -6,6 +6,8 @@ const CompetitionsSection = () => {
   const { data, isLoading } = useContests(1, 12, "active");
   const competitions = data?.data;
 
+  const sortedCompetitions = competitions?.sort((a, b) => b.prizePool - a.prizePool) || [];
+
   if (isLoading) {
     return (
       <section className="py-20 bg-muted/30">
@@ -29,9 +31,9 @@ const CompetitionsSection = () => {
         </div>
 
         {/* Competitions Grid */}
-        {competitions && competitions.length > 0 ? (
+        {sortedCompetitions && sortedCompetitions.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {competitions.map((competition) => (
+            {sortedCompetitions.map((competition) => (
               <CompetitionCard key={competition.id} contest={competition} />
             ))}
           </div>
