@@ -89,7 +89,7 @@ export const CompetitionCard: React.FC<CompetitionCardProps> = ({ contest, showJ
                     return 0; // Maintain original order if no prize values
                   })
                   .map((award) => (
-                    <div key={award.id} className="flex items-center gap-1 text-sm">
+                    <div key={award.id} className="w-full flex items-center gap-1 text-sm">
                       <span>{award.icon}</span>
                       <span className="text-xs">{award.name}</span>
                     </div>

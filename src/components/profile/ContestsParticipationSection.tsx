@@ -1,22 +1,23 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { VoterAuthModal } from "@/components/auth/VoterAuthModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trophy, Calendar, Users, Image as ImageIcon, Gift, Clock, Heart, Star, Timer, BarChart3, TrendingUp, Eye } from "lucide-react";
-import { formatUsdAbbrev } from "@/lib/utils";
-import { ContestParticipation } from "@/types/competitions.types";
+import { Card, CardContent } from "@/components/ui/card";
 import { Profile, useProfile } from "@/hooks/api/useProfile";
+import { formatUsdAbbrev } from "@/lib/utils";
 import { Contest_Status } from "@/lib/validations/contest.schema";
-import { useState, useEffect } from "react";
+import { ContestParticipation } from "@/types/competitions.types";
 import { Link } from "@tanstack/react-router";
+import { Calendar, Eye, Gift, Heart, Trophy, Users } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { Icons } from "../icons";
 import { Lightbox } from "../Lightbox";
 
+import { useAuth } from "@/contexts/AuthContext";
+import { useCastFreeVote, useCheckFreeVoteAvailability } from "@/hooks/api/useVotes";
 import FlipClockCountdown from "@leenguyen/react-flip-clock-countdown";
 import "@leenguyen/react-flip-clock-countdown/dist/index.css";
-import VoteModal from "./VoteModal";
-import { useFreeVote, useFreeVoteAvailability } from "@/hooks/api/useVotes";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
+import VoteModal from "./VoteModal";
 
 interface ContestsParticipationSectionProps {
   participations: ContestParticipation[];
@@ -87,52 +88,93 @@ const getTimeRemainingForNextVote = (lastVoteAt: string): { canVote: boolean; ti
 };
 
 export function ContestsParticipationSection({ profile, participations, onVoteSuccess }: ContestsParticipationSectionProps) {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { useProfileByUserId } = useProfile();
   const { data: voterProfile } = useProfileByUserId(user?.id || "");
   const [lightboxImage, setLightboxImage] = useState<{ url: string; caption: string } | null>(null);
   const [isVoteModalOpen, setIsVoteModalOpen] = useState(false);
   const [selectedParticipation, setSelectedParticipation] = useState<ContestParticipation | null>(null);
-  const { data: freeVoteAvailability, mutate: checkFreeVoteAvailability } = useFreeVoteAvailability();
-  const { mutateAsync: castFreeVote } = useFreeVote();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const { data: freeVoteAvailability } = useCheckFreeVoteAvailability({
+    profileId: voterProfile?.id || "",
+  });
+  const { mutateAsync: castFreeVote, isPending: isVoting } = useCastFreeVote();
   const [isFreeVoteAvailable, setIsFreeVoteAvailable] = useState(false);
 
-
+  // Combined useEffect to handle both API and local state efficiently
   useEffect(() => {
     if (freeVoteAvailability?.available) {
       setIsFreeVoteAvailable(true);
-    }
-  }, [freeVoteAvailability]);
-
-  useEffect(() => {
-    if (voterProfile?.lastFreeVoteAt) {
-      const { canVote, timeRemaining, hoursRemaining } = getTimeRemainingForNextVote(voterProfile.lastFreeVoteAt);
+    } else if (voterProfile?.lastFreeVoteAt) {
+      const { canVote } = getTimeRemainingForNextVote(voterProfile.lastFreeVoteAt);
       setIsFreeVoteAvailable(canVote);
+    } else {
+      setIsFreeVoteAvailable(false);
     }
-  }, [voterProfile]);
-
-  useEffect(() => {
-    checkFreeVoteAvailability({ profileId: profile.id });
-  }, [checkFreeVoteAvailability, profile.id]);
+  }, [freeVoteAvailability, voterProfile?.lastFreeVoteAt]);
 
   const closeLightbox = () => {
     setLightboxImage(null);
   };
 
-  async function giveFreeVote({ contestId, voteeId, voterId, voteeName }: { contestId: string; voteeId: string; voterId: string; voteeName: string }) {
-    const res = await castFreeVote({
-      contestId,
-      voteeId,
-      voterId,
-      comment: "",
-    });
-    if (res && res?.id) {
-      setIsFreeVoteAvailable(true);
-      toast.success("Vote cast successfully", {
-        description: `You have cast your free vote for ${voteeName}`,
-      });
+  const giveFreeVote = useCallback(
+    async ({ contestId, voteeId, voterId, voteeName }: { contestId: string; voteeId: string; voterId: string; voteeName: string }) => {
+      try {
+        const res = await castFreeVote({
+          contestId,
+          voteeId,
+          voterId,
+          comment: "",
+        });
+
+        if (res && res.id) {
+          toast.success("Vote cast successfully", {
+            description: `You have cast your free vote for ${voteeName}`,
+          });
+
+          // Update local state immediately for better UX
+          setIsFreeVoteAvailable(false);
+
+          // Call the callback to refresh data
+          onVoteSuccess();
+        }
+      } catch (error) {
+        console.error("Error casting vote:", error);
+
+        // Show error toast
+        toast.error("Failed to cast vote", {
+          description: error instanceof Error ? error.message : "An unexpected error occurred. Please try again.",
+        });
+
+        // Don't update state on error - keep the button enabled
+      }
+    },
+    [castFreeVote, onVoteSuccess]
+  );
+
+  const handleVoteButtonClick = useCallback(
+    (participation: ContestParticipation) => {
+      // Always set the selected participation first
+      setSelectedParticipation(participation);
+
+      if (!isAuthenticated) {
+        setIsAuthModalOpen(true);
+        return;
+      }
+
+      // User is authenticated, proceed with vote modal
+      setIsVoteModalOpen(true);
+    },
+    [isAuthenticated]
+  );
+
+  const handleAuthSuccess = () => {
+    setIsAuthModalOpen(false);
+    // After successful authentication, automatically open the vote modal
+    if (selectedParticipation) {
+      setIsVoteModalOpen(true);
     }
-  }
+  };
 
   if (!participations || participations.length === 0) {
     return (
@@ -241,7 +283,7 @@ export function ContestsParticipationSection({ profile, participations, onVoteSu
                   )}
 
                   {/* Key Stats Grid */}
-                  <div className="grid md:grid-cols-2 gap-3 mb-4">
+                  <div className="grid grid-cols-2 gap-3 mb-4">
                     <div className="flex items-center space-x-2">
                       <Gift className="w-4 h-4 text-green-600" />
                       <div>
@@ -260,7 +302,7 @@ export function ContestsParticipationSection({ profile, participations, onVoteSu
                   </div>
 
                   {/* Model Rank and Participants */}
-                  <div className="grid md:grid-cols-2 gap-3 mb-4">
+                  <div className="grid grid-cols-2 gap-3 mb-4">
                     <div className="flex items-center space-x-2">
                       <Trophy className="w-4 h-4 text-yellow-600" />
                       <div>
@@ -336,8 +378,12 @@ export function ContestsParticipationSection({ profile, participations, onVoteSu
                       {isFreeVoteAvailable ? (
                         <Button
                           size="lg"
-                          className="w-full text-sm md:text-base bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white py-3 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                          className="w-full truncate text-sm md:text-base bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white py-3 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                           onClick={() => {
+                            if (!isAuthenticated) {
+                              setIsAuthModalOpen(true);
+                              return;
+                            }
                             giveFreeVote({
                               contestId: participation.contest.id,
                               voteeId: profile.id,
@@ -345,18 +391,25 @@ export function ContestsParticipationSection({ profile, participations, onVoteSu
                               voterId: user?.profileId || "",
                             });
                           }}
+                          disabled={isVoting}
                         >
-                          <Heart className="w-5 h-5 mr-2" />
-                          Vote for {profile.user?.name || "this model"}
+                          {isVoting ? (
+                            <div className="flex items-center">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Voting...
+                            </div>
+                          ) : (
+                            <>
+                              <Heart className="w-5 h-5 mr-2" />
+                              Cast a Free Vote for {profile.user?.name || "this model"}
+                            </>
+                          )}
                         </Button>
                       ) : (
                         <Button
                           size="lg"
                           className="w-full text-sm md:text-base bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white py-3 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-                          onClick={() => {
-                            setSelectedParticipation(participation);
-                            setIsVoteModalOpen(true);
-                          }}
+                          onClick={() => handleVoteButtonClick(participation)}
                         >
                           <Heart className="w-5 h-5 mr-2" />
                           Vote for {profile.user?.name || "this model"}
@@ -371,7 +424,31 @@ export function ContestsParticipationSection({ profile, participations, onVoteSu
         ))}
       </div>
 
-      <VoteModal open={isVoteModalOpen} onOpenChange={setIsVoteModalOpen} participation={selectedParticipation ?? ({} as ContestParticipation)} profile={profile} />
+      <VoteModal
+        open={isVoteModalOpen}
+        onOpenChange={setIsVoteModalOpen}
+        participation={selectedParticipation ?? ({} as ContestParticipation)}
+        profile={profile}
+        voterProfile={voterProfile}
+        isFreeVoteAvailable={isFreeVoteAvailable}
+        onAvailabilityChange={setIsFreeVoteAvailable}
+        onFreeVoteRequest={(participation) => {
+          // Handle free vote request from modal
+          if (selectedParticipation) {
+            giveFreeVote({
+              contestId: selectedParticipation.contest.id,
+              voteeId: profile.id,
+              voteeName: profile.user?.name || "",
+              voterId: user?.profileId || "",
+            });
+          }
+          setIsVoteModalOpen(false);
+        }}
+      />
+
+      {/* Voter Authentication Modal */}
+      <VoterAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} onSuccess={handleAuthSuccess} callbackURL={window.location.pathname} />
+
       {/* Lightbox */}
       {lightboxImage && <Lightbox image={lightboxImage} onClose={closeLightbox} />}
     </div>

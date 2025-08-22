@@ -150,11 +150,18 @@ const Header = ({ onSidebarToggle }: HeaderProps) => {
                 Competitions
               </Button>
             </Link>
-            <Link to="/leaderboard">
+            {/* <Link to="/leaderboard">
               <Button variant="ghost" size="sm" className="text-sm">
                 Leaderboard
               </Button>
-            </Link>
+            </Link> */}
+            {isAuthenticated && user && user.type === "MODEL" && (
+              <Link to="/profile/$username" params={{ username: user.username }}>
+                <Button variant="ghost" size="sm" className="text-sm">
+                  Your Profile
+                </Button>
+              </Link>
+            )}
           </nav>
 
           {/* Right side - Profile menu and actions */}

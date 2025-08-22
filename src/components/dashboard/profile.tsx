@@ -3,17 +3,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
+import {  useJoinedContests } from "@/hooks/api/useContests";
 import { useProfile } from "@/hooks/api/useProfile";
 import { useToast } from "@/hooks/use-toast";
-import { useJoinedContests, Contest, Award } from "@/hooks/api/useContests";
 import { formatUsdAbbrev } from "@/lib/utils";
-import { Link, useNavigate } from "@tanstack/react-router";
 import { getSocialMediaUrls } from "@/utils/social-media";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
-import { AlertCircle, Camera, Clock, Edit, Eye, Facebook, Gift, Globe, Instagram, MapPin, RefreshCw, Share2, TrendingUp, Trophy, Twitter, Users, Youtube } from "lucide-react";
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { AlertCircle, Camera, Clock, Edit, Eye, Gift, Globe, MapPin, RefreshCw, Share2, TrendingUp, Trophy, Users } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { Icons } from "../icons";
 import { Lightbox } from "../Lightbox";
+import { Contest } from "@/types/contest.types";
+import { Award } from "@/types";
 
 export function PublicProfile() {
   const { user } = useAuth();
@@ -227,7 +229,7 @@ export function PublicProfile() {
           </div>
 
           {/* View Public Profile Button - Right side below banner */}
-          <div className="absolute -top-8 right-6">
+          <div className="absolute -top-16 right-2 md:-top-8 md:right-6">
             <Link
               to="/profile/$username"
               params={{ username: user?.username || "" }}
@@ -317,15 +319,17 @@ export function PublicProfile() {
                       >
                         <Icons.youtube className="h-4 w-4 fill-red-500" />
                       </Link>
-                      <Link
-                        to={socialUrls.website || "#"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`inline-flex items-center justify-center h-8 w-8 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors ${!socialUrls.website ? "opacity-50 cursor-not-allowed" : "hover:border-gray-300"}`}
-                        onClick={(e) => !socialUrls.website && e.preventDefault()}
-                      >
-                        <Globe className="h-4 w-4" />
-                      </Link>
+                      {socialUrls.website && (
+                        <Link
+                          to={socialUrls.website || "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`inline-flex items-center justify-center h-8 w-8 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors ${!socialUrls.website ? "opacity-50 cursor-not-allowed" : "hover:border-gray-300"}`}
+                          onClick={(e) => !socialUrls.website && e.preventDefault()}
+                        >
+                          <Globe className="h-4 w-4" />
+                        </Link>
+                      )}
                     </>
                   );
                 })()}

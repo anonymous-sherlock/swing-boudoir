@@ -3,7 +3,6 @@ import { ChevronRight, Trophy, Users, DollarSign, TrophyIcon, ArrowRight } from 
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/AuthContext";
 import heroDesktop from "@/assets/hero-desktop.jpg";
-import heroMobile from "@/assets/hero-mobile.jpg";
 import { useContestsAnalytics } from "@/hooks/api/useContests";
 
 const HeroSection = () => {
@@ -24,7 +23,7 @@ const HeroSection = () => {
         <div className="absolute inset-0 z-0">
           <picture>
             <source media="(min-width: 768px)" srcSet={heroDesktop} />
-            <img src={heroMobile} alt="Swing Boudoir Competition" className="w-full h-full object-cover" />
+            <img src={heroDesktop} alt="Swing Boudoir Competition" className="w-full h-full object-cover" style={{ objectPosition: "61% 0" }} />
           </picture>
           <div className="absolute inset-0 bg-gradient-overlay bg-gradient-to-b from-black/30 to-black/90"></div>
         </div>
@@ -49,30 +48,23 @@ const HeroSection = () => {
 
             {/* Description */}
             <p className="text-lg md:text-xl text-white/90 mb-10 max-w-2xl mx-auto leading-relaxed animate-fade-in" style={{ animationDelay: "0.4s" }}>
-              {isAuthenticated 
+              {isAuthenticated
                 ? "You're all set! Browse active competitions, join contests, and start competing for amazing prizes."
-                : "Become a Swing Boudoir content creator and compete with models from around the world. Enter exclusive competitions and win amazing prizes."
-              }
+                : "Become a Swing Boudoir content creator and compete with models from around the world. Enter exclusive competitions and win amazing prizes."}
             </p>
 
             {/* CTA Buttons */}
             <div className="mb-16 animate-scale-in" style={{ animationDelay: "0.6s" }}>
               {isAuthenticated ? (
                 <Link to="/dashboard">
-                  <Button
-                    size="lg"
-                    className="bg-gradient-competition text-competition-foreground hover:opacity-90 transition-luxury text-sm px-6 py-3 h-auto shadow-glow"
-                  >
+                  <Button size="lg" className="bg-gradient-competition text-competition-foreground hover:opacity-90 transition-luxury text-sm px-6 py-3 h-auto shadow-glow">
                     Go to Dashboard
                     <ChevronRight className="w-5 h-5 ml-2" />
                   </Button>
                 </Link>
               ) : (
                 <Link to="/auth/$id" params={{ id: "sign-in" }}>
-                  <Button
-                    size="lg"
-                    className="bg-gradient-competition text-competition-foreground hover:opacity-90 transition-luxury text-lg px-8 py-4 h-auto shadow-glow"
-                  >
+                  <Button size="lg" className="bg-gradient-competition text-competition-foreground hover:opacity-90 transition-luxury text-lg px-8 py-4 h-auto shadow-glow">
                     Register Now
                     <ChevronRight className="w-5 h-5 ml-2" />
                   </Button>
@@ -81,7 +73,7 @@ const HeroSection = () => {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 max-w-3xl mx-auto animate-fade-in" style={{ animationDelay: "0.8s" }}>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 gap-y-10 md:gap-8 max-w-3xl mx-auto animate-fade-in" style={{ animationDelay: "0.8s" }}>
               {stats.map((stat, index) => (
                 <div key={stat.label} className="text-center">
                   <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 mb-4">

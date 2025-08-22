@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useContestLeaderboard } from "@/hooks/api/useContests";
 import { useProfile } from "@/hooks/api/useProfile";
-import { useFreeVote, usePaidVote } from "@/hooks/api/useVotes";
+import { useCastFreeVote, useCastPaidVote } from "@/hooks/api/useVotes";
 import { useToast } from "@/hooks/use-toast";
 import { useParams } from "@tanstack/react-router";
 import { AlertCircle, DollarSign, Menu, Share } from "lucide-react";
@@ -51,8 +51,8 @@ export default function PublicProfilePage() {
   const { useProfileByUsername, useActiveParticipation } = useProfile();
   const { data: modelProfile, isLoading, error } = useProfileByUsername(username || "");
   const { data: participations } = useActiveParticipation(modelProfile?.id || "");
-  const freeVoteMutation = useFreeVote();
-  const paidVoteMutation = usePaidVote();
+  const freeVoteMutation = useCastFreeVote();
+  const paidVoteMutation = useCastPaidVote();
 
   const handleImageClick = (image: { url: string; caption: string }) => {
     setLightboxImage(image);

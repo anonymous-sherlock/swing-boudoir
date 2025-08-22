@@ -132,8 +132,8 @@ export function CompetitionDetails() {
             <div className="absolute top-0 right-0 py-6 px-8">
               <div className="flex items-center space-x-3 mb-4">{getStatusBadge(competition.status)}</div>
             </div>
-            <div className="absolute bottom-0 right-0 p-8">
-              <div className="flex items-center space-x-3 mb-4">
+            <div className="absolute bottom-0 right-0 p-4 md:p-8">
+              <div className="flex items-center space-x-3 md:mb-4">
                 <Button
                   onClick={shareCompetition}
                   variant="outline"
@@ -156,9 +156,9 @@ export function CompetitionDetails() {
                 )}
               </div>
             </div>
-            <div className="absolute bottom-0 left-0 p-8 pr-40">
+            <div className="absolute md:bottom-0 bottom-10 left-0 p-4 pb-6 md:pb-8 md:p-8 md:pr-40">
               <h1 className="text-3xl capitalize font-bold text-white mb-2">{competition.name}</h1>
-              <p className="text-white/90 text-sm sentence-case max-w-3xl">{competition.description}</p>
+              <p className="text-white/90 text-sm sentence-case max-w-3xl hidden md:block">{competition.description}</p>
             </div>
           </div>
         </div>
@@ -297,7 +297,6 @@ export function CompetitionDetails() {
                 </Button>
                 {user?.username && (
                   <Button variant="outline" className="w-full" size="lg" onClick={shareProfile}>
-                    <User className="w-4 h-4 mr-2" />
                     Share Profile
                   </Button>
                 )}

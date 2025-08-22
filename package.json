@@ -78,6 +78,7 @@
     "react-image-crop": "^11.0.10",
     "react-phone-number-input": "^3.4.12",
     "react-resizable-panels": "^2.1.3",
+    "react-whatsapp-chat-widget": "^1.1.6",
     "recharts": "^2.12.7",
     "sonner": "^1.5.0",
     "tailwind-merge": "^2.5.2",

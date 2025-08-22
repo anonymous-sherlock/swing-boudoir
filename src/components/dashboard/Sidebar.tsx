@@ -1,20 +1,4 @@
-import { 
-  Bell, 
-  User, 
-  Users, 
-  Trophy, 
-  Vote, 
-  Gift, 
-  Settings as SettingsIcon, 
-  HelpCircle, 
-  FileText, 
-  Shield, 
-  Lock,
-  LogOut,
-  ChevronLeft,
-  ChevronRight,
-  TrendingUp
-} from "lucide-react";
+import { Bell, User, Users, Trophy, Vote, Gift, Settings as SettingsIcon, HelpCircle, FileText, Shield, Lock, LogOut, ChevronLeft, ChevronRight, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 // import { DashboardSection } from "@/pages/Dashboard";
 
@@ -45,16 +29,10 @@ const sidebarItemsMain = [
 const sidebarItemsSecondary = [
   { id: "support" as DashboardSection, label: "Support", icon: HelpCircle },
   { id: "official-rules" as DashboardSection, label: "Official Rules", icon: FileText },
-  { id: "privacy" as DashboardSection, label: "Privacy Policy", icon: Lock },
+  // { id: "privacy" as DashboardSection, label: "Privacy Policy", icon: Lock },
 ];
 
-export function Sidebar({ 
-  activeSection, 
-  setActiveSection, 
-  isMobile = false,
-  isOpen = false,
-  onToggle 
-}: SidebarProps) {
+export function Sidebar({ activeSection, setActiveSection, isMobile = false, isOpen = false, onToggle }: SidebarProps) {
   const { handleLogout } = useAuth();
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -71,24 +49,23 @@ export function Sidebar({
   // Mobile sidebar
   if (isMobile) {
     return (
-      <div 
-        className={`fixed inset-0 z-50 transition-opacity duration-300 ${
-          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
+      <div
+        className={`fixed inset-0 z-50 transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         onClick={onToggle} // Close sidebar when clicking outside
       >
         {/* Sidebar content */}
-        <div 
-          className={`fixed left-0 top-0 h-full w-64 bg-white border-r border-border transition-transform duration-300 ${
-            isOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
+        <div
+          className={`fixed left-0 top-0 h-full w-64 bg-white border-r border-border transition-transform duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
           onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside sidebar
         >
           <div className="w-full h-full flex flex-col bg-white shadow-2xl">
-            <div className="p-4 border-b border-border bg-white">
+            <div className="p-4 border-b border-border bg-white flex justify-between">
               <h2 className="text-xl font-bold text-foreground">Dashboard</h2>
+              <Button variant="ghost" size="sm" onClick={onToggle} className="p-1 h-8 w-8">
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
             </div>
-            
+
             <nav className="flex-1 p-4 space-y-2 bg-white">
               {sidebarItemsMain.map((item) => {
                 const Icon = item.icon;
@@ -128,12 +105,14 @@ export function Sidebar({
                     </Button>
                   );
                 })}
+
+                <Button className={`w-full transition-all justify-start duration-200`} variant="ghost" onClick={() => navigate({ to: "/privacy" })}>
+                  <Lock className={`mr-3 h-4 w-4`} />
+                  Privacy Policy
+                </Button>
+
                 <div className="pt-4 border-t border-border">
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={handleLogoutClick}
-                  >
+                  <Button variant="ghost" className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10" onClick={handleLogoutClick}>
                     <LogOut className="mr-3 h-4 w-4" />
                     Log Out
                   </Button>
@@ -148,30 +127,18 @@ export function Sidebar({
 
   // Desktop sidebar
   return (
-    <div className={`bg-card border-r border-border h-screen flex flex-col sticky top-0 transition-all duration-300 ${
-      isExpanded ? 'w-64' : 'w-16'
-    }`}>
+    <div className={`bg-card border-r border-border h-screen flex flex-col sticky top-0 transition-all duration-300 ${isExpanded ? "w-64" : "w-16"}`}>
       <div className="p-4 border-b border-border flex items-center justify-between">
         {isExpanded ? (
           <h2 className="text-xl font-bold text-foreground">Dashboard</h2>
         ) : (
-          <>
-          </>
+          <></>
           // <div className="w-8 h-8 bg-primary flex-shrink-0 rounded rounded-lg flex items-center justify-center">
           //   <span className="text-primary-foreground font-bold text-sm">S</span>
           // </div>
         )}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={toggleExpand}
-          className="p-1 h-8 w-8"
-        >
-          {isExpanded ? (
-            <ChevronLeft className="h-4 w-4" />
-          ) : (
-            <ChevronRight className="h-4 w-4" />
-          )}
+        <Button variant="ghost" size="sm" onClick={toggleExpand} className="p-1 h-8 w-8">
+          {isExpanded ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </Button>
       </div>
 
@@ -182,13 +149,11 @@ export function Sidebar({
             <Button
               key={item.id}
               variant={activeSection === item.id ? "default" : "ghost"}
-              className={`w-full transition-all duration-200 ${
-                isExpanded ? 'justify-start' : 'justify-center'
-              }`}
+              className={`w-full transition-all duration-200 ${isExpanded ? "justify-start" : "justify-center"}`}
               onClick={() => setActiveSection(item.id)}
               title={!isExpanded ? item.label : undefined}
             >
-              <Icon className={`h-4 w-4 ${isExpanded ? 'mr-3' : ''}`} />
+              <Icon className={`h-4 w-4 ${isExpanded ? "mr-3" : ""}`} />
               {isExpanded && item.label}
             </Button>
           );
@@ -203,28 +168,28 @@ export function Sidebar({
               <Button
                 key={item.id}
                 variant={activeSection === item.id ? "default" : "ghost"}
-                className={`w-full transition-all duration-200 ${
-                  isExpanded ? 'justify-start' : 'justify-center'
-                }`}
+                className={`w-full transition-all duration-200 ${isExpanded ? "justify-start" : "justify-center"}`}
                 onClick={() => setActiveSection(item.id)}
                 title={!isExpanded ? item.label : undefined}
               >
-                <Icon className={`h-4 w-4 ${isExpanded ? 'mr-3' : ''}`} />
+                <Icon className={`h-4 w-4 ${isExpanded ? "mr-3" : ""}`} />
                 {isExpanded && item.label}
               </Button>
             );
           })}
+          <Button className={`w-full transition-all duration-200 ${isExpanded ? "justify-start" : "justify-center"}`} variant="ghost" onClick={() => navigate({ to: "/privacy" })}>
+            <Lock className={`h-4 w-4 ${isExpanded ? "mr-3" : ""}`} />
+            {isExpanded && "Privacy Policy"}
+          </Button>
           <div className="pt-2 border-t border-border">
             <Button
               variant="ghost"
-              className={`w-full transition-all duration-200 text-destructive hover:text-destructive hover:bg-destructive/10 ${
-                isExpanded ? 'justify-start' : 'justify-center'
-              }`}
+              className={`w-full transition-all duration-200 text-destructive hover:text-destructive hover:bg-destructive/10 ${isExpanded ? "justify-start" : "justify-center"}`}
               onClick={handleLogoutClick}
-              title={!isExpanded ? 'Log Out' : undefined}
+              title={!isExpanded ? "Log Out" : undefined}
             >
-              <LogOut className={`h-4 w-4 ${isExpanded ? 'mr-3' : ''}`} />
-              {isExpanded && 'Log Out'}
+              <LogOut className={`h-4 w-4 ${isExpanded ? "mr-3" : ""}`} />
+              {isExpanded && "Log Out"}
             </Button>
           </div>
         </nav>

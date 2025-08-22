@@ -59,7 +59,7 @@ export function PaymentSuccess() {
 
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
+    <div className="max-w-4xl min-h-screen flex flex-col items-center justify-center mx-auto p-6 space-y-6">
       {/* Success Header */}
       <div className="text-center space-y-4">
         <div className="mx-auto w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
@@ -70,7 +70,7 @@ export function PaymentSuccess() {
       </div>
 
       {/* Payment Details */}
-      <Card className="bg-gradient-to-r from-green-50 to-blue-50">
+      {/* <Card className="bg-gradient-to-r from-green-50 to-blue-50">
         <CardHeader>
           <CardTitle className="flex items-center">
             <Trophy className="w-5 h-5 mr-2 text-green-600" />
@@ -135,7 +135,7 @@ export function PaymentSuccess() {
             </div>
           )}
 
-          {/* Action Buttons */}
+          Action Buttons
           <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
             <Button asChild className="flex-1">
               <Link to="/competition">
@@ -159,10 +159,10 @@ export function PaymentSuccess() {
             </Button>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="hover:shadow-lg transition-shadow cursor-pointer">
           <CardContent className="p-6 text-center">
             <Heart className="w-8 h-8 text-red-500 mx-auto mb-3" />
@@ -204,10 +204,10 @@ export function PaymentSuccess() {
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
 
       {/* Support Section */}
-      <Card className="bg-gray-50">
+      {/* <Card className="bg-gray-50">
         <CardContent className="p-6">
           <div className="text-center space-y-4">
             <h3 className="font-semibold">Need Help?</h3>
@@ -222,7 +222,7 @@ export function PaymentSuccess() {
             </div>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
     </div>
   );
 }

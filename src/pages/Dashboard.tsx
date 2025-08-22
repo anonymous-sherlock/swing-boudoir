@@ -11,7 +11,7 @@ import { PrizeHistory } from "@/components/dashboard/PrizeHistory";
 import { Settings } from "@/components/dashboard/Settings";
 import { Support } from "@/components/dashboard/Support";
 import { OfficialRules } from "@/components/dashboard/OfficialRules";
-import { PrivacyPolicy } from "@/components/dashboard/PrivacyPolicy";
+import { PrivacyPolicy } from "@/pages/PrivacyPolicy";
 import Header from "@/components/layout/Header";
 import { ONBOARDING_REDIRECT } from "@/routes";
 import { DashboardSection } from "@/routes/dashboard/$section";
