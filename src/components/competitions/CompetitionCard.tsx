@@ -78,22 +78,12 @@ export const CompetitionCard: React.FC<CompetitionCardProps> = ({ contest, showJ
             <div className="space-y-2">
               <span className="text-sm text-muted-foreground block">Awards:</span>
               <div className="flex flex-wrap gap-2">
-                {contest.awards
-                  .sort((a, b) => {
-                    // Sort by prize value if available, otherwise maintain original order
-                    const aValue = extractPrizeValue(a.name);
-                    const bValue = extractPrizeValue(b.name);
-                    if (aValue && bValue) {
-                      return bValue - aValue; // Higher prize first
-                    }
-                    return 0; // Maintain original order if no prize values
-                  })
-                  .map((award) => (
-                    <div key={award.id} className="w-full flex items-center gap-1 text-sm">
-                      <span>{award.icon}</span>
-                      <span className="text-xs">{award.name}</span>
-                    </div>
-                  ))}
+                {contest.awards.map((award) => (
+                  <div key={award.id} className="w-full flex items-center gap-1 text-sm">
+                    <span>{award.icon}</span>
+                    <span className="text-xs">{award.name}</span>
+                  </div>
+                ))}
               </div>
             </div>
           )}
