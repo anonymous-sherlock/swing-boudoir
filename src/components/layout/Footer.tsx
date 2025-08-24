@@ -25,10 +25,8 @@ const Footer = () => {
   };
 
   const socialLinks = [
-    { icon: Instagram, href: "https://instagram.com/maxim", label: "Instagram" },
-    { icon: Twitter, href: "https://twitter.com/maxim", label: "Twitter" },
-    { icon: Facebook, href: "https://facebook.com/maxim", label: "Facebook" },
-    { icon: Youtube, href: "https://youtube.com/maxim", label: "YouTube" },
+    { icon: Instagram, href: "https://www.instagram.com/swingboudoirmag", label: "Instagram" },
+    { icon: Youtube, href: "https://www.youtube.com/@swingboudoirmag", label: "YouTube" }
   ];
 
   return (

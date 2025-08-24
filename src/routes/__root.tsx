@@ -13,6 +13,7 @@ import FloatingChatButton from "@/components/layout/floating-chat-btn";
 
 function AppShell() {
   const { isLoading } = useAuth();
+  const isAdminPage = location.pathname.startsWith("/admin");
 
   // Show loading spinner while checking authentication
   if (isLoading && !isPublicRoute(location.pathname) && !authRoutes.includes(location.pathname)) {
@@ -25,7 +26,7 @@ function AppShell() {
       <Outlet />
       <Toaster />
       <SonnerToaster />
-      <FloatingChatButton />
+      {!isAdminPage && <FloatingChatButton />}
     </div>
   );
 }

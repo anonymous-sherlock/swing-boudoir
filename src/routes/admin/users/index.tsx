@@ -1,8 +1,11 @@
-import { createFileRoute } from '@tanstack/react-router';
-import UserTable from './-data-table';
-import { Suspense } from 'react';
+import { createFileRoute } from "@tanstack/react-router";
+import UserTable from "./-data-table";
+import { Suspense } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { useQueryState } from "nuqs";
 
-export const Route = createFileRoute('/admin/users/')({
+export const Route = createFileRoute("/admin/users/")({
   component: RouteComponent,
 });
 
@@ -11,10 +14,9 @@ function RouteComponent() {
     <div>
       <div className="mb-8">
         <h1 className="text-2xl font-bold tracking-tight">All Users</h1>
-        <p className="text-muted-foreground text-sm">
-          Manage user accounts, permissions, and system access
-        </p>
+        <p className="text-muted-foreground text-sm">Manage user accounts, permissions, and system access</p>
       </div>
+
       <Suspense fallback={<div>Loading...</div>}>
         <UserTable />
       </Suspense>

@@ -2,6 +2,7 @@ import Header from "@/components/layout/Header";
 import HeroSection from "@/components/home/HeroSection";
 import CompetitionsSection from "@/components/home/CompetitionsSection";
 import Footer from "@/components/layout/Footer";
+import OboardingVideo from "@/components/home/OboardingVideo";
 
 const Index = () => {
   return (
@@ -10,6 +11,7 @@ const Index = () => {
       <main>
         <HeroSection />
         <CompetitionsSection />
+        <OboardingVideo />
       </main>
       <Footer />
     </div>

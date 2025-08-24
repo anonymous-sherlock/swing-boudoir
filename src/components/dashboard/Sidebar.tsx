@@ -20,7 +20,7 @@ const sidebarItemsMain = [
   { id: "competitions" as DashboardSection, label: "Competitions", icon: Trophy },
   { id: "votes" as DashboardSection, label: "Votes", icon: Vote },
   // { id: "prize-history" as DashboardSection, label: "Prize History", icon: Gift },
-  { id: "leaderboard" as DashboardSection, label: "Leaderboard", icon: TrendingUp },
+  // { id: "leaderboard" as DashboardSection, label: "Leaderboard", icon: TrendingUp },
   { id: "settings" as DashboardSection, label: "Settings", icon: SettingsIcon },
 
   // { id: "notifications" as DashboardSection, label: "Notifications", icon: Bell },

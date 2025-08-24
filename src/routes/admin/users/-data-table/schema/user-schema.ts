@@ -20,6 +20,7 @@ export const userCamelCaseSchema = z.object({
   isActive: z.boolean(),
   emailVerified: z.boolean(),
   hasProfile: z.boolean(),
+  type: z.enum(["MODEL", "VOTER"]),
 });
 
 export type UserCamelCase = z.infer<typeof userCamelCaseSchema>;

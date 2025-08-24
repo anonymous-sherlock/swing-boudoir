@@ -17,6 +17,7 @@ export function useExportConfig() {
       email: "Email",
       phone: "Phone",
       image: "Image",
+      type: "User Type",
       role: "Role",
       emailVerified: "Email Verified",
       hasProfile: "Onboarding Status",
@@ -48,6 +49,7 @@ export function useExportConfig() {
       "email",
       "phone",
       "image",
+      "type",
       "role",
       "emailVerified",
       "hasProfile",
@@ -70,6 +72,7 @@ export function useExportConfig() {
     // Format boolean values for better readability
     emailVerified: row.emailVerified ? "Verified" : "Pending",
     hasProfile: row.hasProfile ? "Completed" : "Pending",
+    type: row.type === "MODEL" ? "Model" : "Voter",
     // Add any other custom transformations as needed
   }), []);
 
@@ -77,7 +80,7 @@ export function useExportConfig() {
     columnMapping,
     columnWidths,
     headers,
-    entityName: "users-camel-case",
+    entityName: "users",
     caseConfig,
     transformFunction
   };

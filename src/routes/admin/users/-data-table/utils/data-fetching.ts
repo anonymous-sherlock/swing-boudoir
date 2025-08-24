@@ -11,10 +11,13 @@ async function fetchUsersCamelCase(params: {
   toDate: string;
   sortBy: string;
   sortOrder: string;
+  type: string;
 }) {
   // TODO: Implement actual API call
   // This is a placeholder - replace with your actual API endpoint
-  const response = await api.get(`/api/v1/search/users?${new URLSearchParams({
+  
+  // Create search params, only include type if it's not empty
+  const searchParams = new URLSearchParams({
     page: params.page.toString(),
     limit: params.limit.toString(),
     search: params.search,
@@ -22,12 +25,19 @@ async function fetchUsersCamelCase(params: {
     toDate: params.toDate,
     sortBy: params.sortBy,
     sortOrder: params.sortOrder,
-  })}`);
+  });
   
+  // Only add type parameter if it's not empty
+  if (params.type) {
+    searchParams.append('type', params.type);
+  }
+
+  const response = await api.get(`/api/v1/search/users?${searchParams}`);
+
   if (!response.success) {
     throw new Error('Failed to fetch users');
   }
-  
+
   return response.data;
 }
 
@@ -45,11 +55,12 @@ export function useUsersCamelCaseData(
   dateRange: { from_date: string; to_date: string },
   sortBy: string,
   sortOrder: string,
-  caseConfig: CaseFormatConfig = DEFAULT_CASE_CONFIG
+  caseConfig: CaseFormatConfig = DEFAULT_CASE_CONFIG,
+  type: "all" | "model" | "voter" | "",
 ) {
   return useQuery({
     queryKey: [
-      "users-camel-case",
+      "users-admin-list",
       page,
       pageSize,
       preprocessSearch(search),
@@ -57,6 +68,7 @@ export function useUsersCamelCaseData(
       sortBy,
       sortOrder,
       caseConfig,
+      type,
     ],
     queryFn: () =>
       fetchUsersCamelCase({
@@ -67,6 +79,7 @@ export function useUsersCamelCaseData(
         toDate: dateRange.to_date,
         sortBy: sortBy,
         sortOrder: sortOrder,
+        type: type
       }),
     placeholderData: keepPreviousData,
   });
