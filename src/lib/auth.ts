@@ -11,11 +11,12 @@
  * @version 1.0.0
  */
 
+import { API_CONFIG } from "@/lib/config";
 import { inferAdditionalFields } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
 export const authClient = createAuthClient({
-    baseURL: "https://api.swingboudoirmag.com/api/v1/auth",
+    baseURL: API_CONFIG.AUTH_BASE_URL,
     plugins: [
         inferAdditionalFields({
             user: {
@@ -31,9 +32,6 @@ export const authClient = createAuthClient({
         }),
     ],
 })
-
-// API Configuration
-export const API_BASE_URL = 'https://api.swingboudoirmag.com/api/v1';
 export const AUTH_TOKEN_KEY = "b-auth-swing"
 
 

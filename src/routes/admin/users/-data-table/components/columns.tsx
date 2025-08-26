@@ -55,7 +55,6 @@ export const getColumns = (handleRowDeselection: ((rowId: string) => void) | nul
       size: 200,
       enableSorting: false,
     },
-
     {
       accessorKey: "email",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Email" />,
@@ -67,6 +66,103 @@ export const getColumns = (handleRowDeselection: ((rowId: string) => void) | nul
         );
       },
       size: 250,
+    },
+    {
+      accessorKey: "gender",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Gender" />,
+      cell: ({ row }) => {
+        const gender = row.original.gender?.toLowerCase();
+        console.log(gender);
+        return (
+          <div className="flex items-center truncate">
+            <span
+              className={`px-2 py-1 capitalize rounded-full text-xs font-medium ${
+                gender === "male"
+                  ? "bg-blue-100 text-blue-800"
+                  : gender?.toLowerCase().includes("female")
+                    ? "bg-pink-100 text-pink-800"
+                    : gender?.toLowerCase().includes("other")
+                      ? "bg-gray-100 text-gray-800"
+                      : "bg-gray-100 text-gray-800"
+              }`}
+            >
+              {gender || "Not specified"}
+            </span>
+          </div>
+        );
+      },
+      size: 100,
+      enableHiding: true,
+    },
+    {
+      accessorKey: "dateOfBirth",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Date of Birth" />,
+      cell: ({ row }) => {
+        const dateOfBirth = row.original.dateOfBirth;
+        if (!dateOfBirth) return <div className="text-muted-foreground"></div>;
+
+        const date = new Date(dateOfBirth);
+        const formattedDate = format(date, "MMM d, yyyy");
+        return <div className="max-w-full text-left truncate">{formattedDate}</div>;
+      },
+      size: 120,
+      enableHiding: true,
+    },
+    {
+      accessorKey: "address",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Address" />,
+      cell: ({ row }) => {
+        const address = row.original.address;
+        return (
+          <div className="flex items-center truncate">
+            <span className="truncate">{address || "N/A"}</span>
+          </div>
+        );
+      },
+      size: 200,
+      enableHiding: true,
+    },
+    {
+      accessorKey: "city",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="City" />,
+      cell: ({ row }) => {
+        const city = row.original.city;
+        return (
+          <div className="flex items-center truncate">
+            <span className="truncate">{city || "N/A"}</span>
+          </div>
+        );
+      },
+      size: 120,
+      enableHiding: true,
+    },
+    {
+      accessorKey: "country",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Country" />,
+      cell: ({ row }) => {
+        const country = row.original.country;
+        return (
+          <div className="flex items-center truncate">
+            <span className="truncate">{country || "N/A"}</span>
+          </div>
+        );
+      },
+      size: 120,
+      enableHiding: true,
+    },
+    {
+      accessorKey: "postalCode",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Postal Code" />,
+      cell: ({ row }) => {
+        const postalCode = row.original.postalCode;
+        return (
+          <div className="flex items-center truncate">
+            <span className="truncate">{postalCode || "N/A"}</span>
+          </div>
+        );
+      },
+      size: 100,
+      enableHiding: true,
     },
     {
       accessorKey: "type",
@@ -89,11 +185,39 @@ export const getColumns = (handleRowDeselection: ((rowId: string) => void) | nul
       cell: ({ row }) => {
         return (
           <div className="flex items-center truncate">
-            <span className="truncate">{row.getValue("phone")}</span>
+            <span className="truncate">{row.original.phone}</span>
           </div>
         );
       },
       size: 150,
+      enableHiding: true,
+    },
+    {
+      accessorKey: "totalContestsParticipated",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Contests Participated" />,
+      cell: ({ row }) => {
+        const participated = row.original.totalContestsParticipated || 0;
+        return (
+          <div className="flex items-center truncate">
+            <span className="font-medium">{participated}</span>
+          </div>
+        );
+      },
+      size: 140,
+      enableHiding: true,
+    },
+    {
+      accessorKey: "totalContestsWon",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Contests Won" />,
+      cell: ({ row }) => {
+        const won = row.original.totalContestsWon || 0;
+        return (
+          <div className="flex items-center truncate">
+            <span className={`font-medium ${won > 0 ? "text-green-600" : "text-muted-foreground"}`}>{won}</span>
+          </div>
+        );
+      },
+      size: 120,
       enableHiding: true,
     },
     {

@@ -1,9 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
 import { useContestLeaderboard } from "@/hooks/api/useContests";
 import { useProfile } from "@/hooks/api/useProfile";
 import { useCastFreeVote, useCastPaidVote } from "@/hooks/api/useVotes";
-import { useToast } from "@/hooks/use-toast";
 import { useParams } from "@tanstack/react-router";
 import { AlertCircle, DollarSign, Menu, Share } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -15,29 +13,6 @@ import { PortfolioGallery } from "@/components/profile/PortfolioGallery";
 import { PublicProfileHeroSection } from "@/components/profile/ProfileMain";
 import { shareProfile } from "@/utils";
 
-const PAID_VOTE_PACKAGES = [
-  {
-    id: "basic",
-    name: "Starter Pack",
-    votes: 5,
-    price: 1,
-    savings: null,
-  },
-  {
-    id: "premium",
-    name: "Popular Choice",
-    votes: 70,
-    price: 10,
-    savings: "Save 30%",
-  },
-  {
-    id: "vip",
-    name: "Ultimate VIP",
-    votes: 500,
-    price: 50,
-    savings: "Save 50%",
-  },
-];
 
 export default function PublicProfilePage() {
   const { username } = useParams({ from: "/_public/profile/$username" });

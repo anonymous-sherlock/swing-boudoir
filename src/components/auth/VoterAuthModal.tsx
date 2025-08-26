@@ -23,7 +23,7 @@ interface VoterAuthModalProps {
 }
 
 export const VoterAuthModal: React.FC<VoterAuthModalProps> = ({ isOpen, onClose, onSuccess, callbackURL }) => {
-  const [activeTab, setActiveTab] = useState<"login" | "register">("register");
+  const [activeTab, setActiveTab] = useState<"login" | "register">("login");
 
   const handleClose = () => {
     onClose();

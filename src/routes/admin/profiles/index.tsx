@@ -22,7 +22,7 @@ import { Link } from "@tanstack/react-router";
 import { format } from "date-fns";
 import { ChevronLeft, ChevronRight, Edit, Eye, Filter, Plus, Search, Trash2 } from "lucide-react";
 
-export const Route = createFileRoute("/admin/profiles")({
+export const Route = createFileRoute("/admin/profiles/")({
   component: () => <ProfilesPage />,
 });
 
@@ -149,7 +149,7 @@ function ProfilesPage() {
                     </div>
                   </div>
                   <div className="flex gap-1">
-                    <Link to={"/profile/$username"} params={{ username: profile.user.username }}>
+                    <Link to={"/admin/profiles/$id"} params={{ id: profile.id }}>
                       <Button size="sm" variant="ghost">
                         <Eye className="w-4 h-4" />
                       </Button>

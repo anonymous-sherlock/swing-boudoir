@@ -50,7 +50,7 @@ export function BioSection({ bio, hobbies, dateOfBirth, gender, email }: BioSect
       {/* Info Panel */}
       <div className="flex-1 space-y-6">
         {/* Personal Info */}
-        <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-xl">
+        {/* <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-xl">
           <CardContent className="p-6">
             <h3 className="text-xl font-semibold text-gray-900 mb-4">Personal Info</h3>
             <div className="space-y-4">
@@ -77,7 +77,7 @@ export function BioSection({ bio, hobbies, dateOfBirth, gender, email }: BioSect
               )}
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Hobbies & Interests */}
         {hobbies && (

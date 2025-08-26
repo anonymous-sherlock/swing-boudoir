@@ -21,8 +21,8 @@ export function ToolbarOptions({ selectedUsers, allSelectedUserIds, totalSelecte
     <div className="flex items-center gap-2">
       <div className="flex items-center gap-2">
         <Select value={userType} onValueChange={setUserType}>
-          <SelectTrigger id="user-type-filter" className="w-32">
-            <SelectValue placeholder="All types" />
+          <SelectTrigger id="user-type-filter" className="w-32 !h-9 py-0">
+            <SelectValue placeholder="All types" className="py-0 h-9" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Users</SelectItem>

@@ -17,17 +17,17 @@ const PROD_HOST = 'https://api.swingboudoirmag.com';
 export const API_CONFIG = {
   // Better Auth API
   AUTH_BASE_URL: `${isDevelopment || isLocalhost ? DEV_HOST : PROD_HOST}/api/v1/auth`,
-  
+
   // Main API
   API_BASE_URL: `${isDevelopment || isLocalhost ? DEV_HOST : PROD_HOST}/api/v1`,
   API_BASE_HOST: isDevelopment || isLocalhost ? DEV_HOST : PROD_HOST,
-  
+
   // Upload service
   UPLOAD_URL: `${isDevelopment || isLocalhost ? DEV_HOST : PROD_HOST}/api/v1/uploadthing`,
-  
+
   // Current origin for callback URLs
   CURRENT_ORIGIN: window.location.origin,
-  
+
   // Environment info
   IS_DEVELOPMENT: isDevelopment,
   IS_LOCALHOST: isLocalhost
@@ -39,7 +39,7 @@ export const getApiUrl = (endpoint: string): string => {
   if (endpoint.startsWith('/api/v1')) {
     return `${API_CONFIG.API_BASE_HOST}${endpoint}`;
   }
-  
+
   // Otherwise, prepend the API base URL
   return `${API_CONFIG.API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 };
@@ -52,4 +52,23 @@ export const getAuthUrl = (endpoint: string): string => {
 // Helper function to get relative path
 export const getCallbackUrl = (path: string): string => {
   return path.startsWith('/') ? path : `/${path}`;
-}; 
+};
+
+
+export const getFullCallbackUrl = (path: string): string => {
+  return `${API_CONFIG.CURRENT_ORIGIN}${getCallbackUrl(path)}`;
+};
+
+/**
+ * Generate OAuth callback URL with redirect parameter
+ * This is used for social login flows where the backend needs to redirect back to frontend
+ */
+export const getOAuthCallbackUrl = (redirectTo?: string): string => {
+  const baseCallbackUrl = getFullCallbackUrl('/auth/callback');
+
+  if (!redirectTo) {
+    return baseCallbackUrl;
+  }
+
+  return `${baseCallbackUrl}?redirectTo=${encodeURIComponent(redirectTo)}`;
+};

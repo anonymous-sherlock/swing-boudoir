@@ -11,8 +11,8 @@ export const Route = createFileRoute("/admin/users/")({
 
 function RouteComponent() {
   return (
-    <div>
-      <div className="mb-8">
+    <>
+      <div className="my-6">
         <h1 className="text-2xl font-bold tracking-tight">All Users</h1>
         <p className="text-muted-foreground text-sm">Manage user accounts, permissions, and system access</p>
       </div>
@@ -20,6 +20,6 @@ function RouteComponent() {
       <Suspense fallback={<div>Loading...</div>}>
         <UserTable />
       </Suspense>
-    </div>
+    </>
   );
 }
