@@ -10,7 +10,7 @@
  * - Generic type support for all API calls
  */
 
-import { SignInWithEmailRequest, SignInWithUsernameRequest, SignUpWithEmailRequest } from '@/types';
+import { SignInWithEmailRequest, SignInWithUsernameRequest, SignUpWithEmailRequest, User_Type } from '@/types';
 import { AUTH_TOKEN_KEY } from './auth';
 import { getApiUrl, getAuthUrl } from './config';
 
@@ -229,11 +229,19 @@ export const authApi = {
   loginWithUsername: <T = any>(credentials: SignInWithUsernameRequest) =>
     api.post<T>('/sign-in/username', credentials, { baseUrl: 'auth', requireAuth: false }),
 
+  loginWithGoogle: <T = any>(data: { provider: string; callbackURL: string; type?: User_Type }) =>
+    api.post<T>('/sign-in/social?type=' + data.type, data, { baseUrl: 'auth', requireAuth: false, }),
+
   logout: <T = any>() =>
     api.post<T>('/sign-out', {}, { baseUrl: 'auth' }),
 
   getSession: <T = any>() =>
     api.get<T>('/get-session', { baseUrl: 'auth', requireAuth: true }),
+
+  getOAuthSession: <T = any>() =>
+    api.get<T>('/get-session', {
+      baseUrl: 'auth', requireAuth: false, credentials: 'include'
+    }),
 
   refreshToken: <T = any>() =>
     api.post<T>('/refresh', {}, { baseUrl: 'auth' }),

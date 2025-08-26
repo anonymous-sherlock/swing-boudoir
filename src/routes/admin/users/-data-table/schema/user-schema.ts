@@ -21,6 +21,15 @@ export const userCamelCaseSchema = z.object({
   emailVerified: z.boolean(),
   hasProfile: z.boolean(),
   type: z.enum(["MODEL", "VOTER"]),
+  // New fields
+  gender: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  country: z.string().optional(),
+  postalCode: z.string().optional(),
+  dateOfBirth: z.string().optional(),
+  totalContestsWon: z.number().optional(),
+  totalContestsParticipated: z.number().optional(),
 });
 
 export type UserCamelCase = z.infer<typeof userCamelCaseSchema>;

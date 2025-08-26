@@ -60,12 +60,12 @@ export default function Page() {
       subtext: 'All votes cast',
       icon: <Vote className="h-8 w-8 text-purple-600" />,
     },
-    {
-      label: 'Total Prize Pool',
-      value: formatCurrency(dashboardResponse.totalPrizePool, 'USD'),
-      subtext: 'Prize money in USD',
-      icon: <DollarSign className="h-8 w-8 text-yellow-600" />,
-    },
+    // {
+    //   label: 'Total Prize Pool',
+    //   value: formatCurrency(dashboardResponse.totalPrizePool, 'USD'),
+    //   subtext: 'Prize money in USD',
+    //   icon: <DollarSign className="h-8 w-8 text-yellow-600" />,
+    // },
     {
       label: 'Total Onboarded Users',
       value: dashboardResponse.totalOnboardedUsers,
@@ -84,12 +84,12 @@ export default function Page() {
       subtext: 'Votes purchased by users',
       icon: <CreditCard className="h-8 w-8 text-indigo-600" />,
     },
-    // {
-    //   label: 'Active Competitions',
-    //   value: dashboardResponse.activeCompetitions,
-    //   subtext: 'Currently running contests',
-    //   icon: <PlayCircle className="h-8 w-8 text-red-600" />,
-    // },
+    {
+      label: 'Active Competitions',
+      value: dashboardResponse.activeCompetitions,
+      subtext: 'Currently running contests',
+      icon: <PlayCircle className="h-8 w-8 text-red-600" />,
+    },
     // {
     //   label: 'Completed Competitions',
     //   value: dashboardResponse.completedCompetitions,
@@ -111,28 +111,28 @@ export default function Page() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
-        <p className="text-muted-foreground">
-          Welcome to the Swing Boudoir admin panel. Manage competitions, users, and settings.
+    <div className="space-y-6 min-w-0 overflow-x-auto">
+      <div className="min-w-0 my-6">
+        <h1 className="text-2xl font-bold tracking-tight">Admin Dashboard</h1>
+        <p className="text-muted-foreground text-sm">
+          Welcome to the Swing Boudoir admin panel. quick insights for contests, users, and more.
         </p>
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 min-w-0">
         {stats.map(stat => (
           <div
             key={stat.label}
-            className="bg-muted/50 rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 flex justify-between items-center"
+            className="bg-muted/50 rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 flex justify-between items-center min-w-0"
           >
-            <div className="space-y-2">
-              <p className="text-2xl font-bold">{stat.value}</p>
-              <div className="space-y-1">
-                <h3 className="text-sm font-bold">{stat.label}</h3>
-                <span className="text-xs text-muted-foreground">{stat.subtext}</span>
+            <div className="space-y-2 min-w-0 flex-1">
+              <p className="text-2xl font-bold truncate">{stat.value}</p>
+              <div className="space-y-1 min-w-0">
+                <h3 className="text-sm font-bold truncate">{stat.label}</h3>
+                <span className="text-xs text-muted-foreground truncate block">{stat.subtext}</span>
               </div>
             </div>
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-center shrink-0 ml-2">
               {stat.icon}
             </div>
           </div>

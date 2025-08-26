@@ -140,7 +140,7 @@ export function DataTable<TData extends ExportableData, TValue>({
 
   // States for API parameters using conditional URL state
   const [page, setPage] = useConditionalUrlState("page", 1);
-  const [pageSize, setPageSize] = useConditionalUrlState("pageSize", 10);
+  const [pageSize, setPageSize] = useConditionalUrlState("limit", 10);
   const [search, setSearch] = useConditionalUrlState("search", "");
   const [dateRange, setDateRange] = useConditionalUrlState<{ from_date: string; to_date: string }>("dateRange", { from_date: "", to_date: "" });
   const [sortBy, setSortBy] = useConditionalUrlState("sortBy", "createdAt");
@@ -433,7 +433,7 @@ export function DataTable<TData extends ExportableData, TValue>({
       if (newPagination.pageSize !== pageSize) {
         // First, directly update URL to ensure it's in sync
         const url = new URL(window.location.href);
-        url.searchParams.set("pageSize", String(newPagination.pageSize));
+        url.searchParams.set("limit", String(newPagination.pageSize));
         url.searchParams.set("page", "1"); // Always reset to page 1
         window.history.replaceState({}, "", url.toString());
 
@@ -698,7 +698,7 @@ export function DataTable<TData extends ExportableData, TValue>({
 
       <div
         ref={tableContainerRef}
-        className="overflow-y-auto rounded-md border table-container"
+        className="overflow-y-auto w-full rounded-md border table-container"
         aria-label="Data table"
         onKeyDown={tableConfig.enableKeyboardNavigation ? handleKeyDown : undefined}
       >

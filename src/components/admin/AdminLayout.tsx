@@ -29,31 +29,35 @@ export function AdminLayout() {
   return (
     <ProtectedRoute>
       <AdminOnlyProtected>
-        <SidebarProvider>
-          <AppSidebar />
-          <SidebarInset>
-            <header className="flex h-16 shrink-0 items-center gap-2">
-              <div className="flex items-center gap-2 px-4">
-                <SidebarTrigger className="-ml-1" />
-                <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
-                <Breadcrumb>
-                  <BreadcrumbList>
-                    <BreadcrumbItem className="hidden md:block">
-                      <BreadcrumbLink asChild>
-                        <Link to="/admin">Admin Dashboard</Link>
-                      </BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator className="hidden md:block" />
-                    <BreadcrumbPage>{getPageTitle(currentPath)}</BreadcrumbPage>
-                  </BreadcrumbList>
-                </Breadcrumb>
+        <div className="admin-layout ">
+          <SidebarProvider>
+            <AppSidebar />
+            <SidebarInset className="min-w-0 flex-1">
+              <header className="flex h-16 shrink-0 items-center gap-2 border-b">
+                <div className="flex items-center gap-2 px-4 min-w-0 flex-1">
+                  <SidebarTrigger className="-ml-1 shrink-0" />
+                  <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4 shrink-0" />
+                  <Breadcrumb className="min-w-0 flex-1">
+                    <BreadcrumbList className="min-w-0">
+                      <BreadcrumbItem className="hidden md:block shrink-0">
+                        <BreadcrumbLink asChild>
+                          <Link to="/admin">Admin Dashboard</Link>
+                        </BreadcrumbLink>
+                      </BreadcrumbItem>
+                      <BreadcrumbSeparator className="hidden md:block shrink-0" />
+                      <BreadcrumbPage className="truncate">{getPageTitle(currentPath)}</BreadcrumbPage>
+                    </BreadcrumbList>
+                  </Breadcrumb>
+                </div>
+              </header>
+              <div className="flex flex-col gap-4 p-4 pt-0 min-w-0 overflow-x-auto">
+                <div className="min-w-0">
+                  <Outlet />
+                </div>
               </div>
-            </header>
-            <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-              <Outlet />
-            </div>
-          </SidebarInset>
-        </SidebarProvider>
+            </SidebarInset>
+          </SidebarProvider>
+        </div>
       </AdminOnlyProtected>
     </ProtectedRoute>
   );

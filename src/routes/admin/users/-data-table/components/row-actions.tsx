@@ -2,13 +2,7 @@ import { DotsHorizontalIcon } from "@radix-ui/react-icons";
 import { Row, Table } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 import { UserCamelCase } from "../schema";
 import { useNavigate } from "@tanstack/react-router";
@@ -18,34 +12,23 @@ interface DataTableRowActionsProps<TData> {
   table: Table<TData>;
 }
 
-export function DataTableRowActions<TData extends UserCamelCase>({
-  row,
-}: DataTableRowActionsProps<TData>) {
+export function DataTableRowActions<TData extends UserCamelCase>({ row }: DataTableRowActionsProps<TData>) {
   const navigate = useNavigate();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          className="flex h-8 w-8 p-0 data-[state=open]:bg-muted"
-        >
+        <Button variant="ghost" className="flex h-8 w-8 p-0 data-[state=open]:bg-muted">
           <DotsHorizontalIcon className="h-4 w-4" />
           <span className="sr-only">Open menu</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[160px]">
-        <DropdownMenuItem onClick={() => navigate({ to: "/profile/$username", params: { username: row.original.username } })}>
-          View Public Profile
-        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate({ to: "/profile/$username", params: { username: row.original.username } })}>View Public Profile</DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => console.log("Edit user", row.original)}>
-          Edit
-        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate({ to: "/admin/profiles/$id", params: { id: row.original.id } })}>View Profile Details</DropdownMenuItem>
+
         <DropdownMenuSeparator />
-        <DropdownMenuItem 
-          className="text-destructive"
-          onClick={() => console.log("Delete user", row.original)}
-        >
+        <DropdownMenuItem className="text-destructive" onClick={() => console.log("Delete user", row.original)}>
           Delete
         </DropdownMenuItem>
       </DropdownMenuContent>

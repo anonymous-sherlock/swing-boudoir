@@ -11,16 +11,25 @@
  * @version 1.0.0
  */
 
-import { PageLoader } from "@/components/PageLoader";
 import { toast } from "@/components/ui/use-toast";
 import { authApi } from "@/lib/api";
-import { AUTH_TOKEN_KEY } from "@/lib/auth";
+import { AUTH_TOKEN_KEY, authClient } from "@/lib/auth";
 import { authPages, DEFAULT_AFTER_LOGIN_REDIRECT, DEFAULT_AFTER_LOGOUT_REDIRECT } from "@/routes";
-import { GetSessionResponse, Session, SignInWithEmailRequest, SignInWithEmailResponse, SignInWithUsernameRequest, SignUpWithEmailRequest, User } from "@/types/auth.types";
+import {
+  GetSessionResponse,
+  Session,
+  SignInWithEmailRequest,
+  SignInWithEmailResponse,
+  SignInWithUsernameRequest,
+  SignUpWithEmailRequest,
+  SocialSignInResponse,
+  User,
+  User_Type,
+} from "@/types/auth.types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { getAuthUrl, getCallbackUrl } from "../lib/config";
+import { getAuthUrl, getCallbackUrl, getOAuthCallbackUrl } from "../lib/config";
 
 interface AuthContextType {
   user: User | null;
@@ -41,6 +50,7 @@ interface AuthContextType {
   }) => Promise<{ token: string; user: User; username: string }>;
   handleLoginWithEmail: (data: SignInWithEmailRequest) => Promise<void>;
   handleLoginWithUsername: (data: SignInWithUsernameRequest) => Promise<void>;
+  handleLoginWithGoogle: (callbackURL?: string, type?: User_Type) => Promise<void>;
   handleLogout: () => Promise<void>;
   checkUserNeedsOnboarding: () => boolean;
 
@@ -63,6 +73,7 @@ interface AuthContextType {
   revokeSession: (token: string) => Promise<void>;
   revokeAllSessions: () => Promise<void>;
   revokeOtherSessions: () => Promise<void>;
+  revalidateSession: () => Promise<GetSessionResponse>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -146,6 +157,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const revalidateSession = async () => {
+    const response = await authApi.getOAuthSession<GetSessionResponse>();
+    console.log("revalidateSession", response);
+    if (!response.success) throw new Error("Session fetch failed");
+    setSession(response.data.session);
+    setUser(response.data.user);
+    setIsAuthenticated(true);
+    setIsLoading(false);
+    return response.data;
+  };
+
   // Register user
   const handleRegister = async (data: SignUpWithEmailRequest) => {
     const { name, email, password, username, type } = data;
@@ -223,7 +245,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return {
         token: response.data.token,
         user: response.data.user,
-        username: username
+        username: username,
       };
     } catch (error: unknown) {
       console.error("Voter register error:", error);
@@ -354,6 +376,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         toast({
           title: "Login Failed",
           description: "Login failed",
+          variant: "destructive",
+        });
+      }
+      throw error; // Re-throw to be handled by component
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  // Login with Google OAuth
+  const handleLoginWithGoogle = async (callbackURL?: string, type?: User_Type) => {
+    console.log("AuthContext - Google login called with:", { callbackURL });
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Create OAuth callback URL that includes the intended redirect destination
+      const finalRedirectUrl = callbackURL ?? DEFAULT_AFTER_LOGIN_REDIRECT;
+      const oauthCallbackUrl = getOAuthCallbackUrl(finalRedirectUrl);
+
+      const response = await authApi.loginWithGoogle<SocialSignInResponse>({
+        provider: "google",
+        callbackURL: oauthCallbackUrl,
+        type: type || "MODEL",
+      });
+
+      if (!response.success) {
+        console.error("Google login error response:", response.error);
+        throw new Error(response.error || "Google login failed");
+      }
+
+      // Check if response has redirect URL (OAuth flow)
+      if (response.data?.redirect && response.data.url) {
+        // Redirect to OAuth provider
+        console.log("Google login redirect:", response.data.url);
+        window.location.href = response.data.url;
+        return;
+      }
+
+      // Direct login response (with token)
+      // if (!response.data?.redirect && response.data?.token && response.data?.user) {
+      //   // Store token first
+      //   localStorage.setItem(AUTH_TOKEN_KEY, response.data.token);
+
+      //   // Invalidate and refetch session data after navigation
+      //   queryClient.invalidateQueries({ queryKey: ["session"] });
+      // } else {
+      //   throw new Error("Invalid response from server");
+      // }
+    } catch (error: unknown) {
+      console.error("Google login error:", error);
+      if (error instanceof Error) {
+        setError(error.message || "Google login failed");
+        toast({
+          title: "Google Login Failed",
+          description: error.message || "Google login failed",
+          variant: "destructive",
+        });
+      } else {
+        setError("Google login failed");
+        toast({
+          title: "Google Login Failed",
+          description: "Google login failed",
           variant: "destructive",
         });
       }
@@ -717,6 +801,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     handleRegisterAsVoter,
     handleLoginWithEmail,
     handleLoginWithUsername,
+    handleLoginWithGoogle,
     handleLogout,
     checkUserNeedsOnboarding,
     getSession,
@@ -731,6 +816,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     revokeSession,
     revokeAllSessions,
     revokeOtherSessions,
+    revalidateSession,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -742,29 +828,4 @@ export const useAuth = () => {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
-};
-
-export const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
-  const router = useRouter();
-
-  // Handle redirect when not authenticated
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.navigate({ to: authPages.login, replace: true });
-    }
-  }, [isAuthenticated, isLoading, router]);
-
-  // Show loading while checking auth state
-  if (isLoading) {
-    return <PageLoader />;
-  }
-
-  // Don't render children if not authenticated (redirect will happen)
-  if (!isAuthenticated) {
-    return null;
-  }
-
-  // User is authenticated, render protected content
-  return <>{children}</>;
 };

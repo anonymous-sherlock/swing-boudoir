@@ -1,14 +1,15 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
-import { loginSchema, type LoginFormData, isEmail } from "@/lib/validations/auth";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { isEmail, loginSchema, type LoginFormData } from "@/lib/validations/auth";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useSearch } from "@tanstack/react-router";
+import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import LoginWithGoogle from "./LoginWithGoogle";
 
 interface LoginFormProps {
   callbackURL?: string;
@@ -16,17 +17,13 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ callbackURL: propCallbackURL, onSuccess }: LoginFormProps = {}) {
-  const { handleLoginWithEmail, handleLoginWithUsername, isLoading } = useAuth();
+  const { handleLoginWithEmail, handleLoginWithUsername, handleLoginWithGoogle, isLoading } = useAuth();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
-  
+
   // Get search params for callback URL, or use prop if provided
   const search = useSearch({ strict: false, shouldThrow: false }) as { callback?: string };
   const callbackURL = propCallbackURL || search.callback || "/dashboard";
-  
-  // Debug: Log the callback URL
-  console.log("LoginForm - Search params:", search);
-  console.log("LoginForm - Callback URL:", callbackURL);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -60,7 +57,7 @@ export function LoginForm({ callbackURL: propCallbackURL, onSuccess }: LoginForm
         title: "Login Successful!",
         description: "Welcome back! Redirecting to your dashboard...",
       });
-      
+
       onSuccess?.();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Please check your credentials and try again.";
@@ -75,6 +72,23 @@ export function LoginForm({ callbackURL: propCallbackURL, onSuccess }: LoginForm
   return (
     <div className="space-y-4">
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="flex flex-col gap-4">
+          <LoginWithGoogle callbackURL={callbackURL} loginAs="MODEL" />
+        </div>
+
+        {/* Divider */}
+        <div className="relative">
+          <div className="absolute w-1/3 inset-0 flex items-center">
+            <span className="w-full border-t " />
+          </div>
+          <div className="absolute w-1/3 left-auto inset-0 flex items-center">
+            <span className="w-full border-t " />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="px-2 text-muted-foreground">Or continue with</span>
+          </div>
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="emailOrUsername">Email address or username</Label>
           <div className="relative">

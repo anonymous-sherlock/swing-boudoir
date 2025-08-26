@@ -66,3 +66,19 @@ export interface GetSessionResponse {
   user: User
   session: Session
 }
+
+// Social sign-in response types
+export interface SocialSignInRedirectResponse {
+  redirect: true;
+  url: string;
+  status?: boolean;
+}
+
+export interface SocialSignInTokenResponse {
+  redirect: false;
+  token: string;
+  user: User;
+  url?: null;
+}
+
+export type SocialSignInResponse = SocialSignInRedirectResponse | SocialSignInTokenResponse;
