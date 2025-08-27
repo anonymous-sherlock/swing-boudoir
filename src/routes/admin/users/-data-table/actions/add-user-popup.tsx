@@ -12,7 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateUser } from "@/hooks/api/users";
+import PasswordInput from "@/components/password-input";
 
 // ** Import API
 
@@ -21,7 +23,14 @@ const formSchema = z.object({
   name: z.string().min(1, "Name is required").max(255),
   email: z.string().email("Invalid email format").max(255),
   username: z.string().min(1, "Username is required").max(255),
-  password: z.string().min(1, "Password is required").max(255),
+  password: z.string()
+    .min(1, "Password is required")
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[0-9]/, "Password must contain at least 1 number")
+    .regex(/[a-z]/, "Password must contain at least 1 lowercase letter")
+    .regex(/[A-Z]/, "Password must contain at least 1 uppercase letter"),
+  role: z.enum(["USER", "MODERATOR", "ADMIN"]),
+  type: z.enum(["MODEL", "VOTER"]),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -29,6 +38,8 @@ type FormValues = z.infer<typeof formSchema>;
 export function AddUserPopup() {
   const [open, setOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [isPasswordValid, setIsPasswordValid] = React.useState(false);
+  const [passwordErrors, setPasswordErrors] = React.useState<string[]>([]);
   const queryClient = useQueryClient();
   const { mutateAsync, data,error } = useCreateUser();
 
@@ -41,6 +52,8 @@ export function AddUserPopup() {
       email: "",
       username: "",
       password: "",
+      role: "USER",
+      type: "MODEL",
     },
   });
 
@@ -48,17 +61,28 @@ export function AddUserPopup() {
   const onSubmit = async (data: FormValues) => {
     try {
       if(!data) return;
+      
+      // Check if password meets requirements
+      if (!isPasswordValid) {
+        toast.error("Please ensure password meets all requirements");
+        return;
+      }
+      
       setIsLoading(true);
       await mutateAsync({
         name: data.name,
         email: data.email,
         username: data.username,
         password: data.password,
+        role: data.role,
+        type: data.type,
       });
       if (!error) {
         toast.success("User added successfully");
         form.reset();
         setOpen(false);
+        setIsPasswordValid(false);
+        setPasswordErrors([]);
         await queryClient.invalidateQueries({ queryKey: ["users"] });
       } else {
         toast.error(error?.message || "Failed to add user");
@@ -68,6 +92,12 @@ export function AddUserPopup() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Handle password validation changes
+  const handlePasswordValidation = (isValid: boolean, errors: string[]) => {
+    setIsPasswordValid(isValid);
+    setPasswordErrors(errors);
   };
 
   return (
@@ -128,8 +158,58 @@ export function AddUserPopup() {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input type="tel" placeholder="Enter phone number" {...field} />
+                    <PasswordInput 
+                      {...field}
+                      placeholder="Enter password"
+                      showStrengthIndicator={true}
+                      error={!!form.formState.errors.password}
+                      onValidationChange={handlePasswordValidation}
+                    />
                   </FormControl>
+                  
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Role</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="USER">User</SelectItem>
+                      <SelectItem value="MODERATOR">Moderator</SelectItem>
+                      <SelectItem value="ADMIN">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>User Type</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select user type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="MODEL">Model</SelectItem>
+                      <SelectItem value="VOTER">Voter</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -138,7 +218,7 @@ export function AddUserPopup() {
               <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isLoading}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading || !isPasswordValid}>
                 {isLoading ? "Adding..." : "Add User"}
               </Button>
             </DialogFooter>

@@ -5,7 +5,7 @@ import { Profile } from "@/hooks/api/useProfile";
 import { useCastPaidVote } from "@/hooks/api/useVotes";
 import { ContestParticipation } from "@/types/competitions.types";
 import { CreditCard, Gift, Star } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Modal, ModalBody, ModalContent, ModalDescription, ModalFooter, ModalHeader, ModalTitle } from "../global/modal";
 import { Badge } from "../ui/badge";
@@ -24,31 +24,44 @@ type VoteModalProps = {
 
 const VoteModal = ({ open, onOpenChange, participation, profile, voterProfile, isFreeVoteAvailable, onAvailabilityChange, onFreeVoteRequest }: VoteModalProps) => {
   const { user } = useAuth();
-  const [selectedVoteType, setSelectedVoteType] = useState<"free" | "single" | "pack5" | "pack10" | "pack25" | null>(null);
+  const [selectedVoteType, setSelectedVoteType] = useState<"free" | "single" | "pack5" | "pack10" | "pack25" | "custom" | null>(null);
+  const [customVoteCount, setCustomVoteCount] = useState<number>(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const { mutateAsync: castPaidVote, isPending: isPaidVoting } = useCastPaidVote();
 
-  const voteOptions = [
-    { id: "free", title: "Free Vote", description: "Daily free vote", votes: 1, price: 0, icon: Gift, available: isFreeVoteAvailable },
-    { id: "single", title: "5 Votes", description: "5 votes for $1", votes: 5, price: 1, icon: Star },
-    {
-      id: "pack5",
-      title: "25 Votes",
-      description: "25 votes for $5",
-      votes: 25,
-      price: 5,
-      icon: Star,
-    },
-    {
-      id: "pack10",
-      title: "50 Votes",
-      popular: true,
-      description: "50 votes for $10",
-      votes: 50,
-      price: 10,
-      icon: Star,
-    },
-  ];
+  const voteOptions = useMemo(
+    () => [
+      { id: "free", title: "Free Vote", description: "Daily free vote", votes: 1, price: 0, icon: Gift, available: isFreeVoteAvailable },
+      { id: "single", title: "5 Votes", description: "5 votes for $1", votes: 5, price: 1, icon: Star },
+      {
+        id: "pack5",
+        title: "25 Votes",
+        description: "25 votes for $5",
+        votes: 25,
+        price: 5,
+        icon: Star,
+      },
+      {
+        id: "pack10",
+        title: "50 Votes",
+        popular: true,
+        description: "50 votes for $10",
+        votes: 50,
+        price: 10,
+        icon: Star,
+      },
+      {
+        id: "custom",
+        title: "Custom Votes",
+        description: "Choose your own number of votes",
+        votes: customVoteCount,
+        price: customVoteCount * 0.2, // $0.20 per vote
+        icon: Star,
+        isCustom: true,
+      },
+    ],
+    [customVoteCount, isFreeVoteAvailable]
+  );
 
   const handleVoteClick = async () => {
     if (!selectedVoteType || !user?.profileId) {
@@ -64,7 +77,8 @@ const VoteModal = ({ open, onOpenChange, participation, profile, voterProfile, i
         return; // Don't close modal here, let parent handle it
       } else {
         // Paid vote logic
-        const voteCount = selectedVoteType === "single" ? 5 : selectedVoteType === "pack5" ? 25 : selectedVoteType === "pack10" ? 50 : 0;
+        const voteCount =
+          selectedVoteType === "single" ? 5 : selectedVoteType === "pack5" ? 25 : selectedVoteType === "pack10" ? 50 : selectedVoteType === "custom" ? customVoteCount : 0;
 
         const voteData = {
           contestId: participation.contest.id,
@@ -121,7 +135,7 @@ const VoteModal = ({ open, onOpenChange, participation, profile, voterProfile, i
                         ? "border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed"
                         : "border-gray-200 hover:border-blue-300 hover:bg-blue-25"
                   }`}
-                  onClick={() => !isDisabled && setSelectedVoteType(option.id as "free" | "single" | "pack5" | "pack10" | "pack25")}
+                  onClick={() => !isDisabled && setSelectedVoteType(option.id as "free" | "single" | "pack5" | "pack10" | "pack25" | "custom")}
                 >
                   {option.popular && <Badge className="absolute -top-2 left-4 bg-orange-500 text-white">Most Popular</Badge>}
 
@@ -138,11 +152,25 @@ const VoteModal = ({ open, onOpenChange, participation, profile, voterProfile, i
                           <CountdownTimer lastVoteAt={voterProfile.lastFreeVoteAt} onAvailabilityChange={onAvailabilityChange} />
                         )}
                         {isDisabled && option.id === "free" && !voterProfile?.lastFreeVoteAt && <p className="text-gray-500 text-sm">Free vote not available</p>}
+                        {option.isCustom && selectedVoteType === "custom" && (
+                          <div className="mt-2">
+                            <input
+                              type="number"
+                              min="1"
+                              max="1000"
+                              value={customVoteCount}
+                              onChange={(e) => setCustomVoteCount(Math.max(1, parseInt(e.target.value) || 1))}
+                              className="w-20 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="1"
+                            />
+                            <span className="text-xs text-gray-500 ml-2">votes</span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
                     <div className="text-right">
-                      <div className="text-2xl font-bold">{option.price === 0 ? "FREE" : `$${option.price}`}</div>
+                      <div className="text-2xl font-bold">{option.price === 0 ? "FREE" : option.isCustom ? `$${option.price.toFixed(2)}` : `$${option.price}`}</div>
                       <div className="text-sm text-gray-500">
                         {option.votes} vote{option.votes > 1 ? "s" : ""}
                       </div>

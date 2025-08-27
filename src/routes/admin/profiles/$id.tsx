@@ -1,4 +1,4 @@
-import { createFileRoute, useParams } from "@tanstack/react-router";
+import { createFileRoute, NotFoundRoute, useParams } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { Lightbox } from "@/components/Lightbox";
@@ -11,34 +11,76 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useContestLeaderboard } from "@/hooks/api/useContests";
-import { useProfile as useProfileApi } from "@/hooks/api/useProfile";
+import { profileApi, useProfile, useProfile as useProfileApi } from "@/hooks/api/useProfile";
 import { useProfileVotes, useTopVoters } from "@/hooks/api/useVotes";
 import { shareProfile } from "@/utils";
 import { getSocialMediaUrls } from "@/utils/social-media";
 import { Link } from "@tanstack/react-router";
 import { format } from "date-fns";
 import {
-    ArrowLeft,
-    ExternalLink,
-    Eye,
-    Facebook,
-    Globe,
-    Heart,
-    Image as ImageIcon,
-    Instagram,
-    Linkedin,
-    MapPin,
-    MessageSquare,
-    Share,
-    TrendingUp,
-    Trophy,
-    Twitter,
-    Users,
-    Youtube
+  ArrowLeft,
+  ArrowRightIcon,
+  ExternalLink,
+  Eye,
+  Facebook,
+  Globe,
+  Heart,
+  Image as ImageIcon,
+  Instagram,
+  Linkedin,
+  MapPin,
+  MessageSquare,
+  Share,
+  TrendingUp,
+  TriangleAlert,
+  Trophy,
+  Twitter,
+  Users,
+  Youtube,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/profiles/$id")({
   component: () => <ProfileDetailsPage />,
+  beforeLoad: async ({ params }) => {
+    const { id } = params;
+    const profile = await profileApi.getProfile(id);
+    if (!profile) {
+      const error = new Error("Profile not found");
+      error.name = "PROFILE_NOT_FOUND";
+      throw error;
+    }
+    if (profile?.user?.type === "VOTER") {
+      const error = new Error("This is a voter profile, you cannot access it");
+      error.name = "VOTER_PROFILE";
+      throw error;
+    }
+    return profile;
+  },
+  errorComponent(props) {
+    return (
+      <div
+        className={cn(
+          "mt-4 rounded-md border  px-4 py-3 text-red-600",
+          props.error.name === "VOTER_PROFILE" && "bg-amber-100 border-amber-500/50 text-amber-600",
+          props.error.name === "PROFILE_NOT_FOUND" && "bg-red-100 border-red-500/50 text-red-600"
+        )}
+      >
+        <div className="flex items-center gap-3">
+          <TriangleAlert className="mt-0.5 shrink-0 opacity-60" size={16} aria-hidden="true" />
+          <div className="flex items-center grow justify-between gap-3">
+            <p className="text-sm">{props.error.message}</p>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/admin/profiles">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Profiles
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  },
 });
 
 function ProfileDetailsPage() {
@@ -157,7 +199,7 @@ function ProfileDetailsPage() {
     );
   }
 
-  if (profileError || !profile) {
+  if (profileError || !profile || profile?.user?.type === "VOTER") {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
@@ -189,12 +231,12 @@ function ProfileDetailsPage() {
             </Link>
           </Button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">{profile.user.name || profile.user.username}</h1>
-            <p className="text-muted-foreground text-sm">Profile ID: {profile.id}</p>
+            <h1 className="text-2xl font-bold tracking-tight">{profile?.user?.name || profile?.user?.username}</h1>
+            <p className="text-muted-foreground text-sm">Profile ID: {profile?.id}</p>
           </div>
         </div>
         <div className="flex gap-2">
-          <Link to={`/profile/$username`} params={{ username: profile.user.username }}>
+          <Link to={`/profile/$username`} params={{ username: profile?.user?.username }}>
             <Button variant="outline" size="sm">
               <ExternalLink className="w-4 h-4 mr-2" />
               View Public Profile

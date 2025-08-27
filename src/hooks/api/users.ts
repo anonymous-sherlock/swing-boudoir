@@ -11,6 +11,7 @@ export const UserSchema = z.object({
     displayUsername: z.string().nullable(),
     name: z.string(),
     role: z.enum(["USER", "ADMIN", "MODERATOR"]),
+    type: z.enum(["MODEL", "VOTER"]),
     isActive: z.boolean().default(true),
     image: z.string().nullable(),
     createdAt: z.date(),
@@ -21,6 +22,8 @@ const UserInsertSchema = UserSchema.pick({
     email: true,
     username: true,
     name: true,
+    role: true,
+    type: true,
 }).extend({
     password: z.string()
 });
@@ -45,15 +48,11 @@ export interface UsersResponse {
 
 // API functions
 const createUser = async (userData: CreateUserData): Promise<User> => {
-    const response = await fetch("http://localhost:9999/api/v1/users", {
-        method: "POST",
-        body: JSON.stringify(userData),
-    });
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message);
+    const response = await api.post("/api/v1/users", userData);
+    if (!response.success) {
+        throw new Error(response.error);
     }
-    return response.json();
+    return response.data;
 };
 
 const getUsers = async (params?: {
@@ -91,6 +90,11 @@ const deleteUser = async (id: string): Promise<{ message: string }> => {
     return response.data;
 };
 
+const changeUserType = async ({ id, type }: { id: string; type: "MODEL" | "VOTER" }): Promise<User> => {
+    const response = await api.patch(`/users/${id}/type`, { type });
+    return response.data;
+};
+
 // React Query hooks
 export const useCreateUser = () => {
     const queryClient = useQueryClient();
@@ -100,6 +104,7 @@ export const useCreateUser = () => {
         onSuccess: (data) => {
             // Invalidate and refetch users list
             queryClient.invalidateQueries({ queryKey: ["users"] });
+            queryClient.invalidateQueries({ queryKey: ["users-admin-list"] });
 
             // Optionally add the new user to the cache
             queryClient.setQueryData(["users"], (oldData: unknown) => {
@@ -186,6 +191,25 @@ export const useDeleteUser = () => {
         },
         onError: (error) => {
             console.error("Failed to delete user:", error);
+        },
+    });
+};
+
+export const useChangeUserType = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: changeUserType,
+        onSuccess: (data, variables) => {
+            // Update the specific user in cache
+            queryClient.setQueryData(["users", variables.id], data);
+
+            // Invalidate users list to refetch
+            queryClient.invalidateQueries({ queryKey: ["users"] });
+            queryClient.invalidateQueries({ queryKey: ["users-admin-list"] });
+        },
+        onError: (error) => {
+            console.error("Failed to change user type:", error);
         },
     });
 };

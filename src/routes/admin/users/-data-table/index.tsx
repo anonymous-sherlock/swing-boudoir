@@ -91,7 +91,7 @@ export default function UserTable() {
         enableColumnVisibility: true,
         enableUrlState: true,
         size: "sm",
-        columnResizingTableId: "user-camel-case-table",
+        columnResizingTableId: "user-list-table",
         searchPlaceholder: "Search users",
       }}
     />

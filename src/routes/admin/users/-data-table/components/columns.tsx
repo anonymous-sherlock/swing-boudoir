@@ -68,11 +68,25 @@ export const getColumns = (handleRowDeselection: ((rowId: string) => void) | nul
       size: 250,
     },
     {
+      accessorKey: "type",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="User Type" />,
+      cell: ({ row }) => {
+        const type = row.original.type;
+        return (
+          <div className="flex items-center truncate">
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${type === "MODEL" ? "bg-purple-100 text-purple-800" : "bg-yellow-100 text-yellow-800"}`}>
+              {type === "MODEL" ? "Model" : "Voter"}
+            </span>
+          </div>
+        );
+      },
+      size: 120,
+    },
+    {
       accessorKey: "gender",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Gender" />,
       cell: ({ row }) => {
         const gender = row.original.gender?.toLowerCase();
-        console.log(gender);
         return (
           <div className="flex items-center truncate">
             <span
@@ -164,21 +178,7 @@ export const getColumns = (handleRowDeselection: ((rowId: string) => void) | nul
       size: 100,
       enableHiding: true,
     },
-    {
-      accessorKey: "type",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="User Type" />,
-      cell: ({ row }) => {
-        const type = row.original.type;
-        return (
-          <div className="flex items-center truncate">
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${type === "MODEL" ? "bg-purple-100 text-purple-800" : "bg-yellow-100 text-yellow-800"}`}>
-              {type === "MODEL" ? "Model" : "Voter"}
-            </span>
-          </div>
-        );
-      },
-      size: 120,
-    },
+
     {
       accessorKey: "phone",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Phone" />,
@@ -285,7 +285,7 @@ export const getColumns = (handleRowDeselection: ((rowId: string) => void) | nul
       id: "actions",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Actions" />,
       cell: ({ row, table }) => <DataTableRowActions row={row} table={table} />,
-      size: 100,
+      size: 20,
     },
   ];
 

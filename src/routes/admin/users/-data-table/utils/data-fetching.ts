@@ -38,7 +38,18 @@ async function fetchUsersCamelCase(params: {
     throw new Error('Failed to fetch users');
   }
 
-  return response.data;
+  // Return the data in the format expected by DataTable
+  // The API should return data with pagination info
+  return {
+    success: true,
+    data: response.data.data || [],
+    pagination: {
+      page: params.page,
+      limit: params.limit,
+      total_pages: response.data.pagination?.totalPages || 1,
+      total_items: response.data.pagination?.total || 0,
+    }
+  };
 }
 
 // ** Import Utils
@@ -70,8 +81,8 @@ export function useUsersCamelCaseData(
       caseConfig,
       type,
     ],
-    queryFn: () =>
-      fetchUsersCamelCase({
+    queryFn: async () => {
+      const result = await fetchUsersCamelCase({
         page,
         limit: pageSize,
         search: preprocessSearch(search),
@@ -80,7 +91,14 @@ export function useUsersCamelCaseData(
         sortBy: sortBy,
         sortOrder: sortOrder,
         type: type
-      }),
+      });
+      
+      // Return in the format expected by DataTable
+      return {
+        data: result.data,
+        pagination: result.pagination
+      };
+    },
     placeholderData: keepPreviousData,
   });
 }

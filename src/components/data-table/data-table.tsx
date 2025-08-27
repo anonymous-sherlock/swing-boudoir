@@ -1,6 +1,4 @@
-import type * as React from "react";
 import {
-  type ColumnSizingState,
   flexRender,
   getCoreRowModel,
   getFacetedRowModel,
@@ -11,35 +9,35 @@ import {
   useReactTable,
   type ColumnDef,
   type ColumnResizeMode,
+  type ColumnSizingState,
 } from "@tanstack/react-table";
-import { useEffect, useCallback, useMemo, useRef, useState } from "react";
+import type * as React from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AlertCircle } from "lucide-react";
+import { DataTableResizer } from "./data-table-resizer";
+import { useTableColumnResize } from "./hooks/use-table-column-resize";
 import { DataTablePagination } from "./pagination";
 import { DataTableToolbar } from "./toolbar";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
-import { useTableConfig, type TableConfig } from "./utils/table-config";
 import type { CaseFormatConfig } from "./utils/case-utils";
 import type { DataTransformFunction, ExportableData } from "./utils/export-utils";
-import { useTableColumnResize } from "./hooks/use-table-column-resize";
-import { DataTableResizer } from "./data-table-resizer";
+import { useTableConfig, type TableConfig } from "./utils/table-config";
 
 // Import core utilities
+import { getCommonPinningStyles } from "./utils";
+import { cleanupColumnResizing, initializeColumnSizes, trackColumnResizing } from "./utils/column-sizing";
+import { createConditionalStateHook } from "./utils/conditional-state";
+import { createKeyboardNavigationHandler } from "./utils/keyboard-navigation";
 import { preprocessSearch } from "./utils/search";
 import {
-  createSortingHandler,
   createColumnFiltersHandler,
   createColumnVisibilityHandler,
-  createPaginationHandler,
-  createColumnSizingHandler,
-  createSortingState,
+  createSortingState
 } from "./utils/table-state-handlers";
-import { createKeyboardNavigationHandler } from "./utils/keyboard-navigation";
-import { createConditionalStateHook } from "./utils/conditional-state";
-import { initializeColumnSizes, trackColumnResizing, cleanupColumnResizing } from "./utils/column-sizing";
 
 // Define types for the data fetching function params and result
 interface DataFetchParams {
@@ -531,6 +529,10 @@ export function DataTable<TData extends ExportableData, TValue>({
       getSortedRowModel: getSortedRowModel<TData>(),
       getFacetedRowModel: getFacetedRowModel<TData>(),
       getFacetedUniqueValues: getFacetedUniqueValues<TData>(),
+      initialState: {
+        sorting: [{ id: "createdAt", desc: true }],
+        columnPinning: { right: ["actions"] },
+      },
     }),
     [
       dataItems,
@@ -715,6 +717,8 @@ export function DataTable<TData extends ExportableData, TValue>({
                     tabIndex={-1}
                     style={{
                       width: header.getSize(),
+                      ...getCommonPinningStyles({ column: header.column }),
+
                     }}
                     data-column-resizing={header.column.getIsResizing() ? "true" : undefined}
                   >
@@ -770,7 +774,9 @@ export function DataTable<TData extends ExportableData, TValue>({
                   }}
                 >
                   {row.getVisibleCells().map((cell, cellIndex) => (
-                    <TableCell className="px-4 py-2 truncate max-w-0 text-left" key={cell.id} id={`cell-${rowIndex}-${cellIndex}`} data-cell-index={cellIndex}>
+                    <TableCell className="px-4 py-2 truncate max-w-0 text-left" key={cell.id} id={`cell-${rowIndex}-${cellIndex}`} data-cell-index={cellIndex} style={{
+                      ...getCommonPinningStyles({ column: cell.column }),
+                    }}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}

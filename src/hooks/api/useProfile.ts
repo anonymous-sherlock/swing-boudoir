@@ -1,7 +1,7 @@
 import { api } from '@/lib/api';
 import type { ProfileSelectSchemaType } from '@/lib/validations/profile.schema';
 import { ProfileInsertSchema } from '@/lib/validations/profile.schema';
-import { ContestParticipation } from '@/types';
+import { ContestParticipation, User_Type } from '@/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import z from 'zod';
 
@@ -60,6 +60,7 @@ export interface Profile {
     displayName: string;
     username: string;
     email: string;
+    type: User_Type
   };
 }
 
@@ -146,7 +147,7 @@ export const profileKeys = {
 };
 
 // Profile API functions
-const profileApi = {
+export const profileApi = {
   // Get all profiles with pagination
   getProfiles: async (
     params: { page?: number; limit?: number } = {}
