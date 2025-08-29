@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Profile } from "@/hooks/api/useProfile";
-import { Dialog } from "@radix-ui/react-dialog";
 import { createContext, useContext, useEffect, useState } from "react";
 
 interface ModalProviderProps {

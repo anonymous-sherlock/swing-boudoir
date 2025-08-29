@@ -14,8 +14,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const getButtonSizeClass = (size: 'sm' | 'default' | 'lg') => {
+const getButtonSizeClass = (size: 'sm' | 'default' | 'lg' | 'xs') => {
   switch (size) {
+    case 'xs': return 'h-7 w-7 p-0';
     case 'sm': return 'h-7 w-7 p-0';
     case 'lg': return 'h-11 w-11 p-0';
     default: return 'h-8 w-8 p-0';
@@ -27,7 +28,7 @@ interface DataTablePaginationProps<TData> {
   totalItems?: number; // Total number of items from API
   totalSelectedItems?: number; // Total selected items across all pages
   pageSizeOptions?: number[]; // Custom page size options
-  size?: 'sm' | 'default' | 'lg'; // Size prop for components
+  size?: 'sm' | 'default' | 'lg' | 'xs'; // Size prop for components
 }
 
 export function DataTablePagination<TData>({

@@ -41,7 +41,7 @@ export interface TableConfig {
   
   // Control the size of buttons and inputs throughout the table
   // sm: small, default: standard, lg: large
-  size: 'sm' | 'default' | 'lg';
+  size: 'sm' | 'default' | 'lg' | 'xs';
   
   // Unique ID for storing column sizing in localStorage
   // This allows multiple tables to have independent sizing states
@@ -72,7 +72,7 @@ const defaultConfig: TableConfig = {
   enableUrlState: true,           // URL state persistence enabled by default
   enableColumnResizing: true,     // Column resizing enabled by default
   enableToolbar: true,            // Toolbar enabled by default
-  size: 'default',                // Default size for buttons and inputs
+  size: 'xs',                // Default size for buttons and inputs
   columnResizingTableId: undefined, // No table ID by default
   searchPlaceholder: undefined,   // No custom search placeholder by default
   allowExportNewColumns: true,    // Allow new columns from transform function by default

@@ -1,5 +1,6 @@
 import { createFileRoute, NotFoundRoute, useParams } from "@tanstack/react-router";
 import { useState } from "react";
+import JSZip from "jszip";
 
 import { Lightbox } from "@/components/Lightbox";
 import { socialIcons } from "@/components/icons";
@@ -20,6 +21,7 @@ import { format } from "date-fns";
 import {
   ArrowLeft,
   ArrowRightIcon,
+  Download,
   ExternalLink,
   Eye,
   Facebook,
@@ -71,9 +73,9 @@ export const Route = createFileRoute("/admin/profiles/$id")({
           <div className="flex items-center grow justify-between gap-3">
             <p className="text-sm">{props.error.message}</p>
             <Button variant="outline" size="sm" asChild>
-              <Link to="/admin/profiles">
+              <Link to="/admin/users">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Profiles
+                Back to Users
               </Link>
             </Button>
           </div>
@@ -87,6 +89,7 @@ function ProfileDetailsPage() {
   const { id } = useParams({ from: "/admin/profiles/$id" });
   const [lightboxImage, setLightboxImage] = useState<{ url: string; caption: string } | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
+  const [isDownloading, setIsDownloading] = useState(false);
   const { useProfile, useProfileStats, useActiveParticipation } = useProfileApi();
   // Fetch profile data
   const { data: profile, isLoading: profileLoading, error: profileError } = useProfile(id);
@@ -129,6 +132,140 @@ function ProfileDetailsPage() {
 
   const openLightbox = (image: { url: string; caption: string }) => {
     setLightboxImage(image);
+  };
+
+  const downloadAllImages = async () => {
+    try {
+      setIsDownloading(true);
+      const zip = new JSZip();
+      const imagePromises: Promise<void>[] = [];
+
+      // Create folders
+      const mainImagesFolder = zip.folder("main-images");
+      const profileImagesFolder = zip.folder("profile-images");
+
+      // Helper function to get proper file extension
+      const getFileExtension = (url: string, blob: Blob): string => {
+        // Since URLs don't have extensions, rely on MIME type detection
+        if (blob.type) {
+          const mimeType = blob.type.toLowerCase();
+          
+          // Map MIME types to file extensions
+          if (mimeType.includes('jpeg') || mimeType.includes('jpg')) {
+            return 'jpg';
+          } else if (mimeType.includes('png')) {
+            return 'png';
+          } else if (mimeType.includes('gif')) {
+            return 'gif';
+          } else if (mimeType.includes('webp')) {
+            return 'webp';
+          } else if (mimeType.includes('bmp')) {
+            return 'bmp';
+          } else if (mimeType.includes('svg')) {
+            return 'svg';
+          }
+        }
+        
+        // If MIME type detection fails, try to extract from URL as fallback
+        const urlExtension = url.split('.').pop()?.toLowerCase();
+        const validExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
+        if (urlExtension && validExtensions.includes(urlExtension)) {
+          return urlExtension;
+        }
+        
+        // Log when falling back to default extension
+        console.log(`Could not determine extension for URL: ${url}, MIME type: ${blob.type}, defaulting to jpg`);
+        
+        // Default to jpg if nothing else works
+        return 'jpg';
+      };
+
+      // Add profile cover image if it exists
+      if (profile?.coverImage) {
+        try {
+          const response = await fetch(profile.coverImage.url);
+          if (!response.ok) throw new Error(`Failed to fetch cover image: ${response.status}`);
+          const blob = await response.blob();
+          const extension = getFileExtension(profile.coverImage.url, blob);
+          mainImagesFolder?.file(`cover-image.${extension}`, blob);
+        } catch (error) {
+          console.error('Error fetching cover image:', error);
+        }
+      }
+
+      // Add banner image if it exists
+      if (profile?.bannerImage) {
+        try {
+          const response = await fetch(profile.bannerImage.url);
+          if (!response.ok) throw new Error(`Failed to fetch banner image: ${response.status}`);
+          const blob = await response.blob();
+          const extension = getFileExtension(profile.bannerImage.url, blob);
+          mainImagesFolder?.file(`banner-image.${extension}`, blob);
+        } catch (error) {
+          console.error('Error fetching banner image:', error);
+        }
+      }
+
+      // Add profile photos if they exist
+      if (profile?.profilePhotos && profile.profilePhotos.length > 0) {
+        profile.profilePhotos.forEach((photo, index) => {
+          const promise = fetch(photo.url)
+            .then(response => {
+              if (!response.ok) throw new Error(`Failed to fetch profile photo ${index + 1}: ${response.status}`);
+              return response.blob();
+            })
+            .then(blob => {
+              const extension = getFileExtension(photo.url, blob);
+              profileImagesFolder?.file(`profile-photo-${index + 1}.${extension}`, blob);
+            })
+            .catch(error => {
+              console.error(`Error fetching profile photo ${index + 1}:`, error);
+            });
+          imagePromises.push(promise);
+        });
+      }
+
+      // Add contest cover images if they exist
+      if (participations && participations.length > 0) {
+        participations.forEach((participation, index) => {
+          const coverImage = participation.coverImage;
+          if (coverImage) {
+            const promise = fetch(coverImage.url)
+              .then(response => {
+                if (!response.ok) throw new Error(`Failed to fetch contest cover image: ${response.status}`);
+                return response.blob();
+              })
+              .then(blob => {
+                const extension = getFileExtension(coverImage.url, blob);
+                profileImagesFolder?.file(`contest-${participation.contest.name.replace(/[^a-zA-Z0-9]/g, '-')}-cover.${extension}`, blob);
+              })
+              .catch(error => {
+                console.error(`Error fetching contest cover image for ${participation.contest.name}:`, error);
+              });
+            imagePromises.push(promise);
+          }
+        });
+      }
+
+      // Wait for all images to be processed
+      await Promise.all(imagePromises);
+
+      // Generate and download the zip file
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(zipBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${profile?.user?.username || 'profile'}-images.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading images:', error);
+      // You could add a toast notification here if you have one
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const socialUrls = getSocialMediaUrls({
@@ -178,9 +315,9 @@ function ProfileDetailsPage() {
       <div className="space-y-6">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" asChild>
-            <Link to="/admin/profiles">
+            <Link to="/admin/users">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Profiles
+              Back to Users
             </Link>
           </Button>
         </div>
@@ -204,9 +341,9 @@ function ProfileDetailsPage() {
       <div className="space-y-6">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" asChild>
-            <Link to="/admin/profiles">
+            <Link to="/admin/users">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Profiles
+              Back to Users
             </Link>
           </Button>
         </div>
@@ -219,15 +356,19 @@ function ProfileDetailsPage() {
     );
   }
 
+  if (!profile) {
+    return <div>Profile not found</div>;
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between mt-4">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" asChild>
-            <Link to="/admin/profiles">
+            <Link to="/admin/users">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Profiles
+              Back to Users
             </Link>
           </Button>
           <div>
@@ -283,7 +424,7 @@ function ProfileDetailsPage() {
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-pink-400 to-purple-600 flex items-center justify-center">
-                    <span className="text-4xl font-bold text-white">{profile.user.username.charAt(0)?.toUpperCase()}</span>
+                    <span className="text-4xl font-bold text-white">{profile?.user?.username?.charAt(0)?.toUpperCase()}</span>
                   </div>
                 )}
               </div>
@@ -291,7 +432,7 @@ function ProfileDetailsPage() {
 
             {/* Profile Info */}
             <div className="flex-1 text-white pointer-events-auto">
-              <h2 className="text-3xl font-bold mb-2">{profile.user.name || profile.user.username}</h2>
+              <h2 className="text-3xl font-bold mb-2">{profile?.user?.name || profile?.user?.username}</h2>
               <div className="flex items-center gap-2 mb-4">
                 <MapPin className="w-4 h-4 text-gray-300" />
                 <span className="text-gray-300">
@@ -309,7 +450,7 @@ function ProfileDetailsPage() {
                 variant="secondary"
                 size="sm"
                 className="bg-white/20 backdrop-blur-sm text-white border-white/30 hover:bg-white/30"
-                onClick={() => shareProfile(profile.user.username)}
+                onClick={() => shareProfile(profile?.user?.username)}
               >
                 <Share className="w-4 h-4 mr-2" />
                 Share profile
@@ -322,18 +463,52 @@ function ProfileDetailsPage() {
       {/* Profile Images Gallery */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ImageIcon className="w-5 h-5" />
-            Profile Images Gallery
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <ImageIcon className="w-5 h-5" />
+              Profile Images Gallery
+            </CardTitle>
+            <Button 
+              onClick={downloadAllImages}
+              variant="outline" 
+              size="sm"
+              className="flex items-center gap-2 hover:bg-black hover:text-white"
+              disabled={isDownloading}
+            >
+              {isDownloading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  Downloading...
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4" />
+                  Download All Images
+                  {(() => {
+                    let count = 0;
+                    if (profile?.coverImage) count++;
+                    if (profile?.bannerImage) count++;
+                    if (profile?.profilePhotos) count += profile.profilePhotos.length;
+                    if (participations) {
+                      participations.forEach(p => { if (p.coverImage) count++; });
+                    }
+                    return count > 0 ? ` (${count})` : '';
+                  })()}
+                  {/* <span className="text-xs text-muted-foreground ml-2">
+                    Organized in 2 folders
+                  </span> */}
+                </>
+              )}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Profile Photos */}
-          {profile.profilePhotos && profile.profilePhotos.length > 0 && (
+          {profile?.profilePhotos && profile?.profilePhotos.length > 0 && (
             <div>
-              <p className="text-sm font-medium mb-4">Profile Photos ({profile.profilePhotos.length})</p>
+              <p className="text-sm font-medium mb-4">Profile Photos ({profile?.profilePhotos.length})</p>
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {profile.profilePhotos.map((photo, index) => (
+                {profile?.profilePhotos.map((photo, index) => (
                   <div
                     key={photo.id}
                     className="aspect-square bg-muted rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
@@ -427,27 +602,27 @@ function ProfileDetailsPage() {
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-3">
                   <Avatar className="w-16 h-16">
-                    <AvatarImage src={profile.coverImage?.url} className="object-cover" />
-                    <AvatarFallback>{profile.user.username.charAt(0)?.toUpperCase()}</AvatarFallback>
+                    <AvatarImage src={profile?.coverImage?.url} className="object-cover" />
+                    <AvatarFallback>{profile?.user?.username?.charAt(0)?.toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <h3 className="font-semibold">{profile.user.name || profile.user.username}</h3>
-                    <p className="text-sm text-muted-foreground">@{profile.user.username}</p>
-                    <p className="text-sm text-muted-foreground">{profile.user.email}</p>
+                    <h3 className="font-semibold">{profile?.user?.name || profile?.user?.username}</h3>
+                    <p className="text-sm text-muted-foreground">@{profile?.user?.username}</p>
+                    <p className="text-sm text-muted-foreground">{profile?.user?.email}</p>
                   </div>
                 </div>
 
-                {profile.bio && (
+                {profile?.bio && (
                   <div>
                     <p className="text-sm font-medium mb-1">Bio</p>
-                    <p className="text-sm text-muted-foreground">{profile.bio}</p>
+                    <p className="text-sm text-muted-foreground">{profile?.bio}</p>
                   </div>
                 )}
 
-                {profile.hobbiesAndPassions && (
+                {profile?.hobbiesAndPassions && (
                   <div>
                     <p className="text-sm font-medium mb-1">Hobbies & Passions</p>
-                    <p className="text-sm text-muted-foreground">{profile.hobbiesAndPassions}</p>
+                    <p className="text-sm text-muted-foreground">{profile?.hobbiesAndPassions}</p>
                   </div>
                 )}
               </CardContent>
@@ -458,28 +633,28 @@ function ProfileDetailsPage() {
                 <CardTitle>Location Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {profile.address && (
+                {profile?.address && (
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm">{profile.address}</span>
+                    <span className="text-sm">{profile?.address}</span>
                   </div>
                 )}
-                {profile.city && (
+                {profile?.city && (
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm">{profile.city}</span>
+                    <span className="text-sm">{profile?.city}</span>
                   </div>
                 )}
-                {profile.country && (
+                {profile?.country && (
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm">{profile.country}</span>
+                    <span className="text-sm">{profile?.country}</span>
                   </div>
                 )}
-                {profile.postalCode && (
+                {profile?.postalCode && (
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm">{profile.postalCode}</span>
+                    <span className="text-sm">{profile?.postalCode}</span>
                   </div>
                 )}
               </CardContent>
@@ -493,7 +668,7 @@ function ProfileDetailsPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Trophy className="w-5 h-5" />
-                Contest Participations ({participations.length})
+                Contest Participations ({participations?.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -506,11 +681,11 @@ function ProfileDetailsPage() {
                     </div>
                   ))}
                 </div>
-              ) : participations.length === 0 ? (
+              ) : participations?.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">No contest participations found.</p>
               ) : (
                 <div className="space-y-4">
-                  {participations.map((participation) => (
+                  {participations?.map((participation) => (
                     <div key={participation.id} className="border rounded-lg p-4">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -800,17 +975,17 @@ function ProfileDetailsPage() {
                 <div className="space-y-4">
                   <div>
                     <p className="text-sm font-medium mb-1">Full Name</p>
-                    <p className="text-sm text-muted-foreground">{profile.user.name || "Not provided"}</p>
+                    <p className="text-sm text-muted-foreground">{profile?.user?.name || "Not provided"}</p>
                   </div>
 
                   <div>
                     <p className="text-sm font-medium mb-1">Username</p>
-                    <p className="text-sm text-muted-foreground">@{profile.user.username}</p>
+                    <p className="text-sm text-muted-foreground">@{profile?.user?.username}</p>
                   </div>
 
                   <div>
                     <p className="text-sm font-medium mb-1">Email</p>
-                    <p className="text-sm text-muted-foreground">{profile.user.email}</p>
+                    <p className="text-sm text-muted-foreground">{profile?.user?.email}</p>
                   </div>
 
                   {profile.phone && (
@@ -860,12 +1035,12 @@ function ProfileDetailsPage() {
 
                   <div>
                     <p className="text-sm font-medium mb-1">Profile Created</p>
-                    <p className="text-sm text-muted-foreground">{format(new Date(profile.createdAt), "MMMM dd, yyyy 'at' h:mm a")}</p>
+                    {/* <p className="text-sm text-muted-foreground">{format(new Date(profile?.createdAt), "MMMM dd, yyyy 'at' h:mm a")}</p> */}
                   </div>
 
                   <div>
                     <p className="text-sm font-medium mb-1">Last Updated</p>
-                    <p className="text-sm text-muted-foreground">{format(new Date(profile.updatedAt), "MMMM dd, yyyy 'at' h:mm a")}</p>
+                    <p className="text-sm text-muted-foreground">{format(new Date(profile?.updatedAt), "MMMM dd, yyyy 'at' h:mm a")}</p>
                   </div>
                 </div>
               </div>
@@ -884,7 +1059,7 @@ function ProfileDetailsPage() {
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2">
-                {profile.instagram && (
+                {profile?.instagram && (
                   <div className="flex items-center gap-3 p-3 border rounded-lg">
                     <Instagram className="w-5 h-5 text-pink-600" />
                     <div className="flex-1">

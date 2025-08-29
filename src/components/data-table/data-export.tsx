@@ -23,8 +23,10 @@ interface DataTableExportProps<TData extends ExportableData> {
   columnWidths?: Array<{ wch: number }>;
   headers?: string[];
   transformFunction?: DataTransformFunction<TData>;
-  size?: 'sm' | 'default' | 'lg';
+  size?: 'sm' | 'default' | 'lg' | 'xs';
   config?: TableConfig;
+  // Indicates whether true "all data" export is available (fetchAllDataFn is provided)
+  enableAllDataExport?: boolean;
 }
 
 export function DataTableExport<TData extends ExportableData>({
@@ -38,8 +40,9 @@ export function DataTableExport<TData extends ExportableData>({
   columnWidths,
   headers,
   transformFunction,
-  size = 'default',
-  config
+  size = 'xs',
+  config,
+  enableAllDataExport = false
 }: DataTableExportProps<TData>): JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -364,12 +367,12 @@ export function DataTableExport<TData extends ExportableData>({
         <Button variant="outline" size={size} disabled={isLoading}>
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
               Exporting...
             </>
           ) : (
             <>
-              <DownloadIcon className="mr-2 h-4 w-4" />
+              <DownloadIcon className="h-4 w-4" />
               Export
               {hasSelection && <span className="ml-1">({selectedData?.length})</span>}
             </>
@@ -394,17 +397,19 @@ export function DataTableExport<TData extends ExportableData>({
             <DropdownMenuItem onClick={() => handleExport("excel")} disabled={isLoading}>
               Export Current Page as XLS
             </DropdownMenuItem>
-            {getAllItems && (
+            {enableAllDataExport && (
               <>
                 <DropdownMenuItem 
                   onClick={() => exportAllPages("csv")} 
                   disabled={isLoading}
+                  title="Export all data (may take time for large datasets)"
                 >
                   Export All Pages as CSV
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => exportAllPages("excel")} 
                   disabled={isLoading}
+                  title="Export all data (may take time for large datasets)"
                 >
                   Export All Pages as XLS
                 </DropdownMenuItem>

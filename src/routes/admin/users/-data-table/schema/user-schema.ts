@@ -11,16 +11,16 @@ export const userCamelCaseSchema = z.object({
   id: z.string(),
   name: z.string(),
   email: z.string(),
-  phone: z.string(),
+  role: z.enum(["USER", "MODERATOR", "ADMIN"]),
+  type: z.enum(["MODEL", "VOTER"]),
+  isActive: z.boolean(),
   image: z.string(),
+  phone: z.string(),
   createdAt: z.string(),
   username: z.string(),
   profileId: z.string().optional(),
-  role: z.enum(["USER", "MODERATOR", "ADMIN"]),
-  isActive: z.boolean(),
   emailVerified: z.boolean(),
   hasProfile: z.boolean(),
-  type: z.enum(["MODEL", "VOTER"]),
   // New fields
   gender: z.string().optional(),
   address: z.string().optional(),
@@ -30,6 +30,20 @@ export const userCamelCaseSchema = z.object({
   dateOfBirth: z.string().optional(),
   totalContestsWon: z.number().optional(),
   totalContestsParticipated: z.number().optional(),
+
+  profile: z.object({
+    id: z.string().optional().nullable(),
+    socialMedia: z.object({
+      instagram: z.string().optional().nullable(),
+      tiktok: z.string().optional().nullable(),
+      youtube: z.string().optional().nullable(),
+      twitter: z.string().optional().nullable(),
+      facebook: z.string().optional().nullable(),
+      linkedin: z.string().optional().nullable(),
+      website: z.string().optional().nullable(),
+      other: z.string().optional().nullable(),
+    }),
+  }),
 });
 
 export type UserCamelCase = z.infer<typeof userCamelCaseSchema>;

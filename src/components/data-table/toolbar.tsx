@@ -3,7 +3,7 @@ import { Cross2Icon } from "@radix-ui/react-icons";
 import type { Table } from "@tanstack/react-table";
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useRouter, useLocation, useSearch } from "@tanstack/react-router";
-import { Settings, Undo2, TrashIcon, EyeOff, CheckSquare, MoveHorizontal } from "lucide-react";
+import { Settings, Undo2, TrashIcon, EyeOff, CheckSquare, MoveHorizontal, DownloadIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,20 +18,25 @@ import type { TableConfig } from "./utils/table-config";
 import { formatDate } from "./utils/date-format";
 
 // Helper functions for component sizing
-const getInputSizeClass = (size: "sm" | "default" | "lg") => {
+const getInputSizeClass = (size: "sm" | "default" | "lg" | "xs") => {
   switch (size) {
+    case "xs":
+      return "h-8 text-xs";
     case "sm":
       return "h-8";
     case "lg":
       return "h-11";
+
     default:
       return "";
   }
 };
 
-const getButtonSizeClass = (size: "sm" | "default" | "lg", isIcon = false) => {
+const getButtonSizeClass = (size: "sm" | "default" | "lg" | "xs", isIcon = false) => {
   if (isIcon) {
     switch (size) {
+      case "xs":
+        return "h-8 w-8 text-xs";
       case "sm":
         return "h-8 w-8";
       case "lg":
@@ -41,6 +46,8 @@ const getButtonSizeClass = (size: "sm" | "default" | "lg", isIcon = false) => {
     }
   }
   switch (size) {
+    case "xs":
+      return "h-8 px-2 text-xs";
     case "sm":
       return "h-8 px-3";
     case "lg":
@@ -64,7 +71,7 @@ interface DataTableToolbarProps<TData extends ExportableData> {
   totalSelectedItems?: number;
   deleteSelection?: () => void;
   getSelectedItems?: () => Promise<TData[]>;
-  getAllItems?: () => TData[];
+  getAllItems?: () => Promise<TData[]>;
   config: TableConfig;
   resetColumnSizing?: () => void;
   resetColumnOrder?: () => void;
@@ -74,6 +81,8 @@ interface DataTableToolbarProps<TData extends ExportableData> {
   headers?: string[];
   transformFunction?: DataTransformFunction<TData>;
   customToolbarComponent?: React.ReactNode;
+  // Indicates whether true "all data" export is available (fetchAllDataFn is provided)
+  enableAllDataExport?: boolean;
 }
 
 export function DataTableToolbar<TData extends ExportableData>({
@@ -93,6 +102,7 @@ export function DataTableToolbar<TData extends ExportableData>({
   headers,
   transformFunction,
   customToolbarComponent,
+  enableAllDataExport = false,
 }: DataTableToolbarProps<TData>) {
   // Get router and pathname for URL state reset
   const router = useRouter();
@@ -341,8 +351,8 @@ export function DataTableToolbar<TData extends ExportableData>({
   // The actual data fetching happens in the export component
   const selectedItems = totalSelectedItems > 0 ? new Array(totalSelectedItems).fill({} as TData) : [];
 
-  // Get all available items data for export
-  const allItems = getAllItems ? getAllItems() : [];
+  // Get all available items data for export - this will be handled asynchronously in the export component
+  const allItems: TData[] = [];
 
   return (
     <div className="flex flex-wrap items-center justify-between">
@@ -373,7 +383,7 @@ export function DataTableToolbar<TData extends ExportableData>({
         {isFiltered && (
           <Button variant="ghost" onClick={handleResetFilters} className={getButtonSizeClass(config.size)}>
             Reset
-            <Cross2Icon className="ml-2 h-4 w-4" />
+            <Cross2Icon className="h-4 w-4" />
           </Button>
         )}
       </div>
@@ -390,10 +400,12 @@ export function DataTableToolbar<TData extends ExportableData>({
             entityName={entityName}
             columnMapping={columnMapping}
             columnWidths={columnWidths}
+            getAllItems={getAllItems}
             headers={headers}
             transformFunction={transformFunction}
             size={config.size}
             config={config}
+            enableAllDataExport={enableAllDataExport}
           />
         )}
 

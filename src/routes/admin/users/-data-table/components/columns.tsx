@@ -14,6 +14,10 @@ import { UserCamelCase } from "../schema";
 
 // ** Import Table Row Actions
 import { DataTableRowActions } from "./row-actions";
+import { getSocialMediaUrls } from "@/utils/social-media";
+import { socialIcons } from "@/components/icons";
+import { Button } from "@/components/ui/button";
+import { Link } from "@tanstack/react-router";
 
 export const getColumns = (handleRowDeselection: ((rowId: string) => void) | null | undefined, currentUserId?: string): ColumnDef<UserCamelCase>[] => {
   // Base columns without the select column
@@ -83,6 +87,50 @@ export const getColumns = (handleRowDeselection: ((rowId: string) => void) | nul
       size: 120,
     },
     {
+      accessorKey: "social media",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Social Media" />,
+      cell: ({ row }) => {
+        const socialMedia = row.original.profile.socialMedia;
+
+        const socialUrls = getSocialMediaUrls(socialMedia);
+      
+        const getSocialLinks = () => {
+          return Object.entries(socialUrls)
+            .filter(([_, url]) => url)
+            .map(([platform, url]) => {
+              const Icon = socialIcons[platform as keyof typeof socialIcons];
+              if (!Icon) return null;
+              if (platform === "tiktok") {
+                return (
+                  <Button key={platform} variant="outline" size="sm" className="backdrop-blur-lg bg-gray-100 border-gray-200 hover:bg-black/10 transition-all duration-300 p-0 w-8 h-8" asChild>
+                    <Link to={url!} target="_blank">
+                      <Icon className="w-4 h-4 fill-black" />
+                    </Link>
+                  </Button>
+                );
+              }
+      
+              return (
+                <Button key={platform} variant="outline" size="sm" className="backdrop-blur-lg bg-gray-100 border-gray-200 hover:bg-black/20 transition-all duration-300 p-0 w-8 h-8" asChild>
+                  <Link to={url!} target="_blank">
+                    <Icon />
+                  </Link>
+                </Button> 
+              );
+            })
+            .filter(Boolean);
+        };
+        return (
+          <div className="flex items-center truncate">
+           <div className="flex gap-2">{getSocialLinks()}</div>
+          </div>
+        );
+      },
+      size: 120,
+      enableSorting: false,
+      enableHiding: true,
+    },
+    {
       accessorKey: "gender",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Gender" />,
       cell: ({ row }) => {
@@ -135,6 +183,7 @@ export const getColumns = (handleRowDeselection: ((rowId: string) => void) | nul
       },
       size: 200,
       enableHiding: true,
+      enableSorting: false,
     },
     {
       accessorKey: "city",
@@ -149,6 +198,7 @@ export const getColumns = (handleRowDeselection: ((rowId: string) => void) | nul
       },
       size: 120,
       enableHiding: true,
+      enableSorting: false,
     },
     {
       accessorKey: "country",
@@ -163,6 +213,7 @@ export const getColumns = (handleRowDeselection: ((rowId: string) => void) | nul
       },
       size: 120,
       enableHiding: true,
+      enableSorting: false,
     },
     {
       accessorKey: "postalCode",
@@ -177,6 +228,7 @@ export const getColumns = (handleRowDeselection: ((rowId: string) => void) | nul
       },
       size: 100,
       enableHiding: true,
+      enableSorting: false,
     },
 
     {
@@ -191,6 +243,7 @@ export const getColumns = (handleRowDeselection: ((rowId: string) => void) | nul
       },
       size: 150,
       enableHiding: true,
+      enableSorting: false,
     },
     {
       accessorKey: "totalContestsParticipated",

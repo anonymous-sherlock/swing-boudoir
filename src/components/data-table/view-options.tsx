@@ -10,13 +10,13 @@ import { useCallback, useEffect, useState, useMemo } from "react";
 interface DataTableViewOptionsProps<TData> {
   table: Table<TData>;
   columnMapping?: Record<string, string>;
-  size?: "sm" | "default" | "lg";
+  size?: "sm" | "default" | "lg" | "xs";
 }
 
 // Local storage key for column order
 const COLUMN_ORDER_STORAGE_KEY = "data-table-column-order";
 
-export function DataTableViewOptions<TData>({ table, columnMapping, size = "default" }: DataTableViewOptionsProps<TData>) {
+  export function DataTableViewOptions<TData>({ table, columnMapping, size = "xs" }: DataTableViewOptionsProps<TData>) {
   // Get columns that can be hidden
   const columns = React.useMemo(() => table.getAllColumns().filter((column) => typeof column.accessorFn !== "undefined" && column.getCanHide()), [table]);
 
@@ -157,7 +157,7 @@ export function DataTableViewOptions<TData>({ table, columnMapping, size = "defa
     <Popover>
       <PopoverTrigger asChild>
         <Button aria-label="Toggle columns" variant="outline" size={size} className="ml-auto hidden lg:flex">
-          <Settings2 className="mr-2 h-4 w-4" />
+          <Settings2 className="h-4 w-4" />
           View
         </Button>
       </PopoverTrigger>

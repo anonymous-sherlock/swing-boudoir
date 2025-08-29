@@ -3,7 +3,7 @@ import * as XLSX from "xlsx";
 
 
 // Generic type for exportable data - should have string keys and values that can be converted to string
-export type ExportableData = Record<string, string | number | boolean | null | undefined>;
+export type ExportableData = Record<string, string | number | boolean | null | undefined|object>;
 
 // Type for transformation function that developers can provide
 export type DataTransformFunction<T extends ExportableData> = (row: T) => ExportableData;

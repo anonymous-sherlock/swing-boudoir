@@ -44,11 +44,6 @@ const data = {
           title: "All Users",
           url: "/admin/users",
         },
-        {
-          title: "All Profiles",
-          url: "/admin/profiles",
-          icon: User,
-        },
       ],
     },
 

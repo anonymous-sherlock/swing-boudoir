@@ -23,7 +23,8 @@ const formSchema = z.object({
   name: z.string().min(1, "Name is required").max(255),
   email: z.string().email("Invalid email format").max(255),
   username: z.string().min(1, "Username is required").max(255),
-  password: z.string()
+  password: z
+    .string()
     .min(1, "Password is required")
     .min(8, "Password must be at least 8 characters")
     .regex(/[0-9]/, "Password must contain at least 1 number")
@@ -41,8 +42,7 @@ export function AddUserPopup() {
   const [isPasswordValid, setIsPasswordValid] = React.useState(false);
   const [passwordErrors, setPasswordErrors] = React.useState<string[]>([]);
   const queryClient = useQueryClient();
-  const { mutateAsync, data,error } = useCreateUser();
-
+  const { mutateAsync, data, error } = useCreateUser();
 
   // Initialize form
   const form = useForm<FormValues>({
@@ -60,14 +60,14 @@ export function AddUserPopup() {
   // Handle form submission
   const onSubmit = async (data: FormValues) => {
     try {
-      if(!data) return;
-      
+      if (!data) return;
+
       // Check if password meets requirements
       if (!isPasswordValid) {
         toast.error("Please ensure password meets all requirements");
         return;
       }
-      
+
       setIsLoading(true);
       await mutateAsync({
         name: data.name,
@@ -103,7 +103,7 @@ export function AddUserPopup() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="h-9 py-0">Add User</Button>
+        <Button className="h-8 py-0 text-xs">Add User</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
@@ -158,7 +158,7 @@ export function AddUserPopup() {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <PasswordInput 
+                    <PasswordInput
                       {...field}
                       placeholder="Enter password"
                       showStrengthIndicator={true}
@@ -166,7 +166,7 @@ export function AddUserPopup() {
                       onValidationChange={handlePasswordValidation}
                     />
                   </FormControl>
-                  
+
                   <FormMessage />
                 </FormItem>
               )}

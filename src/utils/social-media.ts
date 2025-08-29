@@ -11,6 +11,7 @@ export interface SocialMediaUrls {
   youtube?: string | null;
   linkedin?: string | null;
   website?: string | null;
+  other?: string | null;
 }
 
 /**

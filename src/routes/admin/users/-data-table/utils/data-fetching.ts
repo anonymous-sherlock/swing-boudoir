@@ -3,7 +3,7 @@ import { api } from "@/lib/api";
 
 // ** Import API
 // Define the fetch function locally since it doesn't exist in the API module
-async function fetchUsersCamelCase(params: {
+export async function fetchUsersCamelCase(params: {
   page: number;
   limit: number;
   search: string;
@@ -48,6 +48,11 @@ async function fetchUsersCamelCase(params: {
       limit: params.limit,
       total_pages: response.data.pagination?.totalPages || 1,
       total_items: response.data.pagination?.total || 0,
+      // Include the original pagination properties for export
+      hasNextPage: response.data.pagination?.hasNextPage || false,
+      hasPreviousPage: response.data.pagination?.hasPreviousPage || false,
+      nextPage: response.data.pagination?.nextPage || null,
+      previousPage: response.data.pagination?.previousPage || null,
     }
   };
 }

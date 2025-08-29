@@ -6,7 +6,7 @@ import { getColumns } from "./components/columns";
 import { useExportConfig } from "./utils/config";
 
 // ** Import API
-import { useUsersCamelCaseData } from "./utils/data-fetching";
+import { useUsersCamelCaseData, fetchUsersCamelCase } from "./utils/data-fetching";
 
 // ** Import Toolbar Options
 import { ToolbarOptions } from "./components/toolbar-options";
@@ -64,11 +64,71 @@ export default function UserTable() {
   // Set the isQueryHook property so DataTable knows this is a React Query hook
   useFilteredUsersData.isQueryHook = true;
 
+  /**
+   * Function to fetch all users for export (enables "Export All Pages" functionality)
+   * 
+   * This function:
+   * - Fetches data in chunks using pagination to avoid server overload
+   * - Uses a reasonable chunk size (100) to prevent server crashes
+   * - Respects current filters (search, date range, sorting, user type)
+   * - Is called only when user clicks "Export All Pages"
+   * - Returns all user data for CSV/Excel export
+   * - Scales well for large datasets without overwhelming the server
+   */
+  const fetchAllData = async (params: {
+    search: string;
+    from_date: string;
+    to_date: string;
+    sort_by: string;
+    sort_order: string;
+  }) => {
+    try {
+      const allUsers: UserCamelCase[] = [];
+      const chunkSize = 100; // Fetch 100 users at a time
+      let currentPage = 1;
+      let hasMoreData = true;
+      
+      // Fetch data in chunks until we have all users
+      while (hasMoreData) {
+        const result = await fetchUsersCamelCase({
+          page: currentPage,
+          limit: chunkSize,
+          search: params.search,
+          fromDate: params.from_date,
+          toDate: params.to_date,
+          sortBy: params.sort_by,
+          sortOrder: params.sort_order,
+          type: type === "all" ? "" : type // include current type filter
+        });
+        
+        if (result.data && result.data.length > 0) {
+          allUsers.push(...result.data);
+          
+          // Use the API's hasNextPage property for cleaner logic
+          // This matches your API response structure: { hasNextPage: boolean }
+          if (result.pagination?.hasNextPage) {
+            currentPage++;
+          } else {
+            hasMoreData = false;
+          }
+        } else {
+          hasMoreData = false;
+        }
+      }
+      
+      return allUsers;
+    } catch (error) {
+      console.error("Error fetching all users for export:", error);
+      throw new Error("Failed to fetch all users for export");
+    }
+  };
+
   return (
     <DataTable<UserCamelCase, unknown>
       getColumns={getColumnsWithUser}
       exportConfig={useExportConfig()}
       fetchDataFn={useFilteredUsersData}
+      fetchAllDataFn={fetchAllData} // "Export All Pages" functionality is now enabled
       idField="id"
       pageSizeOptions={[10, 20, 30, 40, 50, 100, 150]}
       renderToolbarContent={({ selectedRows, allSelectedIds, totalSelectedCount, resetSelection }) => (
@@ -90,9 +150,16 @@ export default function UserTable() {
         enableDateFilter: true,
         enableColumnVisibility: true,
         enableUrlState: true,
-        size: "sm",
+        size: "xs",
         columnResizingTableId: "user-list-table",
         searchPlaceholder: "Search users",
+        enableExport: true,
+      }}
+      initialState={{
+        columnPinning: {
+          right: ["actions"],
+          left: ["select"],
+        },
       }}
     />
   );

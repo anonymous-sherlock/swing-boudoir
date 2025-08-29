@@ -19,29 +19,32 @@ export function ToolbarOptions({ selectedUsers, allSelectedUserIds, totalSelecte
   });
   return (
     <div className="flex items-center gap-2">
-      <div className="flex items-center gap-2">
-        <Select value={userType} onValueChange={setUserType}>
-          <SelectTrigger id="user-type-filter" className="w-32 !h-9 py-0">
-            <SelectValue placeholder="All types" className="py-0 h-9" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Users</SelectItem>
-            <SelectItem value="model">Model</SelectItem>
-            <SelectItem value="voter">Voter</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <AddUserPopup />
-
       {totalSelectedCount > 0 && (
         <>
-          <span className="text-sm text-muted-foreground">{totalSelectedCount} selected</span>
-          <Button onClick={resetSelection} className="text-sm">
+          <span className="text-xs text-muted-foreground">{totalSelectedCount} selected</span>
+          <Button onClick={resetSelection} size="sm" className="text-xs h-7 px-2">
             Clear selection
           </Button>
         </>
       )}
+      <div className="flex items-center gap-2">
+        <Select value={userType} onValueChange={setUserType}>
+          <SelectTrigger id="user-type-filter" className="w-28 !h-8 py-0 text-xs">
+            <SelectValue placeholder="All types" className="py-0 h-7" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all" className="text-xs">
+              All Users
+            </SelectItem>
+            <SelectItem value="model" className="text-xs">
+              Model
+            </SelectItem>
+            <SelectItem value="voter" className="text-xs">
+              Voter
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
     </div>
   );
 }

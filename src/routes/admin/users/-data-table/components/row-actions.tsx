@@ -13,13 +13,14 @@ import {
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
 import { useNavigate } from "@tanstack/react-router";
 import { UserCamelCase } from "../schema";
 import { ChangeUserStatusDialog } from "./change-user-status-dialog";
 import { ChangeUserTypeDialog } from "./change-user-type-dialog";
+import { DeleteUserPopup } from "../actions/delete-user-popup";
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
@@ -37,7 +38,8 @@ export function DataTableRowActions<TData extends UserCamelCase>({ row }: DataTa
     newStatus: boolean;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
+  const [isDeleteUserPopupOpen, setIsDeleteUserPopupOpen] = useState(false);
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false);
   const handleChangeType = (newType: "MODEL" | "VOTER") => {
     setChangeTypeDialog({ isOpen: true, newType });
   };
@@ -56,32 +58,32 @@ export function DataTableRowActions<TData extends UserCamelCase>({ row }: DataTa
 
   const user = row.original;
   const currentType = user.type;
+  
+  // Common disabled state for all actions when any operation is in progress
+  // This prevents users from triggering multiple actions simultaneously
+  const isAnyActionLoading = isLoading || isDeleteLoading;
 
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="flex h-8 w-8 p-0 data-[state=open]:bg-muted" disabled={isLoading}>
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <DotsHorizontalIcon className="h-4 w-4" />
-            )}
+          <Button variant="ghost" className="flex h-8 w-8 p-0 data-[state=open]:bg-muted" disabled={isAnyActionLoading}>
+            {isAnyActionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <DotsHorizontalIcon className="h-4 w-4" />}
             <span className="sr-only">Open menu</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-[250px]">
-          <DropdownMenuItem onClick={() => navigate({ to: "/profile/$username", params: { username: row.original.username } })} disabled={isLoading}>
+          <DropdownMenuItem onClick={() => navigate({ to: "/profile/$username", params: { username: row.original.username } })} disabled={isAnyActionLoading}>
             <User className="mr-2 h-4 w-4" />
             View Public Profile
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate({ to: "/admin/profiles/$id", params: { id: row.original.id } })} disabled={isLoading}>
+          <DropdownMenuItem onClick={() => navigate({ to: "/admin/profiles/$id", params: { id: row.original.profile.id ?? "" } })} disabled={isAnyActionLoading}>
             <UserCheck className="mr-2 h-4 w-4" />
             View Profile Details
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />
-          
+
           {/* Status Submenu */}
           {/* <DropdownMenuSub>
             <DropdownMenuSubTrigger>
@@ -138,31 +140,21 @@ export function DataTableRowActions<TData extends UserCamelCase>({ row }: DataTa
           </DropdownMenuSub>
 
           <DropdownMenuSeparator /> */}
-          
+
           {/* User Type Submenu */}
           <DropdownMenuSub>
-            <DropdownMenuSubTrigger disabled={isLoading}>
+            <DropdownMenuSubTrigger disabled={isAnyActionLoading}>
               <Vote className="mr-2 h-4 w-4" />
               Type: {currentType === "MODEL" ? "Model" : "Voter"}
-              {isLoading && <Loader2 className="ml-2 h-3 w-3 animate-spin" />}
+              {isAnyActionLoading && <Loader2 className="ml-2 h-3 w-3 animate-spin" />}
             </DropdownMenuSubTrigger>
             <DropdownMenuSubContent>
-              <DropdownMenuCheckboxItem
-                checked={currentType === "MODEL"}
-                onClick={() => handleChangeType("MODEL")}
-                className="text-purple-600"
-                disabled={isLoading}
-              >
+              <DropdownMenuCheckboxItem checked={currentType === "MODEL"} onClick={() => handleChangeType("MODEL")} className="text-purple-600" disabled={isLoading}>
                 <User className="mr-2 h-4 w-4" />
                 Model
                 {isLoading && <Loader2 className="ml-2 h-3 w-3 animate-spin" />}
               </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={currentType === "VOTER"}
-                onClick={() => handleChangeType("VOTER")}
-                className="text-yellow-600"
-                disabled={isLoading}
-              >
+              <DropdownMenuCheckboxItem checked={currentType === "VOTER"} onClick={() => handleChangeType("VOTER")} className="text-yellow-600" disabled={isLoading}>
                 <Vote className="mr-2 h-4 w-4" />
                 Voter
                 {isLoading && <Loader2 className="ml-2 h-3 w-3 animate-spin" />}
@@ -171,22 +163,17 @@ export function DataTableRowActions<TData extends UserCamelCase>({ row }: DataTa
           </DropdownMenuSub>
 
           <DropdownMenuSeparator />
-          <DropdownMenuItem className="text-destructive" onClick={() => console.log("Delete user", row.original)} disabled={isLoading}>
+          <DropdownMenuItem className="text-destructive" disabled={isAnyActionLoading} onClick={() => setIsDeleteUserPopupOpen(true)}>
             <XCircle className="mr-2 h-4 w-4" />
             Delete
+            {isDeleteLoading && <Loader2 className="ml-2 h-3 w-3 animate-spin" />}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
       {/* Change User Type Dialog */}
       {changeTypeDialog && (
-        <ChangeUserTypeDialog
-          user={user}
-          isOpen={changeTypeDialog.isOpen}
-          onClose={closeChangeTypeDialog}
-          newType={changeTypeDialog.newType}
-          onLoadingChange={setIsLoading}
-        />
+        <ChangeUserTypeDialog user={user} isOpen={changeTypeDialog.isOpen} onClose={closeChangeTypeDialog} newType={changeTypeDialog.newType} onLoadingChange={setIsLoading} />
       )}
 
       {/* Change User Status Dialog */}
@@ -199,6 +186,17 @@ export function DataTableRowActions<TData extends UserCamelCase>({ row }: DataTa
           onLoadingChange={setIsLoading}
         />
       )}
+
+      <DeleteUserPopup
+        open={isDeleteUserPopupOpen}
+        onOpenChange={setIsDeleteUserPopupOpen}
+        userId={row.original.id}
+        userName={row.original.username}
+        resetSelection={() => {
+          console.log("Reset selection");
+        }}
+        onLoadingChange={setIsDeleteLoading}
+      />
     </>
   );
 }

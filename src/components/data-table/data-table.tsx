@@ -6,6 +6,7 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  TableState,
   useReactTable,
   type ColumnDef,
   type ColumnResizeMode,
@@ -33,11 +34,7 @@ import { cleanupColumnResizing, initializeColumnSizes, trackColumnResizing } fro
 import { createConditionalStateHook } from "./utils/conditional-state";
 import { createKeyboardNavigationHandler } from "./utils/keyboard-navigation";
 import { preprocessSearch } from "./utils/search";
-import {
-  createColumnFiltersHandler,
-  createColumnVisibilityHandler,
-  createSortingState
-} from "./utils/table-state-handlers";
+import { createColumnFiltersHandler, createColumnVisibilityHandler, createSortingState } from "./utils/table-state-handlers";
 
 // Define types for the data fetching function params and result
 interface DataFetchParams {
@@ -67,6 +64,20 @@ type SortingUpdater = (prev: { id: string; desc: boolean }[]) => { id: string; d
 type ColumnOrderUpdater = (prev: string[]) => string[];
 type RowSelectionUpdater = (prev: Record<string, boolean>) => Record<string, boolean>;
 
+/**
+ * DataTable component with comprehensive export functionality
+ * 
+ * Export Features:
+ * - Export Selected Items: Exports only the selected rows
+ * - Export Current Page: Exports the current page data
+ * - Export All Pages: Exports all data (only shown when fetchAllDataFn is provided)
+ * 
+ * To enable "Export All Pages" functionality:
+ * 1. Provide fetchAllDataFn that fetches all data from your API
+ * 2. The function should respect current filters (search, date range, sorting)
+ * 3. Without fetchAllDataFn, the "Export All Pages" option won't be shown in the UI
+ */
+
 interface DataTableProps<TData extends ExportableData, TValue> {
   // Allow overriding the table configuration
   config?: Partial<TableConfig>;
@@ -90,6 +101,9 @@ interface DataTableProps<TData extends ExportableData, TValue> {
   // Function to fetch specific items by their IDs
   fetchByIdsFn?: (ids: number[] | string[]) => Promise<TData[]>;
 
+  // Function to fetch all data for export (optional - if not provided, will use current page data)
+  fetchAllDataFn?: (params: Omit<DataFetchParams, 'page' | 'limit'>) => Promise<TData[]>;
+
   // Export configuration
   exportConfig: {
     entityName: string;
@@ -106,6 +120,8 @@ interface DataTableProps<TData extends ExportableData, TValue> {
   // Custom page size options
   pageSizeOptions?: number[];
 
+  initialState?: Partial<TableState>;
+
   // Custom toolbar content render function
   renderToolbarContent?: (props: { selectedRows: TData[]; allSelectedIds: (string | number)[]; totalSelectedCount: number; resetSelection: () => void }) => React.ReactNode;
 
@@ -118,11 +134,13 @@ export function DataTable<TData extends ExportableData, TValue>({
   getColumns,
   fetchDataFn,
   fetchByIdsFn,
+  fetchAllDataFn,
   exportConfig,
   idField = "id" as keyof TData,
   pageSizeOptions,
   renderToolbarContent,
   onRowClick,
+  initialState,
 }: DataTableProps<TData, TValue>) {
   // Load table configuration with any overrides
   const tableConfig = useTableConfig(config);
@@ -299,11 +317,29 @@ export function DataTable<TData extends ExportableData, TValue>({
     }
   }, [dataItems, selectedItemIds, totalSelectedItems, fetchByIdsFn, idField]);
 
-  // Get all items on current page
-  const getAllItems = useCallback((): TData[] => {
-    // Return current page data
+  // Get all items for export
+  const getAllItems = useCallback(async (): Promise<TData[]> => {
+    // If a dedicated fetch all data function is provided, use it
+    if (fetchAllDataFn) {
+      try {
+        return await fetchAllDataFn({
+          search: preprocessSearch(search),
+          from_date: dateRange.from_date,
+          to_date: dateRange.to_date,
+          sort_by: sortBy,
+          sort_order: sortOrder,
+        });
+      } catch (error) {
+        console.error("Error fetching all data for export:", error);
+        return dataItems;
+      }
+    }
+    
+    // Otherwise, return current page data
+    // Note: "Export All Pages" option is only shown when fetchAllDataFn is provided
+    // Without fetchAllDataFn, this function still exists but the UI won't show the option
     return dataItems;
-  }, [dataItems]);
+  }, [fetchAllDataFn, search, dateRange, sortBy, sortOrder, dataItems]);
 
   // Fetch data
   useEffect(() => {
@@ -529,16 +565,19 @@ export function DataTable<TData extends ExportableData, TValue>({
       getSortedRowModel: getSortedRowModel<TData>(),
       getFacetedRowModel: getFacetedRowModel<TData>(),
       getFacetedUniqueValues: getFacetedUniqueValues<TData>(),
-      initialState: {
-        sorting: [{ id: "createdAt", desc: true }],
-        columnPinning: { right: ["actions"] },
-      },
+      initialState: initialState
+        ? initialState
+        : {
+            sorting: [{ id: "createdAt", desc: true }],
+            columnPinning: { right: ["actions"] },
+          },
     }),
     [
       dataItems,
       columns,
       sorting,
       columnVisibility,
+      initialState,
       rowSelection,
       columnFilters,
       pagination,
@@ -689,6 +728,7 @@ export function DataTable<TData extends ExportableData, TValue>({
           columnWidths={exportConfig.columnWidths}
           headers={exportConfig.headers}
           transformFunction={exportConfig.transformFunction}
+          enableAllDataExport={!!fetchAllDataFn}
           customToolbarComponent={renderToolbarContent?.({
             selectedRows: dataItems.filter((item) => selectedItemIds[String(item[idField])]),
             allSelectedIds: Object.keys(selectedItemIds),
@@ -718,7 +758,6 @@ export function DataTable<TData extends ExportableData, TValue>({
                     style={{
                       width: header.getSize(),
                       ...getCommonPinningStyles({ column: header.column }),
-
                     }}
                     data-column-resizing={header.column.getIsResizing() ? "true" : undefined}
                   >
@@ -774,9 +813,15 @@ export function DataTable<TData extends ExportableData, TValue>({
                   }}
                 >
                   {row.getVisibleCells().map((cell, cellIndex) => (
-                    <TableCell className="px-4 py-2 truncate max-w-0 text-left" key={cell.id} id={`cell-${rowIndex}-${cellIndex}`} data-cell-index={cellIndex} style={{
-                      ...getCommonPinningStyles({ column: cell.column }),
-                    }}>
+                    <TableCell
+                      className="px-4 py-2 truncate max-w-0 text-left"
+                      key={cell.id}
+                      id={`cell-${rowIndex}-${cellIndex}`}
+                      data-cell-index={cellIndex}
+                      style={{
+                        ...getCommonPinningStyles({ column: cell.column }),
+                      }}
+                    >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
