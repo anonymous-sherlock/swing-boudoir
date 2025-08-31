@@ -552,6 +552,7 @@ export interface ContestParticipant {
       email: string
       name: string
       image: string | null
+      username: string | null
     } | null
   } | null
 }

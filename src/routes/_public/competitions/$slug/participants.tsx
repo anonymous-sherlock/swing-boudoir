@@ -94,14 +94,12 @@ export default function ContestParticipants() {
         id: participant.coverImage.id,
         key: participant.coverImage.key,
         url: participant.coverImage.url,
-        caption: participant.coverImage.caption || undefined
+        caption: participant.coverImage.caption || undefined,
       });
     }
 
     return images;
   };
-
-
 
   return (
     <div className="min-h-screen bg-background">
@@ -196,7 +194,7 @@ export default function ContestParticipants() {
                                   </div>
                                   <div>
                                     <p className="font-semibold text-foreground">{participant.profile?.user?.name || "Unknown User"}</p>
-                                    <p className="text-sm text-muted-foreground">{participant.profile?.user?.email}</p>
+                                    <p className="text-sm text-muted-foreground">@{participant.profile?.user?.username}</p>
                                   </div>
                                 </div>
                               </td>
@@ -204,11 +202,11 @@ export default function ContestParticipants() {
                                 <div className="flex items-center space-x-2">
                                   {/* Show cover image */}
                                   {participant.coverImage ? (
-                                    <div className="w-16 h-16 rounded-lg overflow-hidden border">
+                                    <div className="size-20 rounded-lg overflow-hidden border">
                                       <img src={participant.coverImage.url} alt="Cover" className="w-full h-full object-cover" />
                                     </div>
                                   ) : (
-                                    <div className="w-16 h-16 rounded-lg border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
+                                    <div className="size-20 rounded-lg border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
                                       <span className="text-xs text-muted-foreground">No Image</span>
                                     </div>
                                   )}
@@ -230,14 +228,12 @@ export default function ContestParticipants() {
                               </td>
                               <td className="py-4 px-4">
                                 <div className="flex items-center space-x-2">
-                                  <Button variant="outline" size="sm">
-                                    <Eye className="w-4 h-4 mr-1" />
-                                    View
-                                  </Button>
-                                  <Button variant="outline" size="sm">
-                                    <MessageCircle className="w-4 h-4 mr-1" />
-                                    Message
-                                  </Button>
+                                  <Link to="/profile/$username" params={{ username: participant.profile?.user?.username || "" }}>
+                                    <Button variant="outline" size="sm" className="flex-1">
+                                      <Eye className="w-4 h-4 mr-1" />
+                                      View Profile
+                                    </Button>
+                                  </Link>
                                 </div>
                               </td>
                             </tr>
@@ -250,44 +246,42 @@ export default function ContestParticipants() {
                     <div className="md:hidden space-y-4">
                       {participants.map((participant) => (
                         <Card key={participant.id} className="p-4">
-                          <div className="flex items-start space-x-4">
-                            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                              {participant.profile?.user?.image ? (
-                                <img src={participant.profile.user.image} alt={participant.profile.user.name} className="w-12 h-12 rounded-full object-cover" />
-                              ) : (
-                                <User className="w-6 h-6 text-primary" />
-                              )}
-                            </div>
-                            <div className="flex-1 space-y-2">
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <p className="font-semibold text-foreground">{participant.profile?.user?.name || "Unknown User"}</p>
-                                  <p className="text-sm text-muted-foreground">{participant.profile?.user?.email}</p>
-                                </div>
-                                {getApprovalStatus(participant.isApproved)}
-                              </div>
-
-                              {/* Show cover image */}
-                              {participant.coverImage && (
-                                <div className="w-20 h-20 rounded-lg overflow-hidden border">
-                                  <img src={participant.coverImage.url} alt="Cover" className="w-full h-full object-cover" />
-                                </div>
-                              )}
-
-                              <div className="text-sm text-muted-foreground">Joined {formatDistanceToNow(new Date(participant.createdAt), { addSuffix: true })}</div>
-
-                              <div className="flex items-center space-x-2 pt-2">
-                                {getAllImages(participant).length > 0 && (
-                                  <Button variant="outline" size="sm" className="flex-1" onClick={() => openLightbox(participant)}>
-                                    <Eye className="w-4 h-4 mr-1" />
-                                    View Images
-                                  </Button>
+                          <div className="flex flex-col items-start gap-2">
+                            <div className="flex items-start space-x-4">
+                              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                {participant.profile?.user?.image ? (
+                                  <img src={participant.profile.user.image} alt={participant.profile.user.name} className="w-12 h-12 rounded-full object-cover" />
+                                ) : (
+                                  <User className="w-6 h-6 text-primary" />
                                 )}
-                                <Button variant="outline" size="sm" className="flex-1">
-                                  <MessageCircle className="w-4 h-4 mr-1" />
-                                  Message
-                                </Button>
                               </div>
+                              <div className="flex-1 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <p className="font-semibold text-foreground">{participant.profile?.user?.name || "Unknown User"}</p>
+                                    <p className="text-sm text-muted-foreground">{participant.profile?.user?.email}</p>
+                                  </div>
+                                  {getApprovalStatus(participant.isApproved)}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Show cover image */}
+                            {participant.coverImage && (
+                              <div className="w-full aspect-square rounded-lg overflow-hidden border m-0 mt-2" onClick={() => openLightbox(participant)}>
+                                <img src={participant.coverImage.url} alt="Cover" className="w-full h-full object-cover" />
+                              </div>
+                            )}
+
+                            <div className="text-sm text-muted-foreground">Joined {formatDistanceToNow(new Date(participant.createdAt), { addSuffix: true })}</div>
+
+                            <div className="flex items-center space-x-2 pt-2">
+                              <Link to="/profile/$username" params={{ username: participant.profile?.user?.username || "" }}>
+                                <Button variant="outline" size="sm" className="flex-1">
+                                  <Eye className="w-4 h-4 mr-1" />
+                                  View Profile
+                                </Button>
+                              </Link>
                             </div>
                           </div>
                         </Card>
