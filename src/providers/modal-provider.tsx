@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Profile } from "@/hooks/api/useProfile";
+import { Profile } from "@/types/profile.types";
 import { createContext, useContext, useEffect, useState } from "react";
 
 interface ModalProviderProps {

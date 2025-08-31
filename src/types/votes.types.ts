@@ -1,5 +1,7 @@
 // Vote types based on actual API structure
 
+import { Payment_Status } from "./payment.types";
+
 export interface Vote {
   id: string;
   type: 'FREE' | 'PAID';
@@ -126,4 +128,71 @@ export interface UpdateVoteMultiplierRequest {
   isActive: boolean;
   startTime?: string | null;
   endTime?: string | null;
+}
+
+// Admin votes types
+export interface AdminVote {
+  id: string;
+  type: 'FREE' | 'PAID';
+  count: number;
+  comment: string | null;
+  createdAt: string;
+  contest: {
+    id: string;
+    name: string;
+  };
+  voter: {
+    id: string;
+    username: string;
+    name: string;
+    profilePicture: string;
+  };
+  votee: {
+    id: string;
+    username: string;
+    name: string;
+    profilePicture: string;
+  };
+  payment: {
+    id: string;
+    amount: number;
+    status: Payment_Status;
+  } | null;
+}
+
+export interface AdminVotesResponse {
+  data: AdminVote[];
+  pagination: {
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+    nextPage: number | null;
+    previousPage: number | null;
+  };
+}
+
+// Votes analytics types
+export interface TopVoterAnalytics {
+  profileId: string;
+  username: string;
+  name: string;
+  profileImage: string;
+  totalVotesGiven: number;
+}
+
+export interface TopVoteRecipient {
+  profileId: string;
+  username: string;
+  name: string;
+  profileImage: string;
+  totalVotesReceived: number;
+}
+
+export interface VotesAnalyticsResponse {
+  totalVotes: number;
+  freeVotes: number;
+  paidVotes: number;
+  topVoters: TopVoterAnalytics[];
+  topVoteRecipients: TopVoteRecipient[];
 }

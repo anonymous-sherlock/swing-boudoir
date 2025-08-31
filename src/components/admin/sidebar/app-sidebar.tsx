@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
-import { BookOpen, Bot, Command, Frame, LifeBuoy, Map, PieChart, Send, Settings2, SquareTerminal, User, CreditCard, Zap, Trophy } from "lucide-react";
+import { BookOpen, Bot, Command, Frame, LifeBuoy, Map, PieChart, Send, Settings2, SquareTerminal, User, CreditCard, Zap, Trophy, Heart } from "lucide-react";
 
 import { NavMain } from "@/components/admin/sidebar/nav-main";
 import { NavProjects } from "@/components/admin/sidebar/nav-projects";
@@ -46,7 +46,11 @@ const data = {
         },
       ],
     },
-
+    {
+      title: "Votes",
+      url: "/admin/votes",
+      icon: Heart,
+    },
     {
       title: "Payments",
       url: "/admin/payments",

@@ -22,6 +22,9 @@ export function AdminLayout() {
       "/admin/winners": "Winners",
       "/admin/profiles": "Profiles",
       "/admin/payments": "Payments",
+      "/admin/votes": "Votes",
+      "/admin/votes-boost": "Votes Boost",
+      "/admin/leaderboard": "Leaderboard",
     };
     return pathMap[path] || "Admin Panel";
   };

@@ -61,7 +61,7 @@ export default function Page() {
       value: dashboardResponse.totalVotes, 
       subtext: 'All votes cast',
       icon: <Vote className="h-8 w-8 text-purple-600" />,
-      href: '/admin/votes-boost',
+      href: '/admin/votes',
     },
     // {
     //   label: 'Total Prize Pool',
@@ -81,14 +81,14 @@ export default function Page() {
       value: dashboardResponse.freeVotes, 
       subtext: 'Votes from free credits',
       icon: <Gift className="h-8 w-8 text-pink-600" />,
-      href: '/admin/votes-boost',
+      href: '/admin/votes',
     },
     {
       label: 'Paid Votes',
       value: dashboardResponse.paidVotes,
       subtext: 'Votes purchased by users',
       icon: <CreditCard className="h-8 w-8 text-indigo-600" />,
-      href: '/admin/payments',
+      href: '/admin/votes',
     },
     {
       label: 'Active Competitions',

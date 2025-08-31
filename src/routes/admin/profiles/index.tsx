@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import type { Profile } from "@/hooks/api/useProfile";
+import type { Profile } from "@/types/profile.types";
 import { useProfile } from "@/hooks/api/useProfile";
 import { Link } from "@tanstack/react-router";
 import { format } from "date-fns";

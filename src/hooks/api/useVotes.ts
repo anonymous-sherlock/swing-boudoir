@@ -12,6 +12,8 @@ import {
   VoteMultiplierPeriod,
   CreateVoteMultiplierRequest,
   UpdateVoteMultiplierRequest,
+  AdminVotesResponse,
+  VotesAnalyticsResponse,
 } from "@/types/votes.types";
 import { toast } from "sonner";
 
@@ -25,6 +27,8 @@ const VOTES_ENDPOINTS = {
   topVoters: (profileId: string) => `/api/v1/votes/${profileId}/top-voters`,
   voteMultipliers: () => "/api/v1/vote-multiplier-periods",
   activeVoteMultiplier: () => "/api/v1/vote-multiplier-periods/active",
+  adminVotes: () => "/api/v1/admin/votes",
+  votesAnalytics: () => "/api/v1/analytics/votes",
 } as const;
 
 // Cast a free vote
@@ -245,6 +249,51 @@ export const useDeleteVoteMultiplier = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["voteMultipliers"] });
       queryClient.invalidateQueries({ queryKey: ["activeVoteMultiplier"] });
+    },
+  });
+};
+
+// Get all votes for admin panel
+export const useAdminVotes = (params: { 
+  search?: string; 
+  page?: number; 
+  limit?: number; 
+  type?: 'FREE' | 'PAID';
+  from_date?: string;
+  to_date?: string;
+} = {}) => {
+  return useQuery({
+    queryKey: ["adminVotes", params],
+    queryFn: async (): Promise<AdminVotesResponse> => {
+      const queryParams = new URLSearchParams();
+      if (params.search) queryParams.append("search", params.search);
+      if (params.page) queryParams.append("page", params.page.toString());
+      if (params.limit) queryParams.append("limit", params.limit.toString());
+      if (params.type) queryParams.append("type", params.type);
+      if (params.from_date) queryParams.append("from_date", params.from_date);
+      if (params.to_date) queryParams.append("to_date", params.to_date);
+
+      const response = await api.get<AdminVotesResponse>(
+        `${VOTES_ENDPOINTS.adminVotes()}?${queryParams.toString()}`
+      );
+      if (!isApiSuccess(response)) {
+        throw new Error(extractApiError(response) || "An unknown error occurred");
+      }
+      return response.data;
+    },
+  });
+};
+
+// Get votes analytics
+export const useVotesAnalytics = () => {
+  return useQuery({
+    queryKey: ["votesAnalytics"],
+    queryFn: async (): Promise<VotesAnalyticsResponse> => {
+      const response = await api.get<VotesAnalyticsResponse>(VOTES_ENDPOINTS.votesAnalytics());
+      if (!isApiSuccess(response)) {
+        throw new Error(extractApiError(response) || "An unknown error occurred");
+      }
+      return response.data;
     },
   });
 };

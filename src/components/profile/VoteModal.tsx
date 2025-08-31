@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { Profile } from "@/hooks/api/useProfile";
+import { Profile } from "@/types/profile.types";
 import { useCastPaidVote } from "@/hooks/api/useVotes";
 import { ContestParticipation } from "@/types/competitions.types";
 import { CreditCard, Gift, Star } from "lucide-react";
