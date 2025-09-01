@@ -252,7 +252,7 @@ function AdminNotificationsPage() {
                     <div className="flex items-start gap-4">
                       {/* User Info Section */}
                       <div className="flex-shrink-0">
-                        <Link to={`/admin/profiles/$id`} params={{ id: notification.user?.id ?? "" }}>
+                        <Link to={`/admin/profiles/$id`} params={{ id: notification.profileId ?? "" }}>
                           <Avatar className="w-12 h-12">
                             <AvatarImage src={notification.user?.image ?? ""} className="object-cover" />
                             <AvatarFallback className="bg-gray-100 text-gray-600 text-sm font-medium">
