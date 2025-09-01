@@ -10,7 +10,7 @@ export const Route = createFileRoute("/admin/users/")({
 function RouteComponent() {
   return (
     <>
-      <div className="my-6">
+      <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">All Users</h1>

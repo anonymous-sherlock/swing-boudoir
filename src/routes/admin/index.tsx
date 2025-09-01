@@ -121,7 +121,7 @@ export default function Page() {
 
   return (
     <div className="space-y-6 min-w-0 overflow-x-auto">
-      <div className="min-w-0 my-6">
+      <div className="min-w-0">
         <h1 className="text-2xl font-bold tracking-tight">Admin Dashboard</h1>
         <p className="text-muted-foreground text-sm">
           Welcome to the Swing Boudoir admin panel. quick insights for contests, users, and more.

@@ -65,7 +65,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       const response = await notificationService.getNotifications(user.profileId);
       if (response) {
-        setNotifications(response.data);
+        setNotifications(response.notifications);
       }
     } catch (err) {
       setError("Failed to load notifications");
@@ -174,13 +174,14 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Create daily motivations
   const createDailyMotivations = useCallback(async () => {
     if (!user?.profileId) return;
+    if (user.type !== "MODEL") return;
 
     try {
       await notificationService.createDailyMotivations(user.profileId);
     } catch (error) {
       console.error("Error creating daily motivations:", error);
     }
-  }, [user?.profileId]);
+  }, [user?.profileId, user?.type]);
 
   // Start monitoring when user is authenticated
   useEffect(() => {

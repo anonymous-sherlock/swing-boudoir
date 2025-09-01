@@ -25,6 +25,7 @@ export function AdminLayout() {
       "/admin/votes": "Votes",
       "/admin/votes-boost": "Votes Boost",
       "/admin/leaderboard": "Leaderboard",
+      "/admin/notifications": "Notifications",
     };
     return pathMap[path] || "Admin Panel";
   };
@@ -53,7 +54,7 @@ export function AdminLayout() {
                   </Breadcrumb>
                 </div>
               </header>
-              <div className="flex flex-col gap-4 p-4 pt-0 min-w-0 overflow-x-auto">
+              <div className="flex flex-col gap-4 p-4 pt-4 min-w-0 overflow-x-auto">
                 <div className="min-w-0">
                   <Outlet />
                 </div>

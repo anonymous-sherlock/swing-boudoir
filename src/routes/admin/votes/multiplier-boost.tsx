@@ -16,6 +16,11 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
+export const Route = createFileRoute("/admin/votes/multiplier-boost")({
+  component: VotesBoostPage,
+});
+
+
 // Form validation schema
 const voteMultiplierSchema = z
   .object({
@@ -39,9 +44,6 @@ const voteMultiplierSchema = z
 
 type VoteMultiplierFormData = z.infer<typeof voteMultiplierSchema>;
 
-export const Route = createFileRoute("/admin/votes-boost")({
-  component: VotesBoostPage,
-});
 
 function VotesBoostPage() {
   const { voteMultipliers, loading, createVoteMultiplier, updateVoteMultiplier, deleteVoteMultiplier } = useVoteMultipliers();
@@ -129,10 +131,10 @@ function VotesBoostPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Votes Boost</h1>
-          <p className="text-muted-foreground">Manage vote multiplier periods to boost engagement during contests.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Votes Boost</h1>
+          <p className="text-muted-foreground text-sm">Manage vote multiplier periods to boost engagement during contests.</p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
