@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => ({
     tanstackRouter({
       routesDirectory: './src/routes',
       target: 'react',
-      autoCodeSplitting: mode !== 'development',
+      autoCodeSplitting: false,
     }),
     react()],
   resolve: {
