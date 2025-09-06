@@ -281,7 +281,7 @@ function ContestsPage() {
           <Input placeholder="Search contests..." value={searchInputValue} onChange={(e) => setSearchInputValue(e.target.value)} className="pl-10 h-9 text-sm" />
         </div>
         <Select value={statusFilter || "all"} onValueChange={(value) => setStatusFilter(value === "all" ? "all" : (value as StatusFilter))}>
-          <SelectTrigger className="w-[140px] h-9">
+          <SelectTrigger className="w-[140px] h-9 text-sm" size="sm">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>

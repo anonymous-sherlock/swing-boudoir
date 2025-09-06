@@ -55,9 +55,9 @@ export const extractApiData = <T>(response: ApiResponse<T>): T | null => {
 /**
  * Extract error from API response
  */
-export const extractApiError = <T>(response: ApiResponse<T>): string | null => {
+export const extractApiError = <T>(response: ApiResponse<T>): string | ApiErrorResponse | null => {
   if (isApiError(response)) {
-    return response.error;
+    return response;
   }
   return null;
 };

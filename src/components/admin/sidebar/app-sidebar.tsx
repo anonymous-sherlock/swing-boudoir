@@ -62,6 +62,11 @@ const data = {
       ],
     },
     {
+      title: "Model Rankings",
+      url: "/admin/ranks",
+      icon: Trophy,
+    },
+    {
       title: "Payments",
       url: "/admin/payments",
       icon: CreditCard,

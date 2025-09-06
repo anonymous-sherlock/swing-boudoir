@@ -78,6 +78,12 @@ export interface ContestSearchResult {
   status: 'active' | 'upcoming' | 'ended';
   slug: string;
   isVotingEnabled: boolean;
+  images:{
+    id: string;
+    key: string;
+    url: string;
+    name: string;
+  }[]
 }
 
 export interface UserSearchResult {
@@ -214,7 +220,7 @@ const useContestSearchInternal = (params: ContestSearchParams, enabled: boolean 
   } = useQuery({
     queryKey: [`search-contests`, params, currentPage],
     queryFn: () => searchContests(params),
-    enabled: enabled && !!params.query,
+    enabled: enabled && (!!params.query || !!params.status),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   });

@@ -5,6 +5,7 @@ import { Download, Filter, Trash2 } from "lucide-react";
 import { useQueryState } from "nuqs";
 import { useState } from "react";
 import { BulkDeleteVotesPopup } from "../actions/bulk-delete-popup";
+import { ContestCombobox } from "@/components/contest-combobox";
 
 interface ToolbarOptionsProps {
   selectedVotes: Array<{
@@ -23,6 +24,11 @@ export function ToolbarOptions({ selectedVotes, allSelectedVoteIds, totalSelecte
     defaultValue: "all",
     parse: (value) => value || "all",
     serialize: (value) => (value === "all" ? "" : value),
+  });
+  const [selectedContest, setSelectedContest] = useQueryState("contestId", {
+    defaultValue: "",
+    parse: (value) => value || "",
+    serialize: (value) => value || "",
   });
   const handleBulkDelete = () => {
     setShowBulkDeletePopup(true);
@@ -43,6 +49,13 @@ export function ToolbarOptions({ selectedVotes, allSelectedVoteIds, totalSelecte
   return (
     <>
       <div className="flex items-center gap-2">
+        <ContestCombobox
+          value={selectedContest}
+          onValueChange={setSelectedContest}
+          placeholder="All contests"
+          className="w-64 !h-8 text-xs"
+          showFilters={true}
+        />
         <Select value={voteType} onValueChange={setVoteType}>
           <SelectTrigger id="user-type-filter" className="w-28 !h-8 py-0 text-xs">
             <SelectValue placeholder="All types" className="py-0 h-7" />

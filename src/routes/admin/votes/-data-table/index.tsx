@@ -6,19 +6,19 @@ import { getColumns } from "./components/columns";
 import { useExportConfig } from "./utils/config";
 
 // ** Import API
-import { useVotesData, fetchVotes } from "./utils/data-fetching";
+import { fetchVotes, useVotesData } from "./utils/data-fetching";
 
 // ** Import Toolbar Options
 import { ToolbarOptions } from "./components/toolbar-options";
 
 // ** Import Types
-import { VoteData } from "./schema";
 import { CaseFormatConfig } from "@/components/data-table/utils/case-utils";
+import { VoteData } from "./schema";
 
 // ** Import Auth Context
 import { useAuth } from "@/contexts/AuthContext";
-import { parseAsStringLiteral, useQueryState } from "nuqs";
-import { useCallback, useMemo } from "react";
+import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
+import { useCallback } from "react";
 
 /**
  * VotesTable Component
@@ -40,12 +40,16 @@ type VoteFilterType = "all" | "FREE" | "PAID";
 
 export default function VotesTable() {
   const { user } = useAuth();
+  const [contestId, setContestId] = useQueryState<string>("contestId", parseAsString);
   const [type, setType] = useQueryState<VoteFilterType>("type", parseAsStringLiteral(["all", "FREE", "PAID"]).withDefault("all"));
 
   // Create a wrapper function that includes the current user ID
-  const getColumnsWithUser = useCallback((handleRowDeselection: ((rowId: string) => void) | null | undefined) => {
-    return getColumns(handleRowDeselection, user?.id);
-  }, [user?.id]);
+  const getColumnsWithUser = useCallback(
+    (handleRowDeselection: ((rowId: string) => void) | null | undefined) => {
+      return getColumns(handleRowDeselection, user?.id);
+    },
+    [user?.id]
+  );
 
   // Create a custom hook function that handles vote type filtering
   const useFilteredVotesData = (
@@ -55,64 +59,62 @@ export default function VotesTable() {
     dateRange: { from_date: string; to_date: string },
     sortBy: string,
     sortOrder: string,
-    caseConfig?: CaseFormatConfig
+    caseConfig?: CaseFormatConfig,
   ) => {
     // Only pass the type filter if it's not "all"
     const typeFilter = type === "all" ? "" : type;
-    return useVotesData(page, pageSize, search, dateRange, sortBy, sortOrder, caseConfig, typeFilter);
+    return useVotesData(page, pageSize, search, dateRange, sortBy, sortOrder, caseConfig, typeFilter, contestId);
   };
 
   // Set the isQueryHook property so DataTable knows this is a React Query hook
   useFilteredVotesData.isQueryHook = true;
 
   // Memoize the fetchAllData function to prevent recreation
-  const fetchAllData = useCallback(async (params: {
-    search: string;
-    from_date: string;
-    to_date: string;
-    sort_by: string;
-    sort_order: string;
-  }) => {
-    try {
-      const allVotes: VoteData[] = [];
-      const chunkSize = 100; // Fetch 100 votes at a time
-      let currentPage = 1;
-      let hasMoreData = true;
-      
-      // Fetch data in chunks until we have all votes
-      while (hasMoreData) {
-        const result = await fetchVotes({
-          page: currentPage,
-          limit: chunkSize,
-          search: params.search,
-          fromDate: params.from_date,
-          toDate: params.to_date,
-          sortBy: params.sort_by,
-          sortOrder: params.sort_order,
-          type: type === "all" ? "" : type // include current type filter
-        });
-        
-        if (result.data && result.data.length > 0) {
-          allVotes.push(...result.data);
-          
-          // Use the API's hasNextPage property for cleaner logic
-          // This matches your API response structure: { hasNextPage: boolean }
-          if (result.pagination?.hasNextPage) {
-            currentPage++;
+  const fetchAllData = useCallback(
+    async (params: { search: string; from_date: string; to_date: string; sort_by: string; sort_order: string; contestId?: string | null }) => {
+      try {
+        const allVotes: VoteData[] = [];
+        const chunkSize = 100; // Fetch 100 votes at a time
+        let currentPage = 1;
+        let hasMoreData = true;
+
+        // Fetch data in chunks until we have all votes
+        while (hasMoreData) {
+          const result = await fetchVotes({
+            page: currentPage,
+            limit: chunkSize,
+            search: params.search,
+            fromDate: params.from_date,
+            toDate: params.to_date,
+            sortBy: params.sort_by,
+            sortOrder: params.sort_order,
+            type: type === "all" ? "" : type, // include current type filter
+            contestId: params.contestId,
+          });
+
+          if (result.data && result.data.length > 0) {
+            allVotes.push(...result.data);
+
+            // Use the API's hasNextPage property for cleaner logic
+            // This matches your API response structure: { hasNextPage: boolean }
+            if (result.pagination?.hasNextPage) {
+              currentPage++;
+            } else {
+              hasMoreData = false;
+            }
           } else {
             hasMoreData = false;
           }
-        } else {
-          hasMoreData = false;
         }
+
+        return allVotes;
+      } catch (error) {
+        console.error("Error fetching all votes for export:", error);
+        throw new Error("Failed to fetch all votes for export");
       }
-      
-      return allVotes;
-    } catch (error) {
-      console.error("Error fetching all votes for export:", error);
-      throw new Error("Failed to fetch all votes for export");
-    }
-  }, [type]);
+    },
+    [type]
+  );
 
   // Get export config
   const exportConfig = useExportConfig();

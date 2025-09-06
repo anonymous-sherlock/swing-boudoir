@@ -55,7 +55,7 @@ export const getColumns = (handleRowDeselection: ((rowId: string) => void) | nul
         const votee = row.original.votee;
         return (
           <Link to="/admin/profiles/$id" params={{ id: votee.id }} className="flex items-center space-x-3 truncate hover:bg-gray-50 p-1 rounded transition-colors">
-            <Avatar className="h-8 w-8 bg-gray-200 flex items-center justify-center rounded-full overflow-hidden">
+            <Avatar className="h-8 w-8 bg-gray-200 flex items-center justify-center rounded-full overflow-hidden flex-shrink-0">
               <AvatarImage src={votee.profilePicture} alt={votee.name} className="object-cover object-center w-full h-full" />
               <AvatarFallback className="text-xs">{votee.name.charAt(0).toUpperCase()}</AvatarFallback>
             </Avatar>

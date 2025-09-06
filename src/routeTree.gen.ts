@@ -37,6 +37,7 @@ import { Route as PublicContactRouteImport } from './routes/_public/contact'
 import { Route as AdminVotesRouteRouteImport } from './routes/admin/votes/route'
 import { Route as AdminVotesIndexRouteImport } from './routes/admin/votes/index'
 import { Route as AdminUsersIndexRouteImport } from './routes/admin/users/index'
+import { Route as AdminRanksIndexRouteImport } from './routes/admin/ranks/index'
 import { Route as AdminProfilesIndexRouteImport } from './routes/admin/profiles/index'
 import { Route as AdminContestsIndexRouteImport } from './routes/admin/contests/index'
 import { Route as PublicCompetitionsIndexRouteImport } from './routes/_public/competitions/index'
@@ -189,6 +190,11 @@ const AdminUsersIndexRoute = AdminUsersIndexRouteImport.update({
   path: '/users/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminRanksIndexRoute = AdminRanksIndexRouteImport.update({
+  id: '/ranks/',
+  path: '/ranks/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminProfilesIndexRoute = AdminProfilesIndexRouteImport.update({
   id: '/profiles/',
   path: '/profiles/',
@@ -289,6 +295,7 @@ export interface FileRoutesByFullPath {
   '/competitions': typeof PublicCompetitionsIndexRoute
   '/admin/contests': typeof AdminContestsIndexRoute
   '/admin/profiles': typeof AdminProfilesIndexRoute
+  '/admin/ranks': typeof AdminRanksIndexRoute
   '/admin/users': typeof AdminUsersIndexRoute
   '/admin/votes/': typeof AdminVotesIndexRoute
   '/competitions/$slug/participants': typeof PublicCompetitionsSlugParticipantsRoute
@@ -326,6 +333,7 @@ export interface FileRoutesByTo {
   '/competitions': typeof PublicCompetitionsIndexRoute
   '/admin/contests': typeof AdminContestsIndexRoute
   '/admin/profiles': typeof AdminProfilesIndexRoute
+  '/admin/ranks': typeof AdminRanksIndexRoute
   '/admin/users': typeof AdminUsersIndexRoute
   '/admin/votes': typeof AdminVotesIndexRoute
   '/competitions/$slug/participants': typeof PublicCompetitionsSlugParticipantsRoute
@@ -369,6 +377,7 @@ export interface FileRoutesById {
   '/_public/competitions/': typeof PublicCompetitionsIndexRoute
   '/admin/contests/': typeof AdminContestsIndexRoute
   '/admin/profiles/': typeof AdminProfilesIndexRoute
+  '/admin/ranks/': typeof AdminRanksIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
   '/admin/votes/': typeof AdminVotesIndexRoute
   '/_public/competitions/$slug/participants': typeof PublicCompetitionsSlugParticipantsRoute
@@ -412,6 +421,7 @@ export interface FileRouteTypes {
     | '/competitions'
     | '/admin/contests'
     | '/admin/profiles'
+    | '/admin/ranks'
     | '/admin/users'
     | '/admin/votes/'
     | '/competitions/$slug/participants'
@@ -449,6 +459,7 @@ export interface FileRouteTypes {
     | '/competitions'
     | '/admin/contests'
     | '/admin/profiles'
+    | '/admin/ranks'
     | '/admin/users'
     | '/admin/votes'
     | '/competitions/$slug/participants'
@@ -491,6 +502,7 @@ export interface FileRouteTypes {
     | '/_public/competitions/'
     | '/admin/contests/'
     | '/admin/profiles/'
+    | '/admin/ranks/'
     | '/admin/users/'
     | '/admin/votes/'
     | '/_public/competitions/$slug/participants'
@@ -712,6 +724,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/ranks/': {
+      id: '/admin/ranks/'
+      path: '/ranks'
+      fullPath: '/admin/ranks'
+      preLoaderRoute: typeof AdminRanksIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/profiles/': {
       id: '/admin/profiles/'
       path: '/profiles'
@@ -883,6 +902,7 @@ interface AdminRouteChildren {
   AdminProfilesIdRoute: typeof AdminProfilesIdRoute
   AdminContestsIndexRoute: typeof AdminContestsIndexRoute
   AdminProfilesIndexRoute: typeof AdminProfilesIndexRoute
+  AdminRanksIndexRoute: typeof AdminRanksIndexRoute
   AdminUsersIndexRoute: typeof AdminUsersIndexRoute
   AdminContestsIdEditRoute: typeof AdminContestsIdEditRoute
   AdminContestsIdLeaderboardRoute: typeof AdminContestsIdLeaderboardRoute
@@ -900,6 +920,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminProfilesIdRoute: AdminProfilesIdRoute,
   AdminContestsIndexRoute: AdminContestsIndexRoute,
   AdminProfilesIndexRoute: AdminProfilesIndexRoute,
+  AdminRanksIndexRoute: AdminRanksIndexRoute,
   AdminUsersIndexRoute: AdminUsersIndexRoute,
   AdminContestsIdEditRoute: AdminContestsIdEditRoute,
   AdminContestsIdLeaderboardRoute: AdminContestsIdLeaderboardRoute,
