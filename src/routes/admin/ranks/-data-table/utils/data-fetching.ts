@@ -37,8 +37,8 @@ export async function fetchRanks(params: {
         pagination: {
             page: params.page,
             limit: params.limit,
-            totalPages: response.data.pagination?.totalPages || 1,
-            total: response.data.pagination?.total || 0,
+            total_pages: response.data.pagination?.totalPages || 1,
+            total_items: response.data.pagination?.total || 0,
             hasNextPage: response.data.pagination?.hasNextPage || false,
             hasPreviousPage: response.data.pagination?.hasPreviousPage || false,
             nextPage: response.data.pagination?.nextPage || null,
