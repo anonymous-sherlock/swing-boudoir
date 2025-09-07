@@ -214,7 +214,7 @@ function AdminNotificationsPage() {
             <div>
               <CardTitle className="text-lg font-semibold text-gray-900">Notifications</CardTitle>
               <CardDescription className="text-sm text-gray-600">
-                {isLoading ? "Loading..." : data ? "Showing ${data.data.length} of ${data.pagination.total} notifications" : "No notifications"}
+                {isLoading ? "Loading..." : data ? `Showing ${data.data.length} of ${data.pagination.total} notifications` : "No notifications"}
               </CardDescription>
             </div>
             {data && data.pagination.total > 0 && (
@@ -363,5 +363,5 @@ function AdminNotificationsPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
