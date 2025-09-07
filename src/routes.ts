@@ -21,7 +21,8 @@ export const publicRoutes = [
  */
 export const publicRoutePatterns = [
   "/auth/",
-  "/profile/"
+  "/profile/",
+  "/competitions/"
 ];
 
 /**

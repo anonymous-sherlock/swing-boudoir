@@ -317,7 +317,7 @@ export function PublicProfile() {
                         className={`inline-flex items-center justify-center h-8 w-8 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors ${!socialUrls.youtube ? "opacity-50 cursor-not-allowed" : "hover:border-gray-300"}`}
                         onClick={(e) => !socialUrls.youtube && e.preventDefault()}
                       >
-                        <Icons.youtube className="h-4 w-4 fill-red-500" />
+                        <Icons.youtube className="h-4 w-4 fill-red-500 text-red-500" />
                       </Link>
                       {socialUrls.website && (
                         <Link

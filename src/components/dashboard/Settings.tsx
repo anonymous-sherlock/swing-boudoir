@@ -1,53 +1,30 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Icons } from "@/components/icons";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks/api/useProfile";
+import { useToast } from "@/hooks/use-toast";
+import { notificationService } from "@/lib/notificationService";
+import { getSocialMediaUrls } from "@/utils/social-media";
+import { LinkedInLogoIcon } from "@radix-ui/react-icons";
 import {
-  Bell,
-  Mail,
-  Smartphone,
-  Lock,
-  User,
-  Trash2,
-  LogOut,
-  Shield,
-  Instagram,
+  Edit,
   Eye,
   EyeOff,
   Globe,
-  Download,
-  Settings as SettingsIcon,
-  Monitor,
-  Moon,
-  Sun,
-  Palette,
-  Languages,
-  HelpCircle,
-  MessageSquare,
-  Star,
-  Clock,
-  MapPin,
-  Calendar,
-  Zap,
-  Volume2,
-  VolumeX,
-  Wifi,
-  WifiOff,
-  Activity,
-  Edit,
+  Lock,
+  LogOut,
+  Trash2,
+  User
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { useEffect, useState } from "react";
 import { EditProfile } from "./EditProfile";
-import { useProfile } from "@/hooks/api/useProfile";
-import { notificationService } from "@/lib/notificationService";
-import { Icons } from "@/components/icons";
-import { getSocialMediaUrls } from "@/utils/social-media";
 
 const mockSettings = {
   notifications: {
@@ -445,7 +422,7 @@ export function Settings() {
                               )}
                               {socialUrls.youtube && (
                                 <div className="flex items-center space-x-2">
-                                  <Icons.youtube className="h-4 w-4" />
+                                  <Icons.youtube className="h-4 w-4 text-red-500" />
                                   <span className="text-sm">YouTube</span>
                                   <a href={socialUrls.youtube} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500 hover:underline">
                                     View Channel
@@ -472,7 +449,7 @@ export function Settings() {
                               )}
                               {socialUrls.linkedin && (
                                 <div className="flex items-center space-x-2">
-                                  <Globe className="h-4 w-4 text-blue-700" />
+                                  <LinkedInLogoIcon className="h-4 w-4 text-blue-700" />
                                   <span className="text-sm">LinkedIn</span>
                                   <a href={socialUrls.linkedin} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500 hover:underline">
                                     View Profile

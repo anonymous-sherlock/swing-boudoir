@@ -1,3 +1,17 @@
+#nprogress .bar {
+  background: #fbd051 !important;
+  height: 3px !important;
+}
+#nprogress .peg {
+  box-shadow:
+    0 0 10px #fbd051,
+    0 0 5px #fbd051 !important;
+}
+
+#nprogress .spinner-icon {
+  border-top-color: #fbd051 !important;
+  border-left-color: #fbd051 !important;
+}
 /* custom-styles.css */
 .whatsapp_widget_wrapper {
   bottom: 15px !important;

@@ -92,7 +92,7 @@ export function Lightbox({ image, onClose }: LightboxProps) {
       </div>
 
       {/* Navigation hint */}
-      <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 text-white/70 text-sm">Press ESC to close • Click outside to close</div>
+      <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 text-white/70 text-xs">Press ESC to close • Click outside to close</div>
     </div>
   );
 }

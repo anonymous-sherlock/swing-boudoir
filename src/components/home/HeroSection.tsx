@@ -2,13 +2,15 @@ import { Button } from "@/components/ui/button";
 import { ChevronRight, Trophy, Users, DollarSign, TrophyIcon, ArrowRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/AuthContext";
-import heroDesktop from "@/assets/hero-desktop.jpg";
+import heroDesktop from "@/assets/hero-desktop.webp";
 import { useContestsAnalytics } from "@/hooks/api/useContests";
+import { Route } from "@/routes/index";
 
 const HeroSection = () => {
+  const initialData = Route.useLoaderData();
   const { isAuthenticated } = useAuth();
 
-  const { data: contestsAnalytics } = useContestsAnalytics();
+  const { data: contestsAnalytics } = useContestsAnalytics(initialData);
   const stats = [
     { icon: DollarSign, label: "Prize Pool", value: "$20,000+" },
     { icon: Trophy, label: "Active Competitions", value: contestsAnalytics?.active },

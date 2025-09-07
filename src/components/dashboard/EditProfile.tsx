@@ -1191,7 +1191,7 @@ export function EditProfile() {
 
                 <div className="space-y-2">
                   <Label htmlFor="youtube" className="text-sm font-medium flex items-center gap-2">
-                    <Icons.youtube className="h-4 w-4 fill-red-500" />
+                    <Icons.youtube className="h-4 w-4 fill-red-500 text-red-500" />
                     YouTube
                   </Label>
                   <Controller

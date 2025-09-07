@@ -46,40 +46,41 @@ function DialogClose({ ...props }: React.ComponentProps<typeof DialogPrimitive.C
   return <DialogPrimitive.Close data-slot="dialog-close" {...props} />;
 }
 
-const DialogOverlay = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Overlay>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
->(({ className, ...props }, ref) => {
-  const { backdrop, classNames } = React.useContext(DialogContext);
+const DialogOverlay = React.forwardRef<React.ElementRef<typeof DialogPrimitive.Overlay>, React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>>(
+  ({ className, ...props }, ref) => {
+    const { backdrop, classNames } = React.useContext(DialogContext);
 
-  const backdropStyles: Record<BackdropType, string> = {
-    opaque: "bg-black/50",
-    blur: "backdrop-blur-sm backdrop-saturate-150 bg-black/50",
-    transparent: "bg-transparent",
-    gradient: "bg-gradient-to-t from-zinc-900 to-zinc-900/10 backdrop-opacity-20",
-  };
+    const backdropStyles: Record<BackdropType, string> = {
+      opaque: "bg-black/50",
+      blur: "backdrop-blur-sm backdrop-saturate-150 bg-black/50",
+      transparent: "bg-transparent",
+      gradient: "bg-gradient-to-t from-zinc-900 to-zinc-900/10 backdrop-opacity-20",
+    };
 
-  return (
-    <DialogPrimitive.Overlay
-      ref={ref}
-      data-slot="dialog-overlay"
-      className={cn(
-        "grid place-items-center py-6 px-4 overflow-auto data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50",
-        backdropStyles[backdrop],
-        "w-screen h-screen fixed inset-0",
-        className,
-        classNames?.backdrop
-      )}
-      {...props}
-    />
-  );
-});
+    return (
+      <DialogPrimitive.Overlay
+        ref={ref}
+        data-slot="dialog-overlay"
+        className={cn(
+          "grid place-items-center py-6 px-4 overflow-auto data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50",
+          backdropStyles[backdrop],
+          "w-screen h-screen fixed inset-0",
+          className,
+          classNames?.backdrop
+        )}
+        {...props}
+      />
+    );
+  }
+);
 DialogOverlay.displayName = "DialogOverlay";
 
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => {
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
+    showCloseButton?: boolean;
+  }
+>(({ className, children, showCloseButton = true, ...props }, ref) => {
   const { classNames, size } = React.useContext(DialogContext);
 
   return (
@@ -105,10 +106,12 @@ const DialogContent = React.forwardRef<
           {...props}
         >
           {children}
-          <DialogPrimitive.Close className="hover:bg-gray-300/30 p-1 rounded-full ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-2 right-2 opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
-            <XIcon />
-            <span className="sr-only">Close</span>
-          </DialogPrimitive.Close>
+          {showCloseButton && (
+            <DialogPrimitive.Close className="hover:bg-gray-300/30 p-1 rounded-full ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-2 right-2 opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
+              <XIcon />
+              <span className="sr-only">Close</span>
+            </DialogPrimitive.Close>
+          )}
         </DialogPrimitive.Content>
       </DialogOverlay>
     </DialogPortal>

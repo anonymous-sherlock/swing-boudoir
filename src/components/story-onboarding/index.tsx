@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { ChevronRight, Camera, Sparkles, CheckCircle } from "lucide-react";
-import WelcomeScene from "./WelcomScene";
-import IdentityScene from "./IdentityScene";
-import MeasurementsScene from "./MeasurementsScene";
-import PortfolioScene from "./PortfolioScene";
-import FinalScene from "./FinalScene.tsx";
+import onboardingWelcomeImg from "@/assets/onboarding-welcome.jpg";
+import identityImage from "@/assets/onboarding-identity.jpg";
+
+import React, { useEffect, useState } from "react";
 import ProgressIndicator from "./ProgressIndicator.tsx";
 import "./index.css";
-import onboardingWelcomeImg from "@/assets/onboarding-welcome.jpg";
+
+// Local storage key for persisting form data
+const ONBOARDING_STORAGE_KEY = "swing-boudoir-onboarding-data";
 
 export interface FormData {
   // Identity
@@ -78,10 +77,76 @@ const initialFormData: FormData = {
   tiktok: "",
 };
 
+// Helper functions for localStorage persistence
+const saveFormDataToStorage = (formData: FormData, currentScene: number) => {
+  try {
+    // Create a copy of formData without File objects for localStorage
+    const serializableFormData = {
+      ...formData,
+      photos: [], // Don't persist File objects
+      profileAvatar: null, // Don't persist File objects
+      bannerImage: null, // Don't persist File objects
+    };
+    
+    const dataToSave = {
+      formData: serializableFormData,
+      currentScene,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(dataToSave));
+  } catch (error) {
+    console.warn("Failed to save onboarding data to localStorage:", error);
+  }
+};
+
+const loadFormDataFromStorage = (): { formData: FormData; currentScene: number } | null => {
+  try {
+    const savedData = localStorage.getItem(ONBOARDING_STORAGE_KEY);
+    if (savedData) {
+      const parsed = JSON.parse(savedData);
+      // Check if data is not too old (e.g., within 7 days)
+      const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+      if (Date.now() - parsed.timestamp < maxAge) {
+        return {
+          formData: { 
+            ...initialFormData, 
+            ...parsed.formData,
+            // Ensure File objects are properly initialized
+            photos: [],
+            profileAvatar: null,
+            bannerImage: null,
+          },
+          currentScene: parsed.currentScene || 0,
+        };
+      } else {
+        // Clear old data
+        clearFormDataFromStorage();
+      }
+    }
+  } catch (error) {
+    console.warn("Failed to load onboarding data from localStorage:", error);
+  }
+  return null;
+};
+
+const clearFormDataFromStorage = () => {
+  try {
+    localStorage.removeItem(ONBOARDING_STORAGE_KEY);
+  } catch (error) {
+    console.warn("Failed to clear onboarding data from localStorage:", error);
+  }
+};
+
+const WelcomeSceneLazy = React.lazy(() => import("./WelcomScene").then(module => ({ default: module.default })));
+const IdentitySceneLazy = React.lazy(() => import("./IdentityScene").then(module => ({ default: module.default })));
+const PortfolioSceneLazy = React.lazy(() => import("./PortfolioScene").then(module => ({ default: module.default })));
+const FinalSceneLazy = React.lazy(() => import("./FinalScene").then(module => ({ default: module.default })));
+
 function App() {
   const [currentScene, setCurrentScene] = useState(0);
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const scenes = [
     "Welcome to your modeling journey",
@@ -123,7 +188,12 @@ function App() {
     if (currentScene < scenes.length - 1 && (force || canGoNext)) {
       setIsTransitioning(true);
       setTimeout(() => {
-        setCurrentScene(currentScene + 1);
+        const newScene = currentScene + 1;
+        setCurrentScene(newScene);
+        // Save current scene to localStorage
+        if (isInitialized) {
+          saveFormDataToStorage(formData, newScene);
+        }
         setIsTransitioning(false);
       }, 300);
     }
@@ -133,14 +203,32 @@ function App() {
     if (currentScene > 0) {
       setIsTransitioning(true);
       setTimeout(() => {
-        setCurrentScene(currentScene - 1);
+        const newScene = currentScene - 1;
+        setCurrentScene(newScene);
+        // Save current scene to localStorage
+        if (isInitialized) {
+          saveFormDataToStorage(formData, newScene);
+        }
         setIsTransitioning(false);
       }, 300);
     }
   };
 
   const updateFormData = (updates: Partial<FormData>) => {
-    setFormData((prev) => ({ ...prev, ...updates }));
+    setFormData((prev) => {
+      const newData = { ...prev, ...updates };
+      // Save to localStorage whenever form data changes
+      if (isInitialized) {
+        saveFormDataToStorage(newData, currentScene);
+      }
+      return newData;
+    });
+  };
+
+  const handleOnboardingComplete = () => {
+    // Clear saved data when onboarding is completed
+    clearFormDataFromStorage();
+    // You can add additional logic here like redirecting to dashboard
   };
 
   const renderCurrentScene = () => {
@@ -149,30 +237,45 @@ function App() {
       updateFormData,
       onNext: () => nextScene(true), // Force navigation when called from form submission
       isTransitioning,
+      onComplete: handleOnboardingComplete,
     };
 
     switch (currentScene) {
       case 0:
-        return <WelcomeScene {...sceneProps} />;
+        return <WelcomeSceneLazy {...sceneProps} />;
       case 1:
-        return <IdentityScene {...sceneProps} />;
+        return <IdentitySceneLazy {...sceneProps} />;
       case 2:
-        return <PortfolioScene {...sceneProps} />;
+        return <PortfolioSceneLazy {...sceneProps} />;
       case 3:
-        return <FinalScene {...sceneProps} />;
+        return <FinalSceneLazy {...sceneProps} />;
       default:
-        return <WelcomeScene {...sceneProps} />;
+        return <WelcomeSceneLazy {...sceneProps} />;
     }
   };
+
+  // Initialize component with saved data
+  useEffect(() => {
+    const savedData = loadFormDataFromStorage();
+    if (savedData) {
+      setFormData(savedData.formData);
+      setCurrentScene(savedData.currentScene);
+    }
+    setIsInitialized(true);
+  }, []);
+
+  // Save data whenever formData or currentScene changes (after initialization)
+  useEffect(() => {
+    if (isInitialized) {
+      saveFormDataToStorage(formData, currentScene);
+    }
+  }, [formData, currentScene, isInitialized]);
 
   useEffect(() => {
     // Preload images for smooth transitions
     const imageUrls = [
       onboardingWelcomeImg,
-      "https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg",
-      "https://images.pexels.com/photos/1040945/pexels-photo-1040945.jpeg",
-      "https://images.pexels.com/photos/1040424/pexels-photo-1040424.jpeg",
-      "https://images.pexels.com/photos/1065084/pexels-photo-1065084.jpeg",
+      identityImage
     ];
 
     imageUrls.forEach((url) => {

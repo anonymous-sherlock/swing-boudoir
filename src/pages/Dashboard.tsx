@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter, useParams } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { Sidebar } from "@/components/dashboard/Sidebar";
@@ -28,6 +28,7 @@ function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
   const handleSidebarToggle = () => {
     setIsMobileSidebarOpen(!isMobileSidebarOpen);
@@ -39,14 +40,18 @@ function DashboardLayout({
       <div className="flex pt-16">
         {/* Desktop Sidebar */}
         <aside className="hidden md:block">
-          <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+          <Sidebar 
+            activeSection={activeSection} 
+            setActiveSection={setActiveSection} 
+            onExpandedChange={setIsSidebarExpanded}
+          />
         </aside>
 
         {/* Mobile Sidebar */}
         <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} isMobile={true} isOpen={isMobileSidebarOpen} onToggle={() => setIsMobileSidebarOpen(false)} />
 
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
+        <main className={`flex-1 overflow-y-auto p-4 sm:p-6 transition-all duration-300 ${isSidebarExpanded ? 'md:ml-64' : 'md:ml-16'}`}>{children}</main>
       </div>
     </div>
   );
@@ -59,6 +64,7 @@ export default function Dashboard() {
 
   const { isAuthenticated, isLoading, checkUserNeedsOnboarding } = useAuth();
   const [activeSection, setActiveSection] = useState<DashboardSection>(currentSection || "profile");
+  const [isNavigating, setIsNavigating] = useState(false);
 
   // Auth and onboarding checks
   useEffect(() => {
@@ -72,29 +78,37 @@ export default function Dashboard() {
   }, [isAuthenticated, isLoading]);
 
   // Update URL when section changes (only if user changes section)
-  const handleSetActiveSection = (newSection: DashboardSection) => {
+  const handleSetActiveSection = useCallback((newSection: DashboardSection) => {
+    if (newSection === activeSection) return; // Prevent unnecessary updates
+    
+    setIsNavigating(true);
     setActiveSection(newSection);
     // Always navigate to update the URL, even if currentSection is undefined
-    router.navigate({ to: "/dashboard/$section", params: { section: newSection } });
-  };
+    router.navigate({ to: "/dashboard/$section", params: { section: newSection } }).finally(() => {
+      setIsNavigating(false);
+    });
+  }, [activeSection, router]);
 
-  // Sync state with URL param
+  // Sync state with URL param - only when URL changes externally
   useEffect(() => {
-    if (currentSection && currentSection !== activeSection) {
+    if (currentSection && currentSection !== activeSection && !isNavigating) {
       setActiveSection(currentSection);
     }
-  }, [currentSection, activeSection]);
+  }, [currentSection, activeSection, isNavigating]);
 
-  if (isLoading) {
-    return null;
-  }
+  const renderContent = useMemo(() => {
+    // Show loading state during navigation to prevent flickering
+    if (isNavigating) {
+      return (
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+      );
+    }
 
-  if (!isAuthenticated || checkUserNeedsOnboarding()) {
-    // Don't render dashboard if not authenticated or not onboarded
-    return null;
-  }
-
-  const renderContent = () => {
     switch (activeSection) {
       case "edit-profile":
         return <EditProfile />;
@@ -121,11 +135,20 @@ export default function Dashboard() {
       default:
         return <DashboardNotifications />;
     }
-  };
+  }, [activeSection, isNavigating]);
+
+  if (isLoading) {
+    return null;
+  }
+
+  if (!isAuthenticated || checkUserNeedsOnboarding()) {
+    // Don't render dashboard if not authenticated or not onboarded
+    return null;
+  }
 
   return (
     <DashboardLayout activeSection={activeSection} setActiveSection={handleSetActiveSection}>
-      {renderContent()}
+      {renderContent}
     </DashboardLayout>
   );
 }

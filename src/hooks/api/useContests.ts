@@ -332,7 +332,7 @@ export function useDeleteContest() {
   })
 }
 // hook for getting contests stats
-export function useContestsAnalytics() {
+export function useContestsAnalytics(initialData?: ContestAnalytics) {
   return useQuery({
     queryKey: ['contests', 'analytics'],
     queryFn: async (): Promise<ContestAnalytics> => {
@@ -347,6 +347,7 @@ export function useContestsAnalytics() {
       }
       return response.data
     },
+    initialData: initialData,
   })
 }
 // Hook for creating contest awards

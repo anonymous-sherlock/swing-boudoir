@@ -1,14 +1,16 @@
 import { PageLoader } from "@/components/PageLoader";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import Onboarding from "@/components/story-onboarding";
 import { authApi } from "@/lib/api";
 import { GetSessionResponse } from "@/types/auth.types";
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import React from "react";
+
+const OnboardingLazy = React.lazy(() => import("@/components/story-onboarding").then(module => ({ default: module.default })));
 
 export const Route = createFileRoute("/onboarding/")({
   component: () => (
     <ProtectedRoute>
-      <Onboarding />
+      <OnboardingLazy />
     </ProtectedRoute>
   ),
   pendingComponent: () => <PageLoader />,

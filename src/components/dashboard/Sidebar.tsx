@@ -13,6 +13,7 @@ interface SidebarProps {
   isMobile?: boolean;
   isOpen?: boolean;
   onToggle?: () => void;
+  onExpandedChange?: (expanded: boolean) => void;
 }
 
 const sidebarItemsMain = [
@@ -32,7 +33,7 @@ const sidebarItemsSecondary = [
   // { id: "privacy" as DashboardSection, label: "Privacy Policy", icon: Lock },
 ];
 
-export function Sidebar({ activeSection, setActiveSection, isMobile = false, isOpen = false, onToggle }: SidebarProps) {
+export function Sidebar({ activeSection, setActiveSection, isMobile = false, isOpen = false, onToggle, onExpandedChange }: SidebarProps) {
   const { handleLogout } = useAuth();
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -43,7 +44,9 @@ export function Sidebar({ activeSection, setActiveSection, isMobile = false, isO
   };
 
   const toggleExpand = () => {
-    setIsExpanded(!isExpanded);
+    const newExpanded = !isExpanded;
+    setIsExpanded(newExpanded);
+    onExpandedChange?.(newExpanded);
   };
 
   // Mobile sidebar
@@ -127,7 +130,7 @@ export function Sidebar({ activeSection, setActiveSection, isMobile = false, isO
 
   // Desktop sidebar
   return (
-    <div className={`bg-card border-r border-border h-screen flex flex-col sticky top-0 transition-all duration-300 ${isExpanded ? "w-64" : "w-16"}`}>
+    <div className={`bg-card border-r border-border h-screen flex flex-col transition-all duration-300 fixed left-0 top-16 z-40 ${isExpanded ? "w-64" : "w-16"} will-change-transform`}>
       <div className="p-4 border-b border-border flex items-center justify-between">
         {isExpanded ? (
           <h2 className="text-xl font-bold text-foreground">Dashboard</h2>

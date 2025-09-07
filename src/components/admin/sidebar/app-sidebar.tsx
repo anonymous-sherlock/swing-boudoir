@@ -71,11 +71,11 @@ const data = {
       url: "/admin/payments",
       icon: CreditCard,
     },
-    {
-      title: "Leaderboard",
-      url: "/admin/leaderboard",
-      icon: Trophy,
-    },
+    // {
+    //   title: "Leaderboard",
+    //   url: "/admin/leaderboard",
+    //   icon: Trophy,
+    // },
     {
       title: "Notifications",
       url: "/admin/notifications",

@@ -8,8 +8,9 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
+import { createFileRoute } from '@tanstack/react-router'
+
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as WinnersRouteImport } from './routes/winners'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
@@ -18,44 +19,50 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as VotersIndexRouteImport } from './routes/voters/index'
 import { Route as OnboardingIndexRouteImport } from './routes/onboarding/index'
 import { Route as LeaderboardIndexRouteImport } from './routes/leaderboard/index'
-import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as PaymentsSuccessRouteImport } from './routes/payments/success'
 import { Route as PaymentsFailureRouteImport } from './routes/payments/failure'
 import { Route as DashboardSectionRouteImport } from './routes/dashboard/$section'
 import { Route as AuthIdRouteImport } from './routes/auth/$id'
 import { Route as AdminWinnersRouteImport } from './routes/admin/winners'
-import { Route as AdminPaymentsRouteImport } from './routes/admin/payments'
-import { Route as AdminNotificationsRouteImport } from './routes/admin/notifications'
-import { Route as AdminLeaderboardRouteImport } from './routes/admin/leaderboard'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
-import { Route as PublicTermsOfServicesRouteImport } from './routes/_public/terms-of-services'
-import { Route as PublicRulesRouteImport } from './routes/_public/rules'
-import { Route as PublicPrivacyRouteImport } from './routes/_public/privacy'
-import { Route as PublicFaqRouteImport } from './routes/_public/faq'
-import { Route as PublicContactRouteImport } from './routes/_public/contact'
 import { Route as AdminVotesRouteRouteImport } from './routes/admin/votes/route'
 import { Route as AdminVotesIndexRouteImport } from './routes/admin/votes/index'
-import { Route as AdminUsersIndexRouteImport } from './routes/admin/users/index'
-import { Route as AdminRanksIndexRouteImport } from './routes/admin/ranks/index'
 import { Route as AdminProfilesIndexRouteImport } from './routes/admin/profiles/index'
 import { Route as AdminContestsIndexRouteImport } from './routes/admin/contests/index'
-import { Route as PublicCompetitionsIndexRouteImport } from './routes/_public/competitions/index'
 import { Route as AdminVotesMultiplierBoostRouteImport } from './routes/admin/votes/multiplier-boost'
 import { Route as AdminProfilesIdRouteImport } from './routes/admin/profiles/$id'
 import { Route as AdminContestsCreateRouteImport } from './routes/admin/contests/create'
-import { Route as PublicProfileUsernameRouteImport } from './routes/_public/profile.$username'
 import { Route as PublicCompetitionsSlugRouteRouteImport } from './routes/_public/competitions/$slug/route'
 import { Route as PublicCompetitionsSlugIndexRouteImport } from './routes/_public/competitions/$slug/index'
 import { Route as AdminContestsIdLeaderboardRouteImport } from './routes/admin/contests/$id.leaderboard'
 import { Route as AdminContestsIdEditRouteImport } from './routes/admin/contests/$id.edit'
-import { Route as PublicCompetitionsSlugParticipantsRouteImport } from './routes/_public/competitions/$slug/participants'
 
-const WinnersRoute = WinnersRouteImport.update({
-  id: '/winners',
-  path: '/winners',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const DashboardIndexLazyRouteImport = createFileRoute('/dashboard/')()
+const AdminPaymentsLazyRouteImport = createFileRoute('/admin/payments')()
+const AdminNotificationsLazyRouteImport = createFileRoute(
+  '/admin/notifications',
+)()
+const AdminLeaderboardLazyRouteImport = createFileRoute('/admin/leaderboard')()
+const PublicTermsOfServicesLazyRouteImport = createFileRoute(
+  '/_public/terms-of-services',
+)()
+const PublicRulesLazyRouteImport = createFileRoute('/_public/rules')()
+const PublicPrivacyLazyRouteImport = createFileRoute('/_public/privacy')()
+const PublicFaqLazyRouteImport = createFileRoute('/_public/faq')()
+const PublicContactLazyRouteImport = createFileRoute('/_public/contact')()
+const AdminUsersIndexLazyRouteImport = createFileRoute('/admin/users/')()
+const AdminRanksIndexLazyRouteImport = createFileRoute('/admin/ranks/')()
+const PublicCompetitionsIndexLazyRouteImport = createFileRoute(
+  '/_public/competitions/',
+)()
+const PublicProfileUsernameLazyRouteImport = createFileRoute(
+  '/_public/profile/$username',
+)()
+const PublicCompetitionsSlugParticipantsLazyRouteImport = createFileRoute(
+  '/_public/competitions/$slug/participants',
+)()
+
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -80,6 +87,13 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardIndexLazyRoute = DashboardIndexLazyRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any).lazy(() =>
+  import('./routes/dashboard/index.lazy').then((d) => d.Route),
+)
 const VotersIndexRoute = VotersIndexRouteImport.update({
   id: '/voters/',
   path: '/voters/',
@@ -95,16 +109,64 @@ const LeaderboardIndexRoute = LeaderboardIndexRouteImport.update({
   path: '/leaderboard/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardIndexRoute = DashboardIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminPaymentsLazyRoute = AdminPaymentsLazyRouteImport.update({
+  id: '/payments',
+  path: '/payments',
+  getParentRoute: () => AdminRoute,
+} as any).lazy(() =>
+  import('./routes/admin/payments.lazy').then((d) => d.Route),
+)
+const AdminNotificationsLazyRoute = AdminNotificationsLazyRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => AdminRoute,
+} as any).lazy(() =>
+  import('./routes/admin/notifications.lazy').then((d) => d.Route),
+)
+const AdminLeaderboardLazyRoute = AdminLeaderboardLazyRouteImport.update({
+  id: '/leaderboard',
+  path: '/leaderboard',
+  getParentRoute: () => AdminRoute,
+} as any).lazy(() =>
+  import('./routes/admin/leaderboard.lazy').then((d) => d.Route),
+)
+const PublicTermsOfServicesLazyRoute =
+  PublicTermsOfServicesLazyRouteImport.update({
+    id: '/terms-of-services',
+    path: '/terms-of-services',
+    getParentRoute: () => PublicRouteRoute,
+  } as any).lazy(() =>
+    import('./routes/_public/terms-of-services.lazy').then((d) => d.Route),
+  )
+const PublicRulesLazyRoute = PublicRulesLazyRouteImport.update({
+  id: '/rules',
+  path: '/rules',
+  getParentRoute: () => PublicRouteRoute,
+} as any).lazy(() => import('./routes/_public/rules.lazy').then((d) => d.Route))
+const PublicPrivacyLazyRoute = PublicPrivacyLazyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => PublicRouteRoute,
+} as any).lazy(() =>
+  import('./routes/_public/privacy.lazy').then((d) => d.Route),
+)
+const PublicFaqLazyRoute = PublicFaqLazyRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => PublicRouteRoute,
+} as any).lazy(() => import('./routes/_public/faq.lazy').then((d) => d.Route))
+const PublicContactLazyRoute = PublicContactLazyRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => PublicRouteRoute,
+} as any).lazy(() =>
+  import('./routes/_public/contact.lazy').then((d) => d.Route),
+)
 const PaymentsSuccessRoute = PaymentsSuccessRouteImport.update({
   id: '/payments/success',
   path: '/payments/success',
@@ -130,70 +192,42 @@ const AdminWinnersRoute = AdminWinnersRouteImport.update({
   path: '/winners',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminPaymentsRoute = AdminPaymentsRouteImport.update({
-  id: '/payments',
-  path: '/payments',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
-  id: '/notifications',
-  path: '/notifications',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminLeaderboardRoute = AdminLeaderboardRouteImport.update({
-  id: '/leaderboard',
-  path: '/leaderboard',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
   getParentRoute: () => AdminRoute,
-} as any)
-const PublicTermsOfServicesRoute = PublicTermsOfServicesRouteImport.update({
-  id: '/terms-of-services',
-  path: '/terms-of-services',
-  getParentRoute: () => PublicRouteRoute,
-} as any)
-const PublicRulesRoute = PublicRulesRouteImport.update({
-  id: '/rules',
-  path: '/rules',
-  getParentRoute: () => PublicRouteRoute,
-} as any)
-const PublicPrivacyRoute = PublicPrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => PublicRouteRoute,
-} as any)
-const PublicFaqRoute = PublicFaqRouteImport.update({
-  id: '/faq',
-  path: '/faq',
-  getParentRoute: () => PublicRouteRoute,
-} as any)
-const PublicContactRoute = PublicContactRouteImport.update({
-  id: '/contact',
-  path: '/contact',
-  getParentRoute: () => PublicRouteRoute,
 } as any)
 const AdminVotesRouteRoute = AdminVotesRouteRouteImport.update({
   id: '/votes',
   path: '/votes',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminUsersIndexLazyRoute = AdminUsersIndexLazyRouteImport.update({
+  id: '/users/',
+  path: '/users/',
+  getParentRoute: () => AdminRoute,
+} as any).lazy(() =>
+  import('./routes/admin/users/index.lazy').then((d) => d.Route),
+)
+const AdminRanksIndexLazyRoute = AdminRanksIndexLazyRouteImport.update({
+  id: '/ranks/',
+  path: '/ranks/',
+  getParentRoute: () => AdminRoute,
+} as any).lazy(() =>
+  import('./routes/admin/ranks/index.lazy').then((d) => d.Route),
+)
+const PublicCompetitionsIndexLazyRoute =
+  PublicCompetitionsIndexLazyRouteImport.update({
+    id: '/competitions/',
+    path: '/competitions/',
+    getParentRoute: () => PublicRouteRoute,
+  } as any).lazy(() =>
+    import('./routes/_public/competitions/index.lazy').then((d) => d.Route),
+  )
 const AdminVotesIndexRoute = AdminVotesIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminVotesRouteRoute,
-} as any)
-const AdminUsersIndexRoute = AdminUsersIndexRouteImport.update({
-  id: '/users/',
-  path: '/users/',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminRanksIndexRoute = AdminRanksIndexRouteImport.update({
-  id: '/ranks/',
-  path: '/ranks/',
-  getParentRoute: () => AdminRoute,
 } as any)
 const AdminProfilesIndexRoute = AdminProfilesIndexRouteImport.update({
   id: '/profiles/',
@@ -205,11 +239,14 @@ const AdminContestsIndexRoute = AdminContestsIndexRouteImport.update({
   path: '/contests/',
   getParentRoute: () => AdminRoute,
 } as any)
-const PublicCompetitionsIndexRoute = PublicCompetitionsIndexRouteImport.update({
-  id: '/competitions/',
-  path: '/competitions/',
-  getParentRoute: () => PublicRouteRoute,
-} as any)
+const PublicProfileUsernameLazyRoute =
+  PublicProfileUsernameLazyRouteImport.update({
+    id: '/profile/$username',
+    path: '/profile/$username',
+    getParentRoute: () => PublicRouteRoute,
+  } as any).lazy(() =>
+    import('./routes/_public/profile.$username.lazy').then((d) => d.Route),
+  )
 const AdminVotesMultiplierBoostRoute =
   AdminVotesMultiplierBoostRouteImport.update({
     id: '/multiplier-boost',
@@ -226,11 +263,6 @@ const AdminContestsCreateRoute = AdminContestsCreateRouteImport.update({
   path: '/contests/create',
   getParentRoute: () => AdminRoute,
 } as any)
-const PublicProfileUsernameRoute = PublicProfileUsernameRouteImport.update({
-  id: '/profile/$username',
-  path: '/profile/$username',
-  getParentRoute: () => PublicRouteRoute,
-} as any)
 const PublicCompetitionsSlugRouteRoute =
   PublicCompetitionsSlugRouteRouteImport.update({
     id: '/competitions/$slug',
@@ -243,6 +275,16 @@ const PublicCompetitionsSlugIndexRoute =
     path: '/',
     getParentRoute: () => PublicCompetitionsSlugRouteRoute,
   } as any)
+const PublicCompetitionsSlugParticipantsLazyRoute =
+  PublicCompetitionsSlugParticipantsLazyRouteImport.update({
+    id: '/participants',
+    path: '/participants',
+    getParentRoute: () => PublicCompetitionsSlugRouteRoute,
+  } as any).lazy(() =>
+    import('./routes/_public/competitions/$slug/participants.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AdminContestsIdLeaderboardRoute =
   AdminContestsIdLeaderboardRouteImport.update({
     id: '/contests/$id/leaderboard',
@@ -254,91 +296,83 @@ const AdminContestsIdEditRoute = AdminContestsIdEditRouteImport.update({
   path: '/contests/$id/edit',
   getParentRoute: () => AdminRoute,
 } as any)
-const PublicCompetitionsSlugParticipantsRoute =
-  PublicCompetitionsSlugParticipantsRouteImport.update({
-    id: '/participants',
-    path: '/participants',
-    getParentRoute: () => PublicCompetitionsSlugRouteRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteRouteWithChildren
   '/$': typeof SplatRoute
   '/admin': typeof AdminRouteWithChildren
-  '/winners': typeof WinnersRoute
   '/admin/votes': typeof AdminVotesRouteRouteWithChildren
-  '/contact': typeof PublicContactRoute
-  '/faq': typeof PublicFaqRoute
-  '/privacy': typeof PublicPrivacyRoute
-  '/rules': typeof PublicRulesRoute
-  '/terms-of-services': typeof PublicTermsOfServicesRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
-  '/admin/leaderboard': typeof AdminLeaderboardRoute
-  '/admin/notifications': typeof AdminNotificationsRoute
-  '/admin/payments': typeof AdminPaymentsRoute
   '/admin/winners': typeof AdminWinnersRoute
   '/auth/$id': typeof AuthIdRoute
   '/dashboard/$section': typeof DashboardSectionRoute
   '/payments/failure': typeof PaymentsFailureRoute
   '/payments/success': typeof PaymentsSuccessRoute
+  '/contact': typeof PublicContactLazyRoute
+  '/faq': typeof PublicFaqLazyRoute
+  '/privacy': typeof PublicPrivacyLazyRoute
+  '/rules': typeof PublicRulesLazyRoute
+  '/terms-of-services': typeof PublicTermsOfServicesLazyRoute
+  '/admin/leaderboard': typeof AdminLeaderboardLazyRoute
+  '/admin/notifications': typeof AdminNotificationsLazyRoute
+  '/admin/payments': typeof AdminPaymentsLazyRoute
   '/admin/': typeof AdminIndexRoute
-  '/dashboard/': typeof DashboardIndexRoute
   '/leaderboard': typeof LeaderboardIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
   '/voters': typeof VotersIndexRoute
+  '/dashboard/': typeof DashboardIndexLazyRoute
   '/competitions/$slug': typeof PublicCompetitionsSlugRouteRouteWithChildren
-  '/profile/$username': typeof PublicProfileUsernameRoute
   '/admin/contests/create': typeof AdminContestsCreateRoute
   '/admin/profiles/$id': typeof AdminProfilesIdRoute
   '/admin/votes/multiplier-boost': typeof AdminVotesMultiplierBoostRoute
-  '/competitions': typeof PublicCompetitionsIndexRoute
+  '/profile/$username': typeof PublicProfileUsernameLazyRoute
   '/admin/contests': typeof AdminContestsIndexRoute
   '/admin/profiles': typeof AdminProfilesIndexRoute
-  '/admin/ranks': typeof AdminRanksIndexRoute
-  '/admin/users': typeof AdminUsersIndexRoute
   '/admin/votes/': typeof AdminVotesIndexRoute
-  '/competitions/$slug/participants': typeof PublicCompetitionsSlugParticipantsRoute
+  '/competitions': typeof PublicCompetitionsIndexLazyRoute
+  '/admin/ranks': typeof AdminRanksIndexLazyRoute
+  '/admin/users': typeof AdminUsersIndexLazyRoute
   '/admin/contests/$id/edit': typeof AdminContestsIdEditRoute
   '/admin/contests/$id/leaderboard': typeof AdminContestsIdLeaderboardRoute
+  '/competitions/$slug/participants': typeof PublicCompetitionsSlugParticipantsLazyRoute
   '/competitions/$slug/': typeof PublicCompetitionsSlugIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
-  '/winners': typeof WinnersRoute
-  '/contact': typeof PublicContactRoute
-  '/faq': typeof PublicFaqRoute
-  '/privacy': typeof PublicPrivacyRoute
-  '/rules': typeof PublicRulesRoute
-  '/terms-of-services': typeof PublicTermsOfServicesRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
-  '/admin/leaderboard': typeof AdminLeaderboardRoute
-  '/admin/notifications': typeof AdminNotificationsRoute
-  '/admin/payments': typeof AdminPaymentsRoute
   '/admin/winners': typeof AdminWinnersRoute
   '/auth/$id': typeof AuthIdRoute
   '/dashboard/$section': typeof DashboardSectionRoute
   '/payments/failure': typeof PaymentsFailureRoute
   '/payments/success': typeof PaymentsSuccessRoute
+  '/contact': typeof PublicContactLazyRoute
+  '/faq': typeof PublicFaqLazyRoute
+  '/privacy': typeof PublicPrivacyLazyRoute
+  '/rules': typeof PublicRulesLazyRoute
+  '/terms-of-services': typeof PublicTermsOfServicesLazyRoute
+  '/admin/leaderboard': typeof AdminLeaderboardLazyRoute
+  '/admin/notifications': typeof AdminNotificationsLazyRoute
+  '/admin/payments': typeof AdminPaymentsLazyRoute
   '/admin': typeof AdminIndexRoute
-  '/dashboard': typeof DashboardIndexRoute
   '/leaderboard': typeof LeaderboardIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
   '/voters': typeof VotersIndexRoute
-  '/profile/$username': typeof PublicProfileUsernameRoute
+  '/dashboard': typeof DashboardIndexLazyRoute
   '/admin/contests/create': typeof AdminContestsCreateRoute
   '/admin/profiles/$id': typeof AdminProfilesIdRoute
   '/admin/votes/multiplier-boost': typeof AdminVotesMultiplierBoostRoute
-  '/competitions': typeof PublicCompetitionsIndexRoute
+  '/profile/$username': typeof PublicProfileUsernameLazyRoute
   '/admin/contests': typeof AdminContestsIndexRoute
   '/admin/profiles': typeof AdminProfilesIndexRoute
-  '/admin/ranks': typeof AdminRanksIndexRoute
-  '/admin/users': typeof AdminUsersIndexRoute
   '/admin/votes': typeof AdminVotesIndexRoute
-  '/competitions/$slug/participants': typeof PublicCompetitionsSlugParticipantsRoute
+  '/competitions': typeof PublicCompetitionsIndexLazyRoute
+  '/admin/ranks': typeof AdminRanksIndexLazyRoute
+  '/admin/users': typeof AdminUsersIndexLazyRoute
   '/admin/contests/$id/edit': typeof AdminContestsIdEditRoute
   '/admin/contests/$id/leaderboard': typeof AdminContestsIdLeaderboardRoute
+  '/competitions/$slug/participants': typeof PublicCompetitionsSlugParticipantsLazyRoute
   '/competitions/$slug': typeof PublicCompetitionsSlugIndexRoute
 }
 export interface FileRoutesById {
@@ -348,41 +382,40 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteRouteWithChildren
   '/$': typeof SplatRoute
   '/admin': typeof AdminRouteWithChildren
-  '/winners': typeof WinnersRoute
   '/admin/votes': typeof AdminVotesRouteRouteWithChildren
-  '/_public/contact': typeof PublicContactRoute
-  '/_public/faq': typeof PublicFaqRoute
-  '/_public/privacy': typeof PublicPrivacyRoute
-  '/_public/rules': typeof PublicRulesRoute
-  '/_public/terms-of-services': typeof PublicTermsOfServicesRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
-  '/admin/leaderboard': typeof AdminLeaderboardRoute
-  '/admin/notifications': typeof AdminNotificationsRoute
-  '/admin/payments': typeof AdminPaymentsRoute
   '/admin/winners': typeof AdminWinnersRoute
   '/auth/$id': typeof AuthIdRoute
   '/dashboard/$section': typeof DashboardSectionRoute
   '/payments/failure': typeof PaymentsFailureRoute
   '/payments/success': typeof PaymentsSuccessRoute
+  '/_public/contact': typeof PublicContactLazyRoute
+  '/_public/faq': typeof PublicFaqLazyRoute
+  '/_public/privacy': typeof PublicPrivacyLazyRoute
+  '/_public/rules': typeof PublicRulesLazyRoute
+  '/_public/terms-of-services': typeof PublicTermsOfServicesLazyRoute
+  '/admin/leaderboard': typeof AdminLeaderboardLazyRoute
+  '/admin/notifications': typeof AdminNotificationsLazyRoute
+  '/admin/payments': typeof AdminPaymentsLazyRoute
   '/admin/': typeof AdminIndexRoute
-  '/dashboard/': typeof DashboardIndexRoute
   '/leaderboard/': typeof LeaderboardIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
   '/voters/': typeof VotersIndexRoute
+  '/dashboard/': typeof DashboardIndexLazyRoute
   '/_public/competitions/$slug': typeof PublicCompetitionsSlugRouteRouteWithChildren
-  '/_public/profile/$username': typeof PublicProfileUsernameRoute
   '/admin/contests/create': typeof AdminContestsCreateRoute
   '/admin/profiles/$id': typeof AdminProfilesIdRoute
   '/admin/votes/multiplier-boost': typeof AdminVotesMultiplierBoostRoute
-  '/_public/competitions/': typeof PublicCompetitionsIndexRoute
+  '/_public/profile/$username': typeof PublicProfileUsernameLazyRoute
   '/admin/contests/': typeof AdminContestsIndexRoute
   '/admin/profiles/': typeof AdminProfilesIndexRoute
-  '/admin/ranks/': typeof AdminRanksIndexRoute
-  '/admin/users/': typeof AdminUsersIndexRoute
   '/admin/votes/': typeof AdminVotesIndexRoute
-  '/_public/competitions/$slug/participants': typeof PublicCompetitionsSlugParticipantsRoute
+  '/_public/competitions/': typeof PublicCompetitionsIndexLazyRoute
+  '/admin/ranks/': typeof AdminRanksIndexLazyRoute
+  '/admin/users/': typeof AdminUsersIndexLazyRoute
   '/admin/contests/$id/edit': typeof AdminContestsIdEditRoute
   '/admin/contests/$id/leaderboard': typeof AdminContestsIdLeaderboardRoute
+  '/_public/competitions/$slug/participants': typeof PublicCompetitionsSlugParticipantsLazyRoute
   '/_public/competitions/$slug/': typeof PublicCompetitionsSlugIndexRoute
 }
 export interface FileRouteTypes {
@@ -392,79 +425,77 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/$'
     | '/admin'
-    | '/winners'
     | '/admin/votes'
-    | '/contact'
-    | '/faq'
-    | '/privacy'
-    | '/rules'
-    | '/terms-of-services'
     | '/admin/analytics'
-    | '/admin/leaderboard'
-    | '/admin/notifications'
-    | '/admin/payments'
     | '/admin/winners'
     | '/auth/$id'
     | '/dashboard/$section'
     | '/payments/failure'
     | '/payments/success'
+    | '/contact'
+    | '/faq'
+    | '/privacy'
+    | '/rules'
+    | '/terms-of-services'
+    | '/admin/leaderboard'
+    | '/admin/notifications'
+    | '/admin/payments'
     | '/admin/'
-    | '/dashboard/'
     | '/leaderboard'
     | '/onboarding'
     | '/voters'
+    | '/dashboard/'
     | '/competitions/$slug'
-    | '/profile/$username'
     | '/admin/contests/create'
     | '/admin/profiles/$id'
     | '/admin/votes/multiplier-boost'
-    | '/competitions'
+    | '/profile/$username'
     | '/admin/contests'
     | '/admin/profiles'
+    | '/admin/votes/'
+    | '/competitions'
     | '/admin/ranks'
     | '/admin/users'
-    | '/admin/votes/'
-    | '/competitions/$slug/participants'
     | '/admin/contests/$id/edit'
     | '/admin/contests/$id/leaderboard'
+    | '/competitions/$slug/participants'
     | '/competitions/$slug/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/$'
-    | '/winners'
-    | '/contact'
-    | '/faq'
-    | '/privacy'
-    | '/rules'
-    | '/terms-of-services'
     | '/admin/analytics'
-    | '/admin/leaderboard'
-    | '/admin/notifications'
-    | '/admin/payments'
     | '/admin/winners'
     | '/auth/$id'
     | '/dashboard/$section'
     | '/payments/failure'
     | '/payments/success'
+    | '/contact'
+    | '/faq'
+    | '/privacy'
+    | '/rules'
+    | '/terms-of-services'
+    | '/admin/leaderboard'
+    | '/admin/notifications'
+    | '/admin/payments'
     | '/admin'
-    | '/dashboard'
     | '/leaderboard'
     | '/onboarding'
     | '/voters'
-    | '/profile/$username'
+    | '/dashboard'
     | '/admin/contests/create'
     | '/admin/profiles/$id'
     | '/admin/votes/multiplier-boost'
-    | '/competitions'
+    | '/profile/$username'
     | '/admin/contests'
     | '/admin/profiles'
+    | '/admin/votes'
+    | '/competitions'
     | '/admin/ranks'
     | '/admin/users'
-    | '/admin/votes'
-    | '/competitions/$slug/participants'
     | '/admin/contests/$id/edit'
     | '/admin/contests/$id/leaderboard'
+    | '/competitions/$slug/participants'
     | '/competitions/$slug'
   id:
     | '__root__'
@@ -473,41 +504,40 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/$'
     | '/admin'
-    | '/winners'
     | '/admin/votes'
-    | '/_public/contact'
-    | '/_public/faq'
-    | '/_public/privacy'
-    | '/_public/rules'
-    | '/_public/terms-of-services'
     | '/admin/analytics'
-    | '/admin/leaderboard'
-    | '/admin/notifications'
-    | '/admin/payments'
     | '/admin/winners'
     | '/auth/$id'
     | '/dashboard/$section'
     | '/payments/failure'
     | '/payments/success'
+    | '/_public/contact'
+    | '/_public/faq'
+    | '/_public/privacy'
+    | '/_public/rules'
+    | '/_public/terms-of-services'
+    | '/admin/leaderboard'
+    | '/admin/notifications'
+    | '/admin/payments'
     | '/admin/'
-    | '/dashboard/'
     | '/leaderboard/'
     | '/onboarding/'
     | '/voters/'
+    | '/dashboard/'
     | '/_public/competitions/$slug'
-    | '/_public/profile/$username'
     | '/admin/contests/create'
     | '/admin/profiles/$id'
     | '/admin/votes/multiplier-boost'
-    | '/_public/competitions/'
+    | '/_public/profile/$username'
     | '/admin/contests/'
     | '/admin/profiles/'
+    | '/admin/votes/'
+    | '/_public/competitions/'
     | '/admin/ranks/'
     | '/admin/users/'
-    | '/admin/votes/'
-    | '/_public/competitions/$slug/participants'
     | '/admin/contests/$id/edit'
     | '/admin/contests/$id/leaderboard'
+    | '/_public/competitions/$slug/participants'
     | '/_public/competitions/$slug/'
   fileRoutesById: FileRoutesById
 }
@@ -517,7 +547,6 @@ export interface RootRouteChildren {
   DashboardRouteRoute: typeof DashboardRouteRouteWithChildren
   SplatRoute: typeof SplatRoute
   AdminRoute: typeof AdminRouteWithChildren
-  WinnersRoute: typeof WinnersRoute
   AuthIdRoute: typeof AuthIdRoute
   PaymentsFailureRoute: typeof PaymentsFailureRoute
   PaymentsSuccessRoute: typeof PaymentsSuccessRoute
@@ -528,13 +557,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/winners': {
-      id: '/winners'
-      path: '/winners'
-      fullPath: '/winners'
-      preLoaderRoute: typeof WinnersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -570,6 +592,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/': {
+      id: '/dashboard/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof DashboardIndexLazyRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/voters/': {
       id: '/voters/'
       path: '/voters'
@@ -591,19 +620,68 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LeaderboardIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard/': {
-      id: '/dashboard/'
-      path: '/'
-      fullPath: '/dashboard/'
-      preLoaderRoute: typeof DashboardIndexRouteImport
-      parentRoute: typeof DashboardRouteRoute
-    }
     '/admin/': {
       id: '/admin/'
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/admin/payments': {
+      id: '/admin/payments'
+      path: '/payments'
+      fullPath: '/admin/payments'
+      preLoaderRoute: typeof AdminPaymentsLazyRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/notifications': {
+      id: '/admin/notifications'
+      path: '/notifications'
+      fullPath: '/admin/notifications'
+      preLoaderRoute: typeof AdminNotificationsLazyRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/leaderboard': {
+      id: '/admin/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/admin/leaderboard'
+      preLoaderRoute: typeof AdminLeaderboardLazyRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_public/terms-of-services': {
+      id: '/_public/terms-of-services'
+      path: '/terms-of-services'
+      fullPath: '/terms-of-services'
+      preLoaderRoute: typeof PublicTermsOfServicesLazyRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
+    '/_public/rules': {
+      id: '/_public/rules'
+      path: '/rules'
+      fullPath: '/rules'
+      preLoaderRoute: typeof PublicRulesLazyRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
+    '/_public/privacy': {
+      id: '/_public/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PublicPrivacyLazyRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
+    '/_public/faq': {
+      id: '/_public/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof PublicFaqLazyRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
+    '/_public/contact': {
+      id: '/_public/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof PublicContactLazyRouteImport
+      parentRoute: typeof PublicRouteRoute
     }
     '/payments/success': {
       id: '/payments/success'
@@ -640,68 +718,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminWinnersRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/payments': {
-      id: '/admin/payments'
-      path: '/payments'
-      fullPath: '/admin/payments'
-      preLoaderRoute: typeof AdminPaymentsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/notifications': {
-      id: '/admin/notifications'
-      path: '/notifications'
-      fullPath: '/admin/notifications'
-      preLoaderRoute: typeof AdminNotificationsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/leaderboard': {
-      id: '/admin/leaderboard'
-      path: '/leaderboard'
-      fullPath: '/admin/leaderboard'
-      preLoaderRoute: typeof AdminLeaderboardRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/analytics': {
       id: '/admin/analytics'
       path: '/analytics'
       fullPath: '/admin/analytics'
       preLoaderRoute: typeof AdminAnalyticsRouteImport
       parentRoute: typeof AdminRoute
-    }
-    '/_public/terms-of-services': {
-      id: '/_public/terms-of-services'
-      path: '/terms-of-services'
-      fullPath: '/terms-of-services'
-      preLoaderRoute: typeof PublicTermsOfServicesRouteImport
-      parentRoute: typeof PublicRouteRoute
-    }
-    '/_public/rules': {
-      id: '/_public/rules'
-      path: '/rules'
-      fullPath: '/rules'
-      preLoaderRoute: typeof PublicRulesRouteImport
-      parentRoute: typeof PublicRouteRoute
-    }
-    '/_public/privacy': {
-      id: '/_public/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PublicPrivacyRouteImport
-      parentRoute: typeof PublicRouteRoute
-    }
-    '/_public/faq': {
-      id: '/_public/faq'
-      path: '/faq'
-      fullPath: '/faq'
-      preLoaderRoute: typeof PublicFaqRouteImport
-      parentRoute: typeof PublicRouteRoute
-    }
-    '/_public/contact': {
-      id: '/_public/contact'
-      path: '/contact'
-      fullPath: '/contact'
-      preLoaderRoute: typeof PublicContactRouteImport
-      parentRoute: typeof PublicRouteRoute
     }
     '/admin/votes': {
       id: '/admin/votes'
@@ -710,26 +732,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminVotesRouteRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/votes/': {
-      id: '/admin/votes/'
-      path: '/'
-      fullPath: '/admin/votes/'
-      preLoaderRoute: typeof AdminVotesIndexRouteImport
-      parentRoute: typeof AdminVotesRouteRoute
-    }
     '/admin/users/': {
       id: '/admin/users/'
       path: '/users'
       fullPath: '/admin/users'
-      preLoaderRoute: typeof AdminUsersIndexRouteImport
+      preLoaderRoute: typeof AdminUsersIndexLazyRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/ranks/': {
       id: '/admin/ranks/'
       path: '/ranks'
       fullPath: '/admin/ranks'
-      preLoaderRoute: typeof AdminRanksIndexRouteImport
+      preLoaderRoute: typeof AdminRanksIndexLazyRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/_public/competitions/': {
+      id: '/_public/competitions/'
+      path: '/competitions'
+      fullPath: '/competitions'
+      preLoaderRoute: typeof PublicCompetitionsIndexLazyRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
+    '/admin/votes/': {
+      id: '/admin/votes/'
+      path: '/'
+      fullPath: '/admin/votes/'
+      preLoaderRoute: typeof AdminVotesIndexRouteImport
+      parentRoute: typeof AdminVotesRouteRoute
     }
     '/admin/profiles/': {
       id: '/admin/profiles/'
@@ -745,11 +774,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminContestsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/_public/competitions/': {
-      id: '/_public/competitions/'
-      path: '/competitions'
-      fullPath: '/competitions'
-      preLoaderRoute: typeof PublicCompetitionsIndexRouteImport
+    '/_public/profile/$username': {
+      id: '/_public/profile/$username'
+      path: '/profile/$username'
+      fullPath: '/profile/$username'
+      preLoaderRoute: typeof PublicProfileUsernameLazyRouteImport
       parentRoute: typeof PublicRouteRoute
     }
     '/admin/votes/multiplier-boost': {
@@ -773,13 +802,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminContestsCreateRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/_public/profile/$username': {
-      id: '/_public/profile/$username'
-      path: '/profile/$username'
-      fullPath: '/profile/$username'
-      preLoaderRoute: typeof PublicProfileUsernameRouteImport
-      parentRoute: typeof PublicRouteRoute
-    }
     '/_public/competitions/$slug': {
       id: '/_public/competitions/$slug'
       path: '/competitions/$slug'
@@ -792,6 +814,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/competitions/$slug/'
       preLoaderRoute: typeof PublicCompetitionsSlugIndexRouteImport
+      parentRoute: typeof PublicCompetitionsSlugRouteRoute
+    }
+    '/_public/competitions/$slug/participants': {
+      id: '/_public/competitions/$slug/participants'
+      path: '/participants'
+      fullPath: '/competitions/$slug/participants'
+      preLoaderRoute: typeof PublicCompetitionsSlugParticipantsLazyRouteImport
       parentRoute: typeof PublicCompetitionsSlugRouteRoute
     }
     '/admin/contests/$id/leaderboard': {
@@ -808,25 +837,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminContestsIdEditRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/_public/competitions/$slug/participants': {
-      id: '/_public/competitions/$slug/participants'
-      path: '/participants'
-      fullPath: '/competitions/$slug/participants'
-      preLoaderRoute: typeof PublicCompetitionsSlugParticipantsRouteImport
-      parentRoute: typeof PublicCompetitionsSlugRouteRoute
-    }
   }
 }
 
 interface PublicCompetitionsSlugRouteRouteChildren {
-  PublicCompetitionsSlugParticipantsRoute: typeof PublicCompetitionsSlugParticipantsRoute
+  PublicCompetitionsSlugParticipantsLazyRoute: typeof PublicCompetitionsSlugParticipantsLazyRoute
   PublicCompetitionsSlugIndexRoute: typeof PublicCompetitionsSlugIndexRoute
 }
 
 const PublicCompetitionsSlugRouteRouteChildren: PublicCompetitionsSlugRouteRouteChildren =
   {
-    PublicCompetitionsSlugParticipantsRoute:
-      PublicCompetitionsSlugParticipantsRoute,
+    PublicCompetitionsSlugParticipantsLazyRoute:
+      PublicCompetitionsSlugParticipantsLazyRoute,
     PublicCompetitionsSlugIndexRoute: PublicCompetitionsSlugIndexRoute,
   }
 
@@ -836,26 +858,26 @@ const PublicCompetitionsSlugRouteRouteWithChildren =
   )
 
 interface PublicRouteRouteChildren {
-  PublicContactRoute: typeof PublicContactRoute
-  PublicFaqRoute: typeof PublicFaqRoute
-  PublicPrivacyRoute: typeof PublicPrivacyRoute
-  PublicRulesRoute: typeof PublicRulesRoute
-  PublicTermsOfServicesRoute: typeof PublicTermsOfServicesRoute
+  PublicContactLazyRoute: typeof PublicContactLazyRoute
+  PublicFaqLazyRoute: typeof PublicFaqLazyRoute
+  PublicPrivacyLazyRoute: typeof PublicPrivacyLazyRoute
+  PublicRulesLazyRoute: typeof PublicRulesLazyRoute
+  PublicTermsOfServicesLazyRoute: typeof PublicTermsOfServicesLazyRoute
   PublicCompetitionsSlugRouteRoute: typeof PublicCompetitionsSlugRouteRouteWithChildren
-  PublicProfileUsernameRoute: typeof PublicProfileUsernameRoute
-  PublicCompetitionsIndexRoute: typeof PublicCompetitionsIndexRoute
+  PublicProfileUsernameLazyRoute: typeof PublicProfileUsernameLazyRoute
+  PublicCompetitionsIndexLazyRoute: typeof PublicCompetitionsIndexLazyRoute
 }
 
 const PublicRouteRouteChildren: PublicRouteRouteChildren = {
-  PublicContactRoute: PublicContactRoute,
-  PublicFaqRoute: PublicFaqRoute,
-  PublicPrivacyRoute: PublicPrivacyRoute,
-  PublicRulesRoute: PublicRulesRoute,
-  PublicTermsOfServicesRoute: PublicTermsOfServicesRoute,
+  PublicContactLazyRoute: PublicContactLazyRoute,
+  PublicFaqLazyRoute: PublicFaqLazyRoute,
+  PublicPrivacyLazyRoute: PublicPrivacyLazyRoute,
+  PublicRulesLazyRoute: PublicRulesLazyRoute,
+  PublicTermsOfServicesLazyRoute: PublicTermsOfServicesLazyRoute,
   PublicCompetitionsSlugRouteRoute:
     PublicCompetitionsSlugRouteRouteWithChildren,
-  PublicProfileUsernameRoute: PublicProfileUsernameRoute,
-  PublicCompetitionsIndexRoute: PublicCompetitionsIndexRoute,
+  PublicProfileUsernameLazyRoute: PublicProfileUsernameLazyRoute,
+  PublicCompetitionsIndexLazyRoute: PublicCompetitionsIndexLazyRoute,
 }
 
 const PublicRouteRouteWithChildren = PublicRouteRoute._addFileChildren(
@@ -864,12 +886,12 @@ const PublicRouteRouteWithChildren = PublicRouteRoute._addFileChildren(
 
 interface DashboardRouteRouteChildren {
   DashboardSectionRoute: typeof DashboardSectionRoute
-  DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardIndexLazyRoute: typeof DashboardIndexLazyRoute
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardSectionRoute: DashboardSectionRoute,
-  DashboardIndexRoute: DashboardIndexRoute,
+  DashboardIndexLazyRoute: DashboardIndexLazyRoute,
 }
 
 const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
@@ -893,17 +915,17 @@ const AdminVotesRouteRouteWithChildren = AdminVotesRouteRoute._addFileChildren(
 interface AdminRouteChildren {
   AdminVotesRouteRoute: typeof AdminVotesRouteRouteWithChildren
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
-  AdminLeaderboardRoute: typeof AdminLeaderboardRoute
-  AdminNotificationsRoute: typeof AdminNotificationsRoute
-  AdminPaymentsRoute: typeof AdminPaymentsRoute
   AdminWinnersRoute: typeof AdminWinnersRoute
+  AdminLeaderboardLazyRoute: typeof AdminLeaderboardLazyRoute
+  AdminNotificationsLazyRoute: typeof AdminNotificationsLazyRoute
+  AdminPaymentsLazyRoute: typeof AdminPaymentsLazyRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminContestsCreateRoute: typeof AdminContestsCreateRoute
   AdminProfilesIdRoute: typeof AdminProfilesIdRoute
   AdminContestsIndexRoute: typeof AdminContestsIndexRoute
   AdminProfilesIndexRoute: typeof AdminProfilesIndexRoute
-  AdminRanksIndexRoute: typeof AdminRanksIndexRoute
-  AdminUsersIndexRoute: typeof AdminUsersIndexRoute
+  AdminRanksIndexLazyRoute: typeof AdminRanksIndexLazyRoute
+  AdminUsersIndexLazyRoute: typeof AdminUsersIndexLazyRoute
   AdminContestsIdEditRoute: typeof AdminContestsIdEditRoute
   AdminContestsIdLeaderboardRoute: typeof AdminContestsIdLeaderboardRoute
 }
@@ -911,17 +933,17 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminVotesRouteRoute: AdminVotesRouteRouteWithChildren,
   AdminAnalyticsRoute: AdminAnalyticsRoute,
-  AdminLeaderboardRoute: AdminLeaderboardRoute,
-  AdminNotificationsRoute: AdminNotificationsRoute,
-  AdminPaymentsRoute: AdminPaymentsRoute,
   AdminWinnersRoute: AdminWinnersRoute,
+  AdminLeaderboardLazyRoute: AdminLeaderboardLazyRoute,
+  AdminNotificationsLazyRoute: AdminNotificationsLazyRoute,
+  AdminPaymentsLazyRoute: AdminPaymentsLazyRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminContestsCreateRoute: AdminContestsCreateRoute,
   AdminProfilesIdRoute: AdminProfilesIdRoute,
   AdminContestsIndexRoute: AdminContestsIndexRoute,
   AdminProfilesIndexRoute: AdminProfilesIndexRoute,
-  AdminRanksIndexRoute: AdminRanksIndexRoute,
-  AdminUsersIndexRoute: AdminUsersIndexRoute,
+  AdminRanksIndexLazyRoute: AdminRanksIndexLazyRoute,
+  AdminUsersIndexLazyRoute: AdminUsersIndexLazyRoute,
   AdminContestsIdEditRoute: AdminContestsIdEditRoute,
   AdminContestsIdLeaderboardRoute: AdminContestsIdLeaderboardRoute,
 }
@@ -934,7 +956,6 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRouteRoute: DashboardRouteRouteWithChildren,
   SplatRoute: SplatRoute,
   AdminRoute: AdminRouteWithChildren,
-  WinnersRoute: WinnersRoute,
   AuthIdRoute: AuthIdRoute,
   PaymentsFailureRoute: PaymentsFailureRoute,
   PaymentsSuccessRoute: PaymentsSuccessRoute,

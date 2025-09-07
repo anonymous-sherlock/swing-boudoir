@@ -1,15 +1,14 @@
+import FloatingChatButton from "@/components/layout/floating-chat-btn";
 import { PageLoader } from "@/components/PageLoader";
-import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { QueryClient } from "@tanstack/react-query";
-import { createRootRoute, Outlet } from "@tanstack/react-router";
-import { NuqsAdapter } from "nuqs/adapters/react";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import ModalProvider from "@/providers/modal-provider";
 import { authRoutes, isPublicRoute } from "@/routes";
-import { CheckCircleIcon, XCircleIcon } from "lucide-react";
-import FloatingChatButton from "@/components/layout/floating-chat-btn";
+import { QueryClient } from "@tanstack/react-query";
+import { createRootRoute, Outlet } from "@tanstack/react-router";
+import { NuqsAdapter } from "nuqs/adapters/react";
 
 function AppShell() {
   const { isLoading } = useAuth();
