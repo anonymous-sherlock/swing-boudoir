@@ -22,7 +22,7 @@ import { TransformedImage } from "@/components/ui/transformed-image";
 import { ArrowLeft, Calendar, Check, CheckCircle, ChevronLeft, ChevronRight, Eye, Filter, Loader2, MoreHorizontal, Search, Trophy, Users, X, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 
-const limit = 15;
+const limit = 50;
 
 export default function ContestParticipants() {
   const { id } = Route.useParams();
