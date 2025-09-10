@@ -3,7 +3,7 @@ import type { ProfileSelectSchemaType } from '@/lib/validations/profile.schema';
 import { ProfileInsertSchema } from '@/lib/validations/profile.schema';
 import { ContestParticipation, User_Type } from '@/types';
 import { Profile, ProfileStats } from '@/types/profile.types';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { QueryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import z from 'zod';
 
 
@@ -226,8 +226,9 @@ export const useProfile = () => {
     });
   };
 
-  const useProfileByUsername = (username: string) => {
+  const useProfileByUsername = (username: string, options?: QueryOptions<Profile>) => {
     return useQuery({
+      ...options,
       queryKey: profileKeys.byUsername(username),
       queryFn: () => profileApi.getProfileByUsername(username),
       enabled: !!username,
@@ -256,10 +257,86 @@ export const useProfile = () => {
   // Profile mutations
   const createProfile = useMutation({
     mutationFn: profileApi.createProfile,
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Profile created successfully:", data);
+      
+      // Invalidate all profile-related queries
       queryClient.invalidateQueries({ queryKey: profileKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: profileKeys.detail(data?.id) });
+      
+      // Invalidate user-specific queries if data is available
+      if (data?.userId) {
+        queryClient.invalidateQueries({ queryKey: profileKeys.byUserId(data.userId) });
+      }
+      
+      // Remove and invalidate all username queries - this will catch any username-based queries
+      console.log("Removing and invalidating username queries...");
+      
+      // First, let's see what queries are currently cached
+      const cachedQueries = queryClient.getQueryCache().getAll();
+      console.log("Current cached queries:", cachedQueries.map(q => q.queryKey));
+      
+      // Remove all username queries
+      queryClient.removeQueries({ 
+        queryKey: ["profile", "detail", "username"],
+        exact: false 
+      });
+      
+      // Also try removing with a more specific pattern
+      queryClient.removeQueries({ 
+        queryKey: ["profile"],
+        exact: false,
+        predicate: (query) => {
+          return query.queryKey.includes("username");
+        }
+      });
+      
+      // Try removing queries that match the exact pattern we're seeing
+      queryClient.removeQueries({ 
+        queryKey: ["profile", "detail", "username"],
+        exact: false 
+      });
+      
+      // Also try removing any query that has "username" in it
+      queryClient.removeQueries({ 
+        predicate: (query) => {
+          return query.queryKey.some(key => 
+            typeof key === 'string' && key.includes('username')
+          );
+        }
+      });
+      
+      // Invalidate all username queries
+      queryClient.invalidateQueries({ 
+        queryKey: ["profile", "detail", "username"],
+        exact: false 
+      });
+      
+      console.log("Username queries removed and invalidated");
+      
+      // Also invalidate all profile detail queries to be extra sure
+      console.log("Invalidating all profile detail queries...");
+      queryClient.invalidateQueries({ 
+        queryKey: ["profile", "detail"],
+        exact: false 
+        
+      });
+      
+      // Invalidate all stats queries
+      queryClient.invalidateQueries({ queryKey: profileKeys.stats() });
+      
       // Invalidate session query to refresh user data with new profileId
       queryClient.invalidateQueries({ queryKey: ['session'] });
+      
+      // Also invalidate all profile queries as a fallback
+      queryClient.invalidateQueries({ queryKey: profileKeys.all });
+      
+      // Force refetch all profile queries to ensure fresh data
+      console.log("Force refetching all profile queries...");
+      queryClient.refetchQueries({ 
+        queryKey: ["profile"],
+        exact: false 
+      });
     },
   });
 
@@ -269,6 +346,19 @@ export const useProfile = () => {
     onSuccess: data => {
       queryClient.invalidateQueries({ queryKey: profileKeys.detail(data.id) });
       queryClient.invalidateQueries({ queryKey: profileKeys.lists() });
+      
+      // Invalidate user-specific queries if userId is available
+      if (data.userId) {
+        queryClient.invalidateQueries({ queryKey: profileKeys.byUserId(data.userId) });
+      }
+      // Invalidate all username queries - use a more specific pattern
+      queryClient.invalidateQueries({ 
+        queryKey: ["profile", "detail", "username"],
+        exact: false 
+      });
+      
+      // Invalidate session query if user data might have changed
+      queryClient.invalidateQueries({ queryKey: ['session'] });
     },
   });
 

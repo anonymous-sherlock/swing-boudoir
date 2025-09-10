@@ -82,6 +82,8 @@ export interface ContestStats {
   contestId: string
   contestName: string
   totalParticipants: number
+  approvedParticipants: number
+  pendingParticipants: number
   totalVotes: number
   freeVotes: number
   paidVotes: number
@@ -182,6 +184,11 @@ export function useContestBySlug(slug: string) {
       return response.data
     },
     enabled: !!slug,
+    staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh
+    gcTime: 10 * 60 * 1000, // 10 minutes - cache retention
+    refetchOnWindowFocus: true, // Refetch when user returns to tab
+    refetchOnMount: true, // Always refetch on mount for fresh data
+    refetchOnReconnect: true, // Refetch when network reconnects
   })
 }
 
@@ -517,67 +524,3 @@ export function useUploadContestParticipationCoverImage() {
     },
   })
 }
-
-// Types for contest participants
-export interface ContestParticipant {
-  id: string
-  contestId: string
-  mediaId: string | null
-  coverImage: {
-    id: string
-    key: string
-    name: string
-    url: string
-    size: number | null
-    type: string | null
-    status: 'FAILED' | 'PROCESSING' | 'COMPLETED'
-    mediaType: 'COVER_IMAGE' | 'CONTEST_IMAGE' | 'CONTEST_PARTICIPATION_COVER' | 'PROFILE_IMAGE' | 'PROFILE_COVER_IMAGE' | 'PROFILE_BANNER_IMAGE'
-    createdAt: string
-    updatedAt: string
-    profileId: string | null
-    caption: string | null
-    contestId: string | null
-  } | null
-  isApproved: boolean
-  isParticipating: boolean | null
-  createdAt: string
-  updatedAt: string
-  profile: {
-    id: string
-    bio: string | null
-    freeVoterMessage: string | null
-    hobbiesAndPassions: string | null
-    paidVoterMessage: string | null
-    user: {
-      id: string
-      email: string
-      name: string
-      image: string | null
-      username: string | null
-    } | null
-  } | null
-}
-
-export interface ContestParticipantsResponse {
-  data: ContestParticipant[]
-  pagination: {
-    total: number
-    totalPages: number
-    hasNextPage: boolean
-    hasPreviousPage: boolean
-    nextPage: number | null
-    previousPage: number | null
-  }
-}
-
-// Hook for fetching contest participants
-export function useContestParticipants(contestId: string, page: number = 1, limit: number = 20) {
-  return useQuery({
-    queryKey: ['contest', 'participants', contestId, page, limit],
-    queryFn: async (): Promise<ContestParticipantsResponse> => {
-      const response = await api.get(`/api/v1/contest/${contestId}/participants?page=${page}&limit=${limit}`)
-      return response.data
-    },
-    enabled: !!contestId,
-  })
-} 

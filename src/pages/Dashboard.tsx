@@ -72,10 +72,11 @@ export default function Dashboard() {
     if (!isAuthenticated) {
       router.navigate({ to: "/auth/$id", params: { id: "sign-in" }, replace: true });
     } else if (checkUserNeedsOnboarding()) {
+      console.log("Dashboard: User needs onboarding, redirecting to onboarding (fallback check)");
       router.navigate({ to: ONBOARDING_REDIRECT, replace: true });
     }
     // eslint-disable-next-line
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated, isLoading, checkUserNeedsOnboarding]);
 
   // Update URL when section changes (only if user changes section)
   const handleSetActiveSection = useCallback((newSection: DashboardSection) => {

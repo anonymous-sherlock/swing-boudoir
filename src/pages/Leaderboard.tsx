@@ -1,36 +1,17 @@
-import Header from '@/components/layout/Header';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { api } from '@/lib/api';
-import {
-  ArrowDown,
-  ArrowUp,
-  Award,
-  Calendar,
-  Crown,
-  Eye,
-  Filter,
-  Heart,
-  Medal,
-  Minus,
-  Search,
-  Star,
-  Target,
-  TrendingUp,
-  Trophy,
-  Users,
-  Zap,
-} from 'lucide-react';
-import { useEffect, useState } from 'react';
+import Header from "@/components/layout/Header";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { useAuth } from "@/contexts/AuthContext";
+import { useGetModelRanks, ModelRank } from "@/hooks/api/useModelRanks";
+import { getImageUrl, ImageHelper } from "@/lib/image-helper";
+import { AvatarImage } from "@/components/ui/transformed-image";
+import { Award, Crown, Heart, Medal, Search, Trophy, Users, Target, Pin } from "lucide-react";
+import { useCallback, useEffect, useState, useRef, useMemo } from "react";
+import { Link } from "@tanstack/react-router";
+import React from "react";
+import { useQueryState, parseAsString } from "nuqs";
 
 type LeaderboardStats = {
   totalModels: number;
@@ -38,172 +19,297 @@ type LeaderboardStats = {
   activeContests: number;
 };
 
-interface LeaderboardModel {
-  id: string;
-  name: string;
-  username: string;
-  avatarUrl?: string;
+interface LeaderboardModel extends ModelRank {
+  displayName: string;
   totalVotes: number;
-  totalContests: number;
-  wins: number;
-  rank: number;
-  previousRank: number;
-  voteChange: number;
-  contestChange: number;
-  winRate: number;
-  averageVotes: number;
-  followers: number;
-  isVerified: boolean;
-  isPremium: boolean;
-  badges: string[];
-  recentActivity: string;
-  lastActive: string;
+  isCurrentUser: boolean;
 }
 
-interface LeaderboardFilters {
-  timeFrame: 'all-time' | 'monthly' | 'weekly' | 'daily';
-  category: 'all' | 'verified' | 'premium' | 'rising';
-  sortBy: 'votes' | 'wins' | 'winRate' | 'followers' | 'activity';
-  search: string;
+interface PaginatedData {
+  data: LeaderboardModel[];
+  pagination: {
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+    nextPage: number | null;
+    previousPage: number | null;
+  };
 }
 
-const timeFrameOptions = [
-  { value: 'all-time', label: 'All Time', icon: Trophy },
-  { value: 'monthly', label: 'This Month', icon: Calendar },
-  { value: 'weekly', label: 'This Week', icon: TrendingUp },
-  { value: 'daily', label: 'Today', icon: Zap },
-];
+// Memoized user entry component for performance
+const UserEntry = React.memo(
+  ({
+    model,
+    index,
+    isSticky = false,
+    ref,
+    currentUserRank,
+    isAuthenticated,
+    getRankIcon,
+    formatNumber,
+  }: {
+    model: LeaderboardModel;
+    index: number;
+    isSticky?: boolean;
+    ref?: React.RefObject<HTMLDivElement>;
+    currentUserRank?: number | "N/A";
+    isAuthenticated: boolean;
+    getRankIcon: (rank: number | "N/A") => JSX.Element;
+    formatNumber: (num: number) => string;
+  }) => {
+    const shouldBlurRank =
+      isAuthenticated &&
+      currentUserRank !== undefined &&
+      typeof model.rank === "number" &&
+      typeof currentUserRank === "number" &&
+      model.rank < currentUserRank &&
+      !model.isCurrentUser;
 
-const categoryOptions = [
-  { value: 'all', label: 'All Models', icon: Users },
-  { value: 'verified', label: 'Verified Only', icon: Star },
-  { value: 'premium', label: 'Premium Models', icon: Crown },
-  { value: 'rising', label: 'Rising Stars', icon: TrendingUp },
-];
+    return (
+      <div
+        key={model.id}
+        ref={ref}
+        className={`p-6 border-b border-gray-100 hover:bg-gray-50 transition-colors relative ${
+          model.isCurrentUser
+            ? `bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 ${isSticky ? "sticky bottom-0 z-10 shadow-md" : ""}`
+            : index === 0
+              ? "bg-gradient-to-r from-yellow-50 to-orange-50"
+              : ""
+        }`}
+      >
+        {model.isCurrentUser && (
+          <div className="absolute top-2 right-2">
+            <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+              <Pin className="w-3 h-3 mr-1" />
+              You
+            </Badge>
+          </div>
+        )}
 
-const sortOptions = [
-  { value: 'votes', label: 'Total Votes', icon: Heart },
-  { value: 'wins', label: 'Contest Wins', icon: Trophy },
-  { value: 'winRate', label: 'Win Rate', icon: Target },
-  { value: 'followers', label: 'Followers', icon: Users },
-  { value: 'activity', label: 'Recent Activity', icon: TrendingUp },
-];
+        <div className="flex items-center space-x-4">
+          {/* Rank */}
+          <div className={`flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 ${shouldBlurRank ? "blur-sm" : ""}`}>
+            {shouldBlurRank ? <span className="text-lg font-bold text-gray-400">***</span> : getRankIcon(model.rank)}
+          </div>
+
+          {/* Avatar */}
+          <div className="relative">
+            <Link to="/profile/$username" params={{ username: model.profile.username }}>
+              <img
+                src={model.profile.image ? ImageHelper.avatar(model.profile.image, "small") : `https://ui-avatars.com/api/?name=${model.displayName}&size=60&background=random`}
+                alt={model.displayName}
+                className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 hover:border-blue-300 transition-colors cursor-pointer"
+              />
+            </Link>
+          </div>
+
+          {/* Model Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center space-x-2 mb-1">
+              <h3 className="text-lg font-semibold text-gray-900 truncate">{model.displayName}</h3>
+              <span className="text-sm text-gray-500">@{model.profile.username}</span>
+            </div>
+
+            <div className="text-sm text-gray-500 mt-2 w-2/3">
+              <div className="line-clamp-2">{model.profile.bio || "No recent activity"}</div>
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div className="text-right space-y-1">
+            <div className="flex items-center justify-end space-x-4 text-sm text-gray-600 mb-2">
+              {model.isCurrentUser ? (
+                <span className="flex items-center">
+                  <Heart className="w-4 h-4 mr-1" />
+                  {formatNumber(model.totalVotes)} votes
+                </span>
+              ) : (
+                <span className="flex items-center text-gray-400">
+                  <Heart className="w-4 h-4 mr-1" />
+                  *** votes
+                </span>
+              )}
+              <span className="flex items-center text-gray-400">
+                <Trophy className="w-4 h-4 mr-1" />
+                *** wins
+              </span>
+            </div>
+            <div className="text-xs text-gray-400">Updated: {new Date(model.updatedAt).toLocaleDateString()}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+);
+
+UserEntry.displayName = "UserEntry";
 
 export default function Leaderboard() {
-  const [leaderboardData, setLeaderboardData] = useState<LeaderboardModel[]>([]);
-  const [filteredData, setFilteredData] = useState<LeaderboardModel[]>([]);
-  const [leaderboardStats, setLeaderboardStats] = useState<LeaderboardStats>();
-  const [filters, setFilters] = useState<LeaderboardFilters>({
-    timeFrame: 'all-time',
-    category: 'all',
-    sortBy: 'votes',
-    search: '',
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
+  const { user, isAuthenticated } = useAuth();
+  const [allData, setAllData] = useState<LeaderboardModel[]>([]);
+  const [paginatedData, setPaginatedData] = useState<PaginatedData | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const ITEMS_PER_PAGE = 30;
+
+  // Use nuqs for search state
+  const [search, setSearch] = useQueryState("search", parseAsString.withDefault(""));
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+
+  // Debounce search input
   useEffect(() => {
-    fetchLeaderboardData();
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Use the useModelRanks hook to fetch data
+  const {
+    data: modelRanksData,
+    isLoading,
+    error,
+  } = useGetModelRanks({
+    page: currentPage,
+    limit: ITEMS_PER_PAGE,
+    search: debouncedSearch || undefined,
+  });
+
+  // Transform data when new data arrives
+  const transformData = useCallback(
+    (data: ModelRank[]) => {
+      const currentUserProfileId = user?.profileId;
+      return data.map((modelRank) => ({
+        ...modelRank,
+        displayName: modelRank.profile.name,
+        totalVotes: modelRank.stats.freeVotes + modelRank.stats.paidVotes,
+        isCurrentUser: modelRank.profile.id === currentUserProfileId,
+      }));
+    },
+    [user?.profileId]
+  );
+
+  // Use data directly from API (no client-side filtering needed)
+  const visibleData = useMemo(() => {
+    const maxVisibleItems = 100; // Limit to 100 items for performance
+    if (allData.length <= maxVisibleItems) {
+      return allData;
+    }
+
+    // For search results, show all
+    if (debouncedSearch) {
+      return allData;
+    }
+
+    // For normal pagination, limit to first 100 items
+    return allData.slice(0, maxVisibleItems);
+  }, [allData, debouncedSearch]);
+
+  // Handle new data from API
+  useEffect(() => {
+    if (modelRanksData?.data) {
+      const transformedData = transformData(modelRanksData.data);
+
+      if (currentPage === 1) {
+        // First page - replace all data
+        setAllData(transformedData);
+        setPaginatedData({
+          data: transformedData,
+          pagination: modelRanksData.pagination,
+        });
+      } else {
+        // Subsequent pages - append data
+        setAllData((prev) => [...prev, ...transformedData]);
+        setPaginatedData((prev) =>
+          prev
+            ? {
+                ...prev,
+                data: [...prev.data, ...transformedData],
+                pagination: modelRanksData.pagination,
+              }
+            : null
+        );
+      }
+
+      // Calculate stats from all data
+      const totalVotes = transformedData.reduce((sum, model) => sum + model.totalVotes, 0);
+
+      setIsLoadingMore(false);
+    }
+  }, [modelRanksData, transformData, currentPage]);
+
+  // Reset pagination when search changes
+  useEffect(() => {
+    if (debouncedSearch !== "") {
+      setCurrentPage(1);
+      setAllData([]);
+      setPaginatedData(null);
+    }
+  }, [debouncedSearch]);
+
+  // Debounced load more function
+  const loadMore = useCallback(() => {
+    if (paginatedData?.pagination.hasNextPage && !isLoadingMore && !isLoading) {
+      setIsLoadingMore(true);
+      setCurrentPage((prev) => prev + 1);
+    }
+  }, [paginatedData?.pagination.hasNextPage, isLoadingMore, isLoading]);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && !isLoadingMore && !isLoading) {
+          // Debounce the load more call
+          if (scrollTimeoutRef.current) {
+            clearTimeout(scrollTimeoutRef.current);
+          }
+          scrollTimeoutRef.current = setTimeout(() => {
+            loadMore();
+          }, 100); // 100ms debounce
+        }
+      },
+      {
+        threshold: 0.1,
+        rootMargin: "100px", // Start loading when 100px before the element
+      }
+    );
+
+    const currentRef = loadMoreRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, [loadMore, isLoadingMore, isLoading]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
   }, []);
 
-  useEffect(() => {
-    applyFilters();
-  }, [filters, leaderboardData]);
-
-  const fetchLeaderboardData = async () => {
-    setIsLoading(true);
-    try {
-      const leaderboardResponse = await api.get<LeaderboardModel[]>('/api/v1/leaderboard');
-      const getLeaderboardStats = await api.get<LeaderboardStats>('/api/v1/leaderboard/stats');
-
-      if (getLeaderboardStats) {
-        setLeaderboardStats(getLeaderboardStats.data);
-      }
-
-      const apiData = leaderboardResponse?.data?.data ?? [];
-
-      // Map to LeaderboardModel structure
-      const models: LeaderboardModel[] = apiData.map((item: any) => ({
-        id: item.profileId,
-        name: item.displayUsername || item.username || 'Unknown',
-        username: item.username,
-        avatarUrl: item.coverImage,
-        totalVotes: item.totalVotes ?? 0,
-        totalContests: 0, // API doesn’t provide yet
-        wins: 0, // API doesn’t provide yet
-        rank: item.rank,
-        previousRank: item.rank, // fallback until API provides history
-        voteChange: 0,
-        contestChange: 0,
-        winRate: 0,
-        averageVotes: 0,
-        followers: 0, // not in API yet
-        isVerified: false, // not in API yet
-        isPremium: false, // not in API yet
-        badges: [],
-        recentActivity: item.bio || 'No recent activity',
-        lastActive: item.createdAt,
-      }));
-
-      // Fallback to mock data if API empty
-      setLeaderboardData(models.length > 0 ? models : []);
-    } catch (error) {
-      console.error('Error fetching leaderboard data:', error);
-      setLeaderboardData([]);
-    } finally {
-      setIsLoading(false);
+  const getRankIcon = (rank: number | "N/A") => {
+    if (rank === "N/A") {
+      return <span className="text-lg font-bold text-gray-400">N/A</span>;
     }
-  };
-
-  const applyFilters = () => {
-    let filtered = [...leaderboardData];
-
-    // Apply search filter
-    if (filters.search) {
-      filtered = filtered.filter(
-        model =>
-          model.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-          model.username.toLowerCase().includes(filters.search.toLowerCase())
-      );
-    }
-
-    // Apply category filter
-    if (filters.category !== 'all') {
-      switch (filters.category) {
-        case 'verified':
-          filtered = filtered.filter(model => model.isVerified);
-          break;
-        case 'premium':
-          filtered = filtered.filter(model => model.isPremium);
-          break;
-        case 'rising':
-          filtered = filtered.filter(model => model.voteChange > 0);
-          break;
-      }
-    }
-
-    // Apply sorting
-    filtered.sort((a, b) => {
-      switch (filters.sortBy) {
-        case 'votes':
-          return b.totalVotes - a.totalVotes;
-        case 'wins':
-          return b.wins - a.wins;
-        case 'winRate':
-          return b.winRate - a.winRate;
-        case 'followers':
-          return b.followers - a.followers;
-        case 'activity':
-          return new Date(b.lastActive).getTime() - new Date(a.lastActive).getTime();
-        default:
-          return 0;
-      }
-    });
-
-    setFilteredData(filtered);
-  };
-
-  const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1:
         return <Crown className="w-6 h-6 text-yellow-500" />;
@@ -216,41 +322,17 @@ export default function Leaderboard() {
     }
   };
 
-  const getRankChangeIcon = (currentRank: number, previousRank: number) => {
-    if (currentRank < previousRank) {
-      return <ArrowUp className="w-4 h-4 text-green-500" />;
-    } else if (currentRank > previousRank) {
-      return <ArrowDown className="w-4 h-4 text-red-500" />;
-    } else {
-      return <Minus className="w-4 h-4 text-gray-400" />;
-    }
-  };
-
-  const getBadgeIcon = (badge: string) => {
-    switch (badge) {
-      case 'verified':
-        return <Star className="w-4 h-4 text-blue-500" />;
-      case 'premium':
-        return <Crown className="w-4 h-4 text-yellow-500" />;
-      case 'top-performer':
-        return <Trophy className="w-4 h-4 text-purple-500" />;
-      case 'rising-star':
-        return <TrendingUp className="w-4 h-4 text-green-500" />;
-      default:
-        return null;
-    }
-  };
-
   const formatNumber = (num: number) => {
     if (num >= 1000000) {
-      return (num / 1000000).toFixed(1) + 'M';
+      return (num / 1000000).toFixed(1) + "M";
     } else if (num >= 1000) {
-      return (num / 1000).toFixed(1) + 'K';
+      return (num / 1000).toFixed(1) + "K";
     }
     return num.toString();
   };
 
-  if (isLoading) {
+  // Only show full page loader on initial load (page 1) and no data, and not when searching
+  if (isLoading && currentPage === 1 && allData.length === 0 && !debouncedSearch) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
         <Header />
@@ -275,11 +357,27 @@ export default function Leaderboard() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+        <Header />
+        <div className="pt-20 pb-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-red-600 mb-4">Error Loading Leaderboard</h1>
+              <p className="text-gray-600">There was an error loading the leaderboard data. Please try again later.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <Header />
 
-      <div className="pt-20 pb-8">
+      <div className="pt-40 pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header Section */}
           <div className="text-center mb-8">
@@ -288,13 +386,12 @@ export default function Leaderboard() {
               <h1 className="text-4xl font-bold text-gray-900">Leaderboard</h1>
             </div>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Discover the top-performing models and rising stars in our community. Vote for your
-              favorites and watch them climb the ranks!
+              Discover the top-performing models and rising stars in our community. Vote for your favorites and watch them climb the ranks!
             </p>
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -336,107 +433,16 @@ export default function Leaderboard() {
                 </div>
               </CardContent>
             </Card>
-          </div>
+          </div> */}
 
-          {/* Filters Section */}
+          {/* Search Section */}
           <Card className="mb-6">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center">
-                  <Filter className="w-5 h-5 mr-2" />
-                  Filters & Search
-                </CardTitle>
-                <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
-                  {showFilters ? 'Hide' : 'Show'} Filters
-                </Button>
+            <CardContent className="pt-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input placeholder="Search models..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
               </div>
-            </CardHeader>
-
-            {showFilters && (
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  {/* Search */}
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <Input
-                      placeholder="Search models..."
-                      value={filters.search}
-                      onChange={e => setFilters({ ...filters, search: e.target.value })}
-                      className="pl-10"
-                    />
-                  </div>
-
-                  {/* Time Frame */}
-                  <Select
-                    value={filters.timeFrame}
-                    onValueChange={value => setFilters({ ...filters, timeFrame: value as any })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Time Frame" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {timeFrameOptions.map(option => {
-                        const Icon = option.icon;
-                        return (
-                          <SelectItem key={option.value} value={option.value}>
-                            <div className="flex items-center">
-                              <Icon className="w-4 h-4 mr-2" />
-                              {option.label}
-                            </div>
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-
-                  {/* Category */}
-                  <Select
-                    value={filters.category}
-                    onValueChange={value => setFilters({ ...filters, category: value as any })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categoryOptions.map(option => {
-                        const Icon = option.icon;
-                        return (
-                          <SelectItem key={option.value} value={option.value}>
-                            <div className="flex items-center">
-                              <Icon className="w-4 h-4 mr-2" />
-                              {option.label}
-                            </div>
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-
-                  {/* Sort By */}
-                  <Select
-                    value={filters.sortBy}
-                    onValueChange={value => setFilters({ ...filters, sortBy: value as any })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sort By" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {sortOptions.map(option => {
-                        const Icon = option.icon;
-                        return (
-                          <SelectItem key={option.value} value={option.value}>
-                            <div className="flex items-center">
-                              <Icon className="w-4 h-4 mr-2" />
-                              {option.label}
-                            </div>
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            )}
+            </CardContent>
           </Card>
 
           {/* Leaderboard Table */}
@@ -445,125 +451,258 @@ export default function Leaderboard() {
               <CardTitle className="flex items-center justify-between">
                 <span>Top Models</span>
                 <Badge variant="secondary" className="text-sm">
-                  {filteredData.length} models
+                  {debouncedSearch ? visibleData.length : paginatedData?.pagination.total || 0} models
                 </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <div className="space-y-2">
-                {filteredData.map((model, index) => (
-                  <div
-                    key={model.id}
-                    className={`p-6 border-b border-gray-100 hover:bg-gray-50 transition-colors ${
-                      index === 0 ? 'bg-gradient-to-r from-yellow-50 to-orange-50' : ''
-                    }`}
-                  >
-                    <div className="flex items-center space-x-4">
-                      {/* Rank */}
-                      <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-100">
-                        {getRankIcon(model.rank)}
-                      </div>
-
-                      {/* Avatar */}
-                      <div className="relative">
-                        <img
-                          src={
-                            model.avatarUrl ||
-                            `https://ui-avatars.com/api/?name=${model.name}&size=60&background=random`
-                          }
-                          alt={model.name}
-                          className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
-                        />
-                        {model.isVerified && (
-                          <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-1">
-                            <Star className="w-3 h-3 text-white" />
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Model Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <h3 className="text-lg font-semibold text-gray-900 truncate">
-                            {model.name}
-                          </h3>
-                          <span className="text-sm text-gray-500">@{model.username}</span>
-                          {model.isPremium && (
-                            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-                              <Crown className="w-3 h-3 mr-1" />
-                              Premium
-                            </Badge>
-                          )}
-                        </div>
-
-                        <div className="flex items-center space-x-4 text-sm text-gray-600">
-                          <span className="flex items-center">
-                            <Heart className="w-4 h-4 mr-1" />
-                            {formatNumber(model.totalVotes)} votes
-                          </span>
-                          <span className="flex items-center">
-                            <Trophy className="w-4 h-4 mr-1" />
-                            {model.wins} wins
-                          </span>
-                          {/*
-                          <span className="flex items-center">
-                            <Target className="w-4 h-4 mr-1" />
-                            {model.winRate}% win rate
-                          </span>
-                          <span className="flex items-center">
-                            <Users className="w-4 h-4 mr-1" />
-                            {formatNumber(model.followers)} followers
-                          </span>
-                            */}
-                        </div>
-
-                        <div className="flex items-center space-x-2 mt-2">
-                          {model.badges.map(badge => (
-                            <div key={badge} className="flex items-center text-xs text-gray-500">
-                              {getBadgeIcon(badge)}
-                              <span className="ml-1 capitalize">{badge.replace('-', ' ')}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Stats */}
-                      <div className="text-right space-y-1">
-                        <div className="flex items-center justify-end space-x-2">
-                          {getRankChangeIcon(model.rank, model.previousRank)}
-                          <span
-                            className={`text-sm font-medium ${
-                              model.rank < model.previousRank
-                                ? 'text-green-600'
-                                : model.rank > model.previousRank
-                                  ? 'text-red-600'
-                                  : 'text-gray-600'
-                            }`}
-                          >
-                            {model.rank < model.previousRank ? '+' : ''}
-                            {model.previousRank - model.rank}
-                          </span>
-                        </div>
-
-                        <div className="text-sm text-gray-500">{model.recentActivity}</div>
-
-                        <div className="text-xs text-gray-400">{model.lastActive}</div>
-                      </div>
-
-                      {/* Action Button */}
-                      <Button variant="outline" size="sm">
-                        <Eye className="w-4 h-4 mr-2" />
-                        View Profile
-                      </Button>
+                {/* Loading state for search - only show when no data exists */}
+                {isLoading && debouncedSearch && visibleData.length === 0 && (
+                  <div className="p-6 text-center">
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                      <span className="text-gray-600">Searching models...</span>
                     </div>
                   </div>
-                ))}
+                )}
+
+                {/* No results found for search */}
+                {!isLoading && debouncedSearch && visibleData.length === 0 && (
+                  <div className="p-6 text-center">
+                    <div className="flex flex-col items-center space-y-2">
+                      <Search className="w-8 h-8 text-gray-400" />
+                      <h3 className="text-lg font-medium text-gray-900">No models found</h3>
+                      <p className="text-gray-500">Try adjusting your search terms</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Blank blurred cards for missing ranks - only show when not searching */}
+                {!debouncedSearch &&
+                  (() => {
+                    // Get the first rank from the original sorted data, not filtered data
+                    const sortedData = [...visibleData].sort((a, b) => {
+                      if (typeof a.rank === "number" && typeof b.rank === "number") {
+                        return a.rank - b.rank;
+                      }
+                      return 0;
+                    });
+
+                    const firstRank = sortedData.length > 0 ? (typeof sortedData[0].rank === "number" ? sortedData[0].rank : 1) : 1;
+                    const blankCards: JSX.Element[] = [];
+
+                    for (let i = 1; i < firstRank; i++) {
+                      blankCards.push(
+                        <div key={`blank-${i}`} className="p-6 border-b border-gray-100 bg-gray-50">
+                          <div className="flex items-center space-x-4">
+                            {/* Rank */}
+                            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-200 blur-sm">
+                              <span className="text-lg font-bold text-gray-400">#{i}</span>
+                            </div>
+
+                            {/* Avatar */}
+                            <div className="relative">
+                              <div className="w-12 h-12 rounded-full bg-gray-200 blur-sm"></div>
+                            </div>
+
+                            {/* Model Info */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center space-x-2 mb-1">
+                                <div className="h-6 bg-gray-200 rounded blur-sm w-32"></div>
+                                <div className="h-4 bg-gray-200 rounded blur-sm w-20"></div>
+                              </div>
+                              <div className="h-4 bg-gray-200 rounded blur-sm w-2/3"></div>
+                            </div>
+
+                            {/* Stats */}
+                            <div className="text-right space-y-1">
+                              <div className="flex items-center justify-end space-x-4 text-sm text-gray-400 mb-2">
+                                <div className="h-4 bg-gray-200 rounded blur-sm w-16"></div>
+                                <div className="h-4 bg-gray-200 rounded blur-sm w-12"></div>
+                              </div>
+                              <div className="h-3 bg-gray-200 rounded blur-sm w-24"></div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return blankCards;
+                  })()}
+
+                {/* Blurred cards for ranks above current user + gaps in admin-assigned ranks - only show when not searching */}
+                {!debouncedSearch &&
+                  (() => {
+                    const currentUserRank = visibleData.find((m) => m.isCurrentUser)?.rank;
+                    if (!isAuthenticated || !currentUserRank || typeof currentUserRank !== "number") {
+                      return null;
+                    }
+
+                    // Get all assigned ranks (1-5 are admin assigned)
+                    const assignedRanks = visibleData
+                      .filter((model) => typeof model.rank === "number" && model.rank <= 5)
+                      .map((model) => model.rank as number)
+                      .sort((a, b) => a - b);
+
+                    // Find gaps in admin-assigned ranks (1-5)
+                    const adminRanks = [1, 2, 3, 4, 5];
+                    const missingAdminRanks = adminRanks.filter((rank) => !assignedRanks.includes(rank));
+
+                    // Get ranks above current user
+                    const ranksAboveCurrentUser = visibleData
+                      .filter((model) => typeof model.rank === "number" && model.rank < currentUserRank && !model.isCurrentUser)
+                      .sort((a, b) => (a.rank as number) - (b.rank as number));
+
+                    // Combine missing admin ranks and ranks above current user
+                    const allRanksToShow = [...missingAdminRanks, ...ranksAboveCurrentUser.map((m) => m.rank as number)]
+                      .filter((rank, index, arr) => arr.indexOf(rank) === index) // Remove duplicates
+                      .sort((a, b) => a - b);
+
+                    return allRanksToShow.map((rank) => {
+                      // Check if this rank has an actual user
+                      const actualUser = ranksAboveCurrentUser.find((m) => m.rank === rank);
+
+                      if (actualUser) {
+                        // Show blurred card for actual user
+                        return (
+                          <div key={actualUser.id} className="p-6 border-b border-gray-100 bg-gray-50">
+                            <div className="flex items-center space-x-4">
+                              {/* Rank - blurred */}
+                              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-200 blur-sm">
+                                <span className="text-lg font-bold text-gray-400">#{rank}</span>
+                              </div>
+
+                              {/* Avatar - visible but blurred */}
+                              <div className="relative">
+                                <img
+                                  src={
+                                    actualUser.profile.image
+                                      ? ImageHelper.avatar(actualUser.profile.image, "small")
+                                      : `https://ui-avatars.com/api/?name=${actualUser.displayName}&size=60&background=random`
+                                  }
+                                  alt={actualUser.displayName}
+                                  className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 blur-sm"
+                                />
+                              </div>
+
+                              {/* Model Info - blurred */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center space-x-2 mb-1">
+                                  <div className="h-6 bg-gray-200 rounded blur-sm w-32"></div>
+                                  <div className="h-4 bg-gray-200 rounded blur-sm w-20"></div>
+                                </div>
+                                <div className="h-4 bg-gray-200 rounded blur-sm w-2/3"></div>
+                              </div>
+
+                              {/* Stats - blurred */}
+                              <div className="text-right space-y-1">
+                                <div className="flex items-center justify-end space-x-4 text-sm text-gray-400 mb-2">
+                                  <div className="h-4 bg-gray-200 rounded blur-sm w-16"></div>
+                                  <div className="h-4 bg-gray-200 rounded blur-sm w-12"></div>
+                                </div>
+                                <div className="h-3 bg-gray-200 rounded blur-sm w-24"></div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      } else {
+                        // Show blank card for missing admin rank
+                        return (
+                          <div key={`missing-admin-${rank}`} className="p-6 border-b border-gray-100 bg-gray-50">
+                            <div className="flex items-center space-x-4">
+                              {/* Rank */}
+                              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-200 blur-sm">
+                                <span className="text-lg font-bold text-gray-400">#{rank}</span>
+                              </div>
+
+                              {/* Avatar */}
+                              <div className="relative">
+                                <div className="w-12 h-12 rounded-full bg-gray-200 blur-sm"></div>
+                              </div>
+
+                              {/* Model Info */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center space-x-2 mb-1">
+                                  <div className="h-6 bg-gray-200 rounded blur-sm w-32"></div>
+                                  <div className="h-4 bg-gray-200 rounded blur-sm w-20"></div>
+                                </div>
+                                <div className="h-4 bg-gray-200 rounded blur-sm w-2/3"></div>
+                              </div>
+
+                              {/* Stats */}
+                              <div className="text-right space-y-1">
+                                <div className="flex items-center justify-end space-x-4 text-sm text-gray-400 mb-2">
+                                  <div className="h-4 bg-gray-200 rounded blur-sm w-16"></div>
+                                  <div className="h-4 bg-gray-200 rounded blur-sm w-12"></div>
+                                </div>
+                                <div className="h-3 bg-gray-200 rounded blur-sm w-24"></div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+                    });
+                  })()}
+
+                {/* Regular leaderboard entries (excluding ranks above current user) */}
+                {visibleData.map((model, index) => {
+                    // Skip ranks above current user as they're handled separately above
+                    const currentUserRank = visibleData.find((m) => m.isCurrentUser)?.rank;
+                    const isRankAboveCurrentUser =
+                      isAuthenticated &&
+                      currentUserRank !== undefined &&
+                      typeof model.rank === "number" &&
+                      typeof currentUserRank === "number" &&
+                      model.rank < currentUserRank &&
+                      !model.isCurrentUser;
+
+                    if (isRankAboveCurrentUser) {
+                      return null; // Skip this entry as it's handled above
+                    }
+
+                    return (
+                      <UserEntry
+                        key={model.id}
+                        model={model}
+                        index={index}
+                        isSticky={false}
+                        currentUserRank={currentUserRank}
+                        isAuthenticated={isAuthenticated}
+                        getRankIcon={getRankIcon}
+                        formatNumber={formatNumber}
+                      />
+                    );
+                  })}
+
+                {/* Load More Trigger (Intersection Observer) */}
+                {paginatedData?.pagination.hasNextPage && !debouncedSearch && (
+                  <div ref={loadMoreRef} className="p-6 text-center">
+                    {isLoadingMore ? (
+                      <div className="flex items-center justify-center space-x-2">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                        <span className="text-gray-600">Loading more models...</span>
+                      </div>
+                    ) : (
+                      <div className="text-gray-500 text-sm">Scroll down to load more</div>
+                    )}
+                  </div>
+                )}
+
+                {/* Manual Load More Button (fallback) */}
+                {paginatedData?.pagination.hasNextPage && !debouncedSearch && !isLoadingMore && (
+                  <div className="p-6 text-center">
+                    <Button onClick={loadMore} variant="outline" size="lg" className="min-w-32">
+                      Load More
+                    </Button>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
 
           {/* Call to Action */}
-          <Card className="mt-8 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+          {/* <Card className="mt-8 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
             <CardContent className="p-8 text-center">
               <h3 className="text-2xl font-bold text-blue-900 mb-4">
                 Ready to Join the Competition?
@@ -583,7 +722,7 @@ export default function Leaderboard() {
                 </Button>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
       </div>
     </div>

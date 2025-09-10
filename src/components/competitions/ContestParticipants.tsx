@@ -1,26 +1,26 @@
-import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Users, Search, Filter, ArrowLeft, Eye, Heart, Star, Calendar, User, Award, Trophy, RefreshCw } from "lucide-react";
+import { useContestParticipants } from "@/hooks/api/useContestParticipation";
+import { useContestBySlug } from "@/hooks/api/useContests";
 import { Link, useParams } from "@tanstack/react-router";
-import { useContestBySlug, useContestParticipants, useContests } from "@/hooks/api/useContests";
 import { formatDistanceToNow } from "date-fns";
-import { useQueryState } from "nuqs";
+import { ArrowLeft, Calendar, Eye, RefreshCw, Search, User, Users } from "lucide-react";
+import { parseAsInteger, useQueryState } from "nuqs";
 
 export function ContestParticipants() {
   const { slug } = useParams({ from: "/_public/competitions/$slug/participants" });
   const [search, setSearch] = useQueryState("search", { defaultValue: "" });
-  const [page, setPage] = useQueryState("page", { defaultValue: "1" });
+  const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
   const [filter, setFilter] = useQueryState("filter", { defaultValue: "all" });
 
   // Get contest details
   const { data: contestData, isLoading: isLoadingContest } = useContestBySlug(slug);
 
   // Get participants
-  const { data: participantsData, isLoading, error } = useContestParticipants(contestData?.id || "", parseInt(page || "1", 10), 12);
+  const { data: participantsData, isLoading, error } = useContestParticipants({ contestId: contestData?.id || "", page: page, search, limit: 12 });
 
   const participants = participantsData?.data || [];
   const pagination = participantsData?.pagination;
@@ -36,7 +36,7 @@ export function ContestParticipants() {
   });
 
   const handlePageChange = (newPage: number) => {
-    setPage(newPage.toString());
+    setPage(newPage);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -55,9 +55,7 @@ export function ContestParticipants() {
       <div className="container mx-auto px-4 py-8">
         <Card>
           <CardContent className="pt-6">
-            <p className="text-center text-red-600">
-              {error ? "Failed to load participants" : "Contest not found"}
-            </p>
+            <p className="text-center text-red-600">{error ? "Failed to load participants" : "Contest not found"}</p>
           </CardContent>
         </Card>
       </div>
@@ -185,14 +183,14 @@ export function ContestParticipants() {
       {/* Pagination */}
       {pagination && pagination.totalPages > 1 && (
         <div className="flex items-center justify-center space-x-2">
-          <Button variant="outline" size="sm" onClick={() => handlePageChange(parseInt(page || "1", 10) - 1)} disabled={!pagination.hasPreviousPage}>
+          <Button variant="outline" size="sm" onClick={() => handlePageChange(page - 1)} disabled={!pagination.hasPreviousPage}>
             Previous
           </Button>
 
           <div className="flex items-center space-x-1">
             {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
               let pageNum;
-              const currentPageNum = parseInt(page || "1", 10);
+              const currentPageNum = page;
 
               if (pagination.totalPages <= 5) {
                 pageNum = i + 1;
@@ -212,7 +210,7 @@ export function ContestParticipants() {
             })}
           </div>
 
-          <Button variant="outline" size="sm" onClick={() => handlePageChange(parseInt(page || "1", 10) + 1)} disabled={!pagination.hasNextPage}>
+          <Button variant="outline" size="sm" onClick={() => handlePageChange(page + 1)} disabled={!pagination.hasNextPage}>
             Next
           </Button>
         </div>

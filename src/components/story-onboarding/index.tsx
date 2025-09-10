@@ -228,7 +228,7 @@ function App() {
   const handleOnboardingComplete = () => {
     // Clear saved data when onboarding is completed
     clearFormDataFromStorage();
-    // You can add additional logic here like redirecting to dashboard
+    // The actual completion and redirect is handled in FinalScene component
   };
 
   const renderCurrentScene = () => {

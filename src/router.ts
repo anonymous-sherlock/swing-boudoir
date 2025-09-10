@@ -3,6 +3,7 @@ import { routeTree } from './routeTree.gen'
 import * as TanStackQueryProvider from './integrations/tanstack-query/root-provider'
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
+import NotFound from './pages/NotFound';
 
 const TanStackQueryProviderContext = TanStackQueryProvider.getContext()
 export const router = createRouter({
@@ -11,10 +12,11 @@ export const router = createRouter({
     ...TanStackQueryProviderContext,
   },
   defaultPreload: "intent",
-  scrollRestoration: false,
+  scrollRestoration: true,
   defaultStructuralSharing: false, // Enable structural sharing to prevent unnecessary re-renders
   defaultPreloadStaleTime: 0, // 1 seconds - cache preloaded data longer
-  defaultPreloadDelay: 100, // Small delay to prevent excessive preloading
+  defaultPreloadDelay: 100,
+  defaultNotFoundComponent: () => NotFound
 })
 
 NProgress.configure({

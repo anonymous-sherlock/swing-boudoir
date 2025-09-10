@@ -1,7 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { useContestLeaderboard } from "@/hooks/api/useContests";
-import { useProfile } from "@/hooks/api/useProfile";
-import { useCastFreeVote, useCastPaidVote } from "@/hooks/api/useVotes";
 import { useParams } from "@tanstack/react-router";
 import { AlertCircle, DollarSign, Menu, Share } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -11,23 +8,16 @@ import { BioSection } from "@/components/profile/BioSection";
 import { ContestsParticipationSection } from "@/components/profile/ContestsParticipationSection";
 import { PortfolioGallery } from "@/components/profile/PortfolioGallery";
 import { PublicProfileHeroSection } from "@/components/profile/ProfileMain";
+import { Route } from "@/routes/_public/profile.$username";
 import { shareProfile } from "@/utils";
 
-
 export default function PublicProfilePage() {
+  const {profile:modelProfile} = Route.useRouteContext();
+  const participations  = Route.useLoaderData();
   const { username } = useParams({ from: "/_public/profile/$username" });
-
-  const [showPaidVoteOptions, setShowPaidVoteOptions] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-
   const [lightboxImage, setLightboxImage] = useState<{ url: string; caption: string } | null>(null);
 
-  // API hooks
-  const { useProfileByUsername, useActiveParticipation } = useProfile();
-  const { data: modelProfile, isLoading, error } = useProfileByUsername(username || "");
-  const { data: participations } = useActiveParticipation(modelProfile?.id || "");
-  const freeVoteMutation = useCastFreeVote();
-  const paidVoteMutation = useCastPaidVote();
 
   const handleImageClick = (image: { url: string; caption: string }) => {
     setLightboxImage(image);
@@ -47,46 +37,7 @@ export default function PublicProfilePage() {
     return filtered;
   }, [participations]);
 
-  // Get leaderboard data for the first contest to show model rank and total participants
-  const { data: leaderboardData } = useContestLeaderboard(activeParticipations[0]?.contestId || "", 1, 100);
-
-  if (isLoading) {
-    return (
-      <>
-        <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
-          <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="flex flex-col items-start">
-                <div className="text-2xl font-display font-bold text-primary tracking-tight">SWING</div>
-                <div className="text-xs font-medium text-muted-foreground -mt-1 tracking-wider">Boudoir</div>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" size="sm" className="text-gray-600 hover:text-gray-800 border-gray-300 hidden sm:flex">
-                <DollarSign className="w-4 h-4 mr-1" />
-                Buy More Votes
-              </Button>
-              <Button variant="outline" size="sm" className="text-gray-600 hover:text-gray-800 border-gray-300 hidden sm:flex">
-                <Share className="w-4 h-4 mr-1" />
-                Share Profile
-              </Button>
-              <Button variant="ghost" size="sm" className="sm:hidden">
-                <Menu className="w-5 h-5" />
-              </Button>
-            </div>
-          </div>
-        </header>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center pt-16">
-          <div className="text-center space-y-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-            <p className="text-gray-600">Loading profile...</p>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  if (error || !modelProfile) {
+  if (!modelProfile) {
     return (
       <>
         <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
@@ -138,7 +89,7 @@ export default function PublicProfilePage() {
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            <Button onClick={() => setShowPaidVoteOptions(true)} variant="outline" size="sm" className="text-gray-600 hover:text-gray-800 border-gray-300 hidden sm:flex">
+            <Button onClick={() => {}} variant="outline" size="sm" className="text-gray-600 hover:text-gray-800 border-gray-300 hidden sm:flex">
               <DollarSign className="w-4 h-4 mr-1" />
               Buy More Votes
             </Button>
@@ -191,7 +142,7 @@ export default function PublicProfilePage() {
       {showMobileMenu && (
         <div className="fixed top-16 left-0 right-0 z-40 bg-white border-b border-gray-200 shadow-lg sm:hidden">
           <div className="p-4 space-y-3">
-            <Button onClick={() => setShowPaidVoteOptions(true)} variant="outline" size="sm" className="w-full text-gray-600 hover:text-gray-800 border-gray-300">
+            <Button onClick={() => {}} variant="outline" size="sm" className="w-full text-gray-600 hover:text-gray-800 border-gray-300">
               <DollarSign className="w-4 h-4 mr-2" />
               Buy More Votes
             </Button>

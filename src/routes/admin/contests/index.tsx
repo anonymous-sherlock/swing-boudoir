@@ -33,7 +33,7 @@ type SearchParams = z.infer<typeof searchSchema>;
 
 export const Route = createFileRoute("/admin/contests/")({
   component: () => <ContestsPage />,
-  validateSearch: (search): SearchParams => searchSchema.parse(search),
+  validateSearch: (search): Partial<SearchParams> => searchSchema.parse(search),
   loaderDeps: ({ search }) => ({
     page: search.page,
     limit: search.limit,
@@ -48,12 +48,12 @@ export const Route = createFileRoute("/admin/contests/")({
 
     // Build query string for contests API
     const queryParams = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-      search: searchTerm,
-      status,
-      sortBy: sortBy,
-      sortOrder: sortOrder,
+      page: page?.toString() || "",
+      limit: limit?.toString() || "",
+      search: searchTerm || "",
+      status: status || "",
+      sortBy: sortBy || "",
+      sortOrder: sortOrder || "",
     });
 
     // your API requests
@@ -354,6 +354,11 @@ function ContestsPage() {
                         <Button asChild size="icon" variant="ghost" className="h-6 w-6 bg-blue-100 hover:bg-blue-100">
                           <Link to={`/competitions/$slug`} params={{ slug: contest.slug }} title={`View ${contest.name}`}>
                             <Eye className="w-3 h-3" />
+                          </Link>
+                        </Button>
+                        <Button asChild size="icon" variant="ghost" className="h-6 w-6 bg-blue-100 hover:bg-blue-100">
+                          <Link to={`/admin/contests/$id/participants`} params={{ id: contest.id }} title={`View ${contest.name} participants`}>
+                            <Users className="w-3 h-3" />
                           </Link>
                         </Button>
                         <Button asChild size="icon" variant="ghost" className="h-6 w-6 bg-green-100 hover:bg-green-100">

@@ -6,7 +6,7 @@ import { useProfile } from "@/hooks/api/useProfile";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
-
+import { useQueryClient } from "@tanstack/react-query";
 interface FinalSceneProps {
   formData: FormData;
   updateFormData: (updates: Partial<FormData>) => void;
@@ -18,6 +18,7 @@ const FinalScene: React.FC<FinalSceneProps> = ({ formData }) => {
   const { createProfile, uploadCoverImage, uploadBannerImage, uploadProfilePhotos } = useProfile();
   const { user, isLoading } = useAuth();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const handleComplete = () => {
     console.log("Finalizing profile with data:", formData);
     if (!isLoading && !user) return;
@@ -61,6 +62,9 @@ const FinalScene: React.FC<FinalSceneProps> = ({ formData }) => {
           uploadProfilePhotos.mutate({ id: profile.id, files: formData.photos });
         }
 
+        // Invalidate profile queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ["profile"] });
+        queryClient.invalidateQueries({ queryKey: ["session"] });
         // Show success toast and redirect to dashboard
         toast.success("🎉 Welcome to the modeling platform! Your profile is now live.");
 

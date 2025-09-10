@@ -108,19 +108,14 @@ const apiRequest = async <T = any>(
     ...customHeaders,
   };
 
-  // Add authentication if required
-  if (requireAuth) {
-    const token = localStorage.getItem(AUTH_TOKEN_KEY);
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-  }
-
   // Prepare the request
   const requestConfig: RequestInit = {
     ...fetchOptions,
     headers,
   };
+
+  requestConfig.credentials = 'include';
+
 
   // Add body if provided
   if (body) {

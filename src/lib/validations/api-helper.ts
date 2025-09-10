@@ -989,6 +989,11 @@ const endpoints = makeApi([
         type: "Query",
         schema: z.number().nullish().default(20),
       },
+      {
+        name: "search",
+        type: "Query",
+        schema: z.string().optional(),
+      },
     ],
     response: z
       .object({

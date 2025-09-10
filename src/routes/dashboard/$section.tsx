@@ -1,3 +1,4 @@
+import { useAuth } from "@/contexts/AuthContext";
 import Dashboard from "@/pages/Dashboard";
 import { createFileRoute } from "@tanstack/react-router";
 

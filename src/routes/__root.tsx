@@ -29,7 +29,7 @@ function AppShell() {
     </div>
   );
 }
-interface MyRouterContext {
+export interface MyRouterContext {
   queryClient: QueryClient;
 }
 

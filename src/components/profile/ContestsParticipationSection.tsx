@@ -2,7 +2,7 @@ import { VoterAuthModal } from "@/components/auth/VoterAuthModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Profile, useProfile } from "@/hooks/api/useProfile";
+import { useProfile } from "@/hooks/api/useProfile";
 import { formatUsdAbbrev } from "@/lib/utils";
 import { Contest_Status } from "@/lib/validations/contest.schema";
 import { ContestParticipation } from "@/types/competitions.types";
@@ -18,6 +18,8 @@ import FlipClockCountdown from "@leenguyen/react-flip-clock-countdown";
 import "@leenguyen/react-flip-clock-countdown/dist/index.css";
 import { toast } from "sonner";
 import VoteModal from "./VoteModal";
+import { Profile } from "@/types/profile.types";
+import { getImageUrl } from "@/lib/image-helper";
 
 interface ContestsParticipationSectionProps {
   participations: ContestParticipation[];
@@ -214,45 +216,49 @@ export function ContestsParticipationSection({ profile, participations, onVoteSu
               <div className="flex flex-col lg:flex-row">
                 {/* Contest Photo Section - Fixed sizing */}
                 <div className="lg:w-2/5 relative overflow-hidden">
-                  {participation.coverImage && (
-                    <div className="relative h-80 lg:h-full group">
-                      <img
-                        src={participation.coverImage.url}
-                        alt="Contest Participation Photo"
-                        className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-300"
-                        onClick={() =>
-                          participation.coverImage &&
-                          setLightboxImage({
-                            url: participation.coverImage.url,
-                            caption: "Contest Participation Photo",
-                          })
-                        }
-                      />
-                      <div className="absolute top-4 left-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs px-3 py-1 rounded-full font-medium shadow-lg">
-                        Participation Photo
-                      </div>
-                      {/* View Icon on Hover */}
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-lg flex items-center justify-center">
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="bg-white text-gray-900 hover:bg-gray-100"
+                  {participation.coverImage &&
+                    (() => {
+                      const optimizedCoverImage = getImageUrl(participation.coverImage.url, "gallery", { w: 600, q: 80 });
+                      return (
+                        <div className="relative h-80 lg:h-full group">
+                          <img
+                            src={optimizedCoverImage}
+                            alt="Contest Participation Photo"
+                            className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-300"
                             onClick={() =>
                               participation.coverImage &&
                               setLightboxImage({
                                 url: participation.coverImage.url,
-                                caption: "",
+                                caption: "Contest Participation Photo",
                               })
                             }
-                          >
-                            <Eye className="h-4 w-4 mr-2" />
-                            View
-                          </Button>
+                          />
+                          <div className="absolute top-4 left-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs px-3 py-1 rounded-full font-medium shadow-lg">
+                            Participation Photo
+                          </div>
+                          {/* View Icon on Hover */}
+                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-lg flex items-center justify-center">
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="bg-white text-gray-900 hover:bg-gray-100"
+                                onClick={() =>
+                                  participation.coverImage &&
+                                  setLightboxImage({
+                                    url: participation.coverImage.url,
+                                    caption: "",
+                                  })
+                                }
+                              >
+                                <Eye className="h-4 w-4 mr-2" />
+                                View
+                              </Button>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  )}
+                      );
+                    })()}
                 </div>
 
                 {/* Contest Info Section */}

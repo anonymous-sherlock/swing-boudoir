@@ -69,6 +69,7 @@ export const VoterOnlyMenu: React.FC<VoterOnlyMenuProps> = ({ isOpen, onClose })
         try {
           await handleLogout();
           onClose();
+          // Navigation is now handled by the AuthContext handleLogout function
         } catch (error) {
           console.error("Logout failed:", error);
         }

@@ -33,6 +33,7 @@ export type AssignRankData = z.infer<typeof AssignRankSchema>;
 
 // API response type for paginated model ranks
 export interface ModelRanksResponse {
+  currentProfile: ModelRank
   data: ModelRank[];
   pagination: {
     total: number;
@@ -46,12 +47,16 @@ export interface ModelRanksResponse {
 
 // API functions
 const getModelRanks = async (params?: {
+  search?: string;
   page?: number;
   limit?: number;
+  profileId?: string;
 }): Promise<ModelRanksResponse> => {
   const queryParams = new URLSearchParams();
+  if (params?.search) queryParams.append('search', params.search);
   if (params?.page) queryParams.append('page', params.page.toString());
   if (params?.limit) queryParams.append('limit', params.limit.toString());
+  if (params?.profileId) queryParams.append('profileId', params.profileId);
 
   const endpoint = queryParams.toString() ? `/api/v1/ranks?${queryParams.toString()}` : '/api/v1/ranks';
   const response = await api.get(endpoint);
@@ -72,7 +77,7 @@ const removeModelRank = async (profileId: string): Promise<{ success: boolean; m
 };
 
 const updateComputedRanks = async (): Promise<{ success: boolean; message: string; rank: ModelRank }> => {
-  const response = await api.post('/api/v1/ranks/update-computed',{
+  const response = await api.post('/api/v1/ranks/update-computed', {
     force: true,
   });
   return response.data;
@@ -82,6 +87,7 @@ const updateComputedRanks = async (): Promise<{ success: boolean; message: strin
 export const useGetModelRanks = (params?: {
   page?: number;
   limit?: number;
+  search?: string;
 }) => {
   return useQuery({
     queryKey: ["model-ranks", params],

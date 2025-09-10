@@ -4,7 +4,7 @@ import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { PageLoader } from '@/components/PageLoader';
 import { toast } from '@/components/ui/use-toast';
-import { AUTH_TOKEN_KEY } from '@/lib/auth';
+// Removed AUTH_TOKEN_KEY import as we're using cookies now
 import Auth from "@/pages/AuthPage";
 import NotFound from "@/pages/NotFound";
 
@@ -64,30 +64,57 @@ function AuthPage() {
 // OAuth Callback Component
 const OAuthCallbackPage = () => {
   const navigate = useNavigate();
-  const { revalidateSession } = useAuth();
+  const { revalidateSession, checkUserNeedsOnboarding } = useAuth();
   const [isProcessing, setIsProcessing] = useState(true);
   const search = useSearch({ from: '/auth/$id' });
 
   useEffect(() => {
     const handleOAuthCallback = async () => {
       try {
-     
         const redirectTo = search.redirectTo as string;
 
+        // Revalidate session to get fresh user data
         const session = await revalidateSession();
 
-        console.log("session", session);
+        console.log("OAuth callback session:", session);
 
         if (!session.session) {
           throw new Error("No session received from OAuth callback");
         }
 
-        // Store the token
-        localStorage.setItem(AUTH_TOKEN_KEY, session.session.token);
+        // Wait for AuthContext to update with the new session
+        await new Promise(resolve => setTimeout(resolve, 300));
 
-        // Redirect to the intended destination or default
-        const targetPath = redirectTo || '/dashboard';
-        navigate({ to: targetPath });
+        // Check if user needs onboarding BEFORE redirecting
+        // Use the session data directly to avoid race conditions
+        const needsOnboarding = !session.user.profileId || !session.session.profileId;
+        console.log("OAuth callback - User needs onboarding:", needsOnboarding, {
+          userProfileId: session.user.profileId,
+          sessionProfileId: session.session.profileId
+        });
+
+        // Double-check with AuthContext as fallback (in case of race conditions)
+        const authContextNeedsOnboarding = checkUserNeedsOnboarding();
+        console.log("OAuth callback - AuthContext check:", authContextNeedsOnboarding);
+        
+        // Use the more reliable check (session data is more reliable than context state)
+        const finalNeedsOnboarding = needsOnboarding || authContextNeedsOnboarding;
+
+        // Determine redirect path - prioritize onboarding over dashboard
+        let targetPath = '/dashboard';
+        
+        if (finalNeedsOnboarding) {
+          targetPath = '/onboarding';
+        } else if (redirectTo && redirectTo !== '/dashboard') {
+          // Only use custom redirect if user doesn't need onboarding
+          targetPath = redirectTo;
+        }
+
+        console.log("OAuth callback redirecting to:", targetPath);
+        
+        // Navigate to the determined path
+        navigate({ to: targetPath, replace: true });
+        
         toast({
           title: 'Welcome!',
           description: 'Successfully signed in with Google',
@@ -100,14 +127,14 @@ const OAuthCallbackPage = () => {
           description: 'Failed to complete authentication',
           variant: 'destructive',
         });
-        navigate({ to: '/auth/$id', params: { id: 'sign-in' } });
+        navigate({ to: '/auth/$id', params: { id: 'sign-in' }, replace: true });
       } finally {
         setIsProcessing(false);
       }
     };
 
     handleOAuthCallback();
-  }, [search, navigate, revalidateSession]);
+  }, [search, navigate, revalidateSession, checkUserNeedsOnboarding]);
 
   if (isProcessing) {
     return (
