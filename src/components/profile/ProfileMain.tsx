@@ -63,13 +63,19 @@ export function PublicProfileHeroSection({ name, username, city, country, phone,
       .filter(Boolean);
   };
 
-  const optimizedBannerImageUrl = getImageUrl(bannerImage, 'banner');
-  const optimizedCoverImageUrl = getImageUrl(coverImage, 'medium');
+  const optimizedBannerImageUrl = bannerImage ? getImageUrl(bannerImage, 'banner') : '';
+  const optimizedCoverImageUrl = coverImage ? getImageUrl(coverImage, 'medium') : '';
 
   return (
     <div className="relative h-[60vh] min-h-[500px]">
       {/* Banner Image */}
-      <div className="absolute inset-0 bg-cover bg-center bg-no-repeat flex items-center justify-center" style={{ backgroundImage: `url(${optimizedBannerImageUrl})` }}>
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat flex items-center justify-center" 
+        style={{ 
+          backgroundImage: optimizedBannerImageUrl ? `url(${optimizedBannerImageUrl})` : undefined,
+          backgroundColor: !optimizedBannerImageUrl ? '#f3f4f6' : undefined
+        }}
+      >
         {!bannerImage ? <User className="size-40 text-gray-400   object-cover" /> : null}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
       </div>
@@ -81,7 +87,7 @@ export function PublicProfileHeroSection({ name, username, city, country, phone,
             {/* Profile Image - Hidden on mobile, shown on desktop */}
             <div className="relative hidden md:block">
               <div className={cn("w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-2xl", !coverImage && "flex justify-center items-center bg-gray-200")}>
-                {coverImage ? <img src={optimizedCoverImageUrl} alt={name} className="w-full h-full object-cover" /> : <User className="size-16 text-gray-400   object-cover" />}
+                {coverImage && optimizedCoverImageUrl ? <img src={optimizedCoverImageUrl} alt={name} className="w-full h-full object-cover" /> : <User className="size-16 text-gray-400   object-cover" />}
               </div>
               {/* <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 border-4 border-white rounded-full"> </div> */}
             </div>
@@ -118,7 +124,13 @@ export function PublicProfileHeroSection({ name, username, city, country, phone,
       <div className="relative md:hidden">
         <div className="absolute -bottom-5 left-1/2  transform -translate-x-1/2 translate-y-1/2">
           <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-2xl bg-white">
-            <img src={optimizedCoverImageUrl} alt={name} className="w-full h-full object-cover" />
+            {coverImage && optimizedCoverImageUrl ? (
+              <img src={optimizedCoverImageUrl} alt={name} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                <User className="size-16 text-gray-400" />
+              </div>
+            )}
           </div>
         </div>
       </div>

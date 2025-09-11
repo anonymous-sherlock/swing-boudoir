@@ -255,6 +255,11 @@ export function getImageUrl(
     size: ImageSize = 'medium',
     customOptions: Partial<ImageTransformOptions> = {}
 ): string {
+    // Return empty string if originalUrl is null, undefined, or empty
+    if (!originalUrl || originalUrl.trim() === '') {
+        return '';
+    }
+
     const sizeConfig = IMAGE_SIZE_CONFIGS[size];
     const options: ImageTransformOptions = {
         ...DEFAULT_OPTIONS,
@@ -284,6 +289,15 @@ export function getMultipleImageUrls(
     sizes: ImageSize[],
     customOptions: Partial<ImageTransformOptions> = {}
 ): Record<ImageSize, string> {
+    // Return empty object if originalUrl is null, undefined, or empty
+    if (!originalUrl || originalUrl.trim() === '') {
+        const result = {} as Record<ImageSize, string>;
+        sizes.forEach(size => {
+            result[size] = '';
+        });
+        return result;
+    }
+
     const result = {} as Record<ImageSize, string>;
 
     sizes.forEach(size => {
@@ -315,11 +329,17 @@ export function getResponsiveImageSrcset(
     sizes: Array<{ size: ImageSize; density: number }>,
     customOptions: Partial<ImageTransformOptions> = {}
 ): string {
+    // Return empty string if originalUrl is null, undefined, or empty
+    if (!originalUrl || originalUrl.trim() === '') {
+        return '';
+    }
+
     return sizes
         .map(({ size, density }) => {
             const url = getImageUrl(originalUrl, size, customOptions);
-            return `${url} ${density}x`;
+            return url ? `${url} ${density}x` : '';
         })
+        .filter(Boolean)
         .join(', ');
 }
 
