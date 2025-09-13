@@ -46,7 +46,6 @@ const AdminPaymentsLazyRouteImport = createFileRoute('/admin/payments')()
 const AdminNotificationsLazyRouteImport = createFileRoute(
   '/admin/notifications',
 )()
-const AdminLeaderboardLazyRouteImport = createFileRoute('/admin/leaderboard')()
 const PublicTermsOfServicesLazyRouteImport = createFileRoute(
   '/_public/terms-of-services',
 )()
@@ -119,13 +118,6 @@ const AdminNotificationsLazyRoute = AdminNotificationsLazyRouteImport.update({
   getParentRoute: () => AdminRoute,
 } as any).lazy(() =>
   import('./routes/admin/notifications.lazy').then((d) => d.Route),
-)
-const AdminLeaderboardLazyRoute = AdminLeaderboardLazyRouteImport.update({
-  id: '/leaderboard',
-  path: '/leaderboard',
-  getParentRoute: () => AdminRoute,
-} as any).lazy(() =>
-  import('./routes/admin/leaderboard.lazy').then((d) => d.Route),
 )
 const PublicTermsOfServicesLazyRoute =
   PublicTermsOfServicesLazyRouteImport.update({
@@ -310,7 +302,6 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PublicPrivacyLazyRoute
   '/rules': typeof PublicRulesLazyRoute
   '/terms-of-services': typeof PublicTermsOfServicesLazyRoute
-  '/admin/leaderboard': typeof AdminLeaderboardLazyRoute
   '/admin/notifications': typeof AdminNotificationsLazyRoute
   '/admin/payments': typeof AdminPaymentsLazyRoute
   '/admin/': typeof AdminIndexRoute
@@ -349,7 +340,6 @@ export interface FileRoutesByTo {
   '/privacy': typeof PublicPrivacyLazyRoute
   '/rules': typeof PublicRulesLazyRoute
   '/terms-of-services': typeof PublicTermsOfServicesLazyRoute
-  '/admin/leaderboard': typeof AdminLeaderboardLazyRoute
   '/admin/notifications': typeof AdminNotificationsLazyRoute
   '/admin/payments': typeof AdminPaymentsLazyRoute
   '/admin': typeof AdminIndexRoute
@@ -392,7 +382,6 @@ export interface FileRoutesById {
   '/_public/privacy': typeof PublicPrivacyLazyRoute
   '/_public/rules': typeof PublicRulesLazyRoute
   '/_public/terms-of-services': typeof PublicTermsOfServicesLazyRoute
-  '/admin/leaderboard': typeof AdminLeaderboardLazyRoute
   '/admin/notifications': typeof AdminNotificationsLazyRoute
   '/admin/payments': typeof AdminPaymentsLazyRoute
   '/admin/': typeof AdminIndexRoute
@@ -436,7 +425,6 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/rules'
     | '/terms-of-services'
-    | '/admin/leaderboard'
     | '/admin/notifications'
     | '/admin/payments'
     | '/admin/'
@@ -475,7 +463,6 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/rules'
     | '/terms-of-services'
-    | '/admin/leaderboard'
     | '/admin/notifications'
     | '/admin/payments'
     | '/admin'
@@ -517,7 +504,6 @@ export interface FileRouteTypes {
     | '/_public/privacy'
     | '/_public/rules'
     | '/_public/terms-of-services'
-    | '/admin/leaderboard'
     | '/admin/notifications'
     | '/admin/payments'
     | '/admin/'
@@ -633,13 +619,6 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/admin/notifications'
       preLoaderRoute: typeof AdminNotificationsLazyRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/leaderboard': {
-      id: '/admin/leaderboard'
-      path: '/leaderboard'
-      fullPath: '/admin/leaderboard'
-      preLoaderRoute: typeof AdminLeaderboardLazyRouteImport
       parentRoute: typeof AdminRoute
     }
     '/_public/terms-of-services': {
@@ -926,7 +905,6 @@ interface AdminRouteChildren {
   AdminVotesRouteRoute: typeof AdminVotesRouteRouteWithChildren
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminWinnersRoute: typeof AdminWinnersRoute
-  AdminLeaderboardLazyRoute: typeof AdminLeaderboardLazyRoute
   AdminNotificationsLazyRoute: typeof AdminNotificationsLazyRoute
   AdminPaymentsLazyRoute: typeof AdminPaymentsLazyRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -945,7 +923,6 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminVotesRouteRoute: AdminVotesRouteRouteWithChildren,
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminWinnersRoute: AdminWinnersRoute,
-  AdminLeaderboardLazyRoute: AdminLeaderboardLazyRoute,
   AdminNotificationsLazyRoute: AdminNotificationsLazyRoute,
   AdminPaymentsLazyRoute: AdminPaymentsLazyRoute,
   AdminIndexRoute: AdminIndexRoute,

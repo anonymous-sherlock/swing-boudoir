@@ -8,7 +8,7 @@ import { Contest_Status } from "@/lib/validations/contest.schema";
 import { ContestParticipation } from "@/types/competitions.types";
 import { Link } from "@tanstack/react-router";
 import { Calendar, Eye, Gift, Heart, Trophy, Users } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { Icons } from "../icons";
 import { Lightbox } from "../Lightbox";
 
@@ -18,6 +18,7 @@ import FlipClockCountdown from "@leenguyen/react-flip-clock-countdown";
 import "@leenguyen/react-flip-clock-countdown/dist/index.css";
 import { toast } from "sonner";
 import VoteModal from "./VoteModal";
+import CountdownTimer from "./CountdownTimer";
 import { Profile } from "@/types/profile.types";
 import { getImageUrl } from "@/lib/image-helper";
 
@@ -92,28 +93,32 @@ const getTimeRemainingForNextVote = (lastVoteAt: string): { canVote: boolean; ti
 export function ContestsParticipationSection({ profile, participations, onVoteSuccess }: ContestsParticipationSectionProps) {
   const { user, isAuthenticated } = useAuth();
   const { useProfileByUserId } = useProfile();
-  const { data: voterProfile } = useProfileByUserId(user?.id || "");
+  const { data: voterProfile, refetch: refetchVoterProfile } = useProfileByUserId(user?.id || "");
   const [lightboxImage, setLightboxImage] = useState<{ url: string; caption: string } | null>(null);
   const [isVoteModalOpen, setIsVoteModalOpen] = useState(false);
   const [selectedParticipation, setSelectedParticipation] = useState<ContestParticipation | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const { data: freeVoteAvailability } = useCheckFreeVoteAvailability({
+  const { data: freeVoteAvailability, refetch: refetchFreeVoteAvailability } = useCheckFreeVoteAvailability({
     profileId: voterProfile?.id || "",
   });
   const { mutateAsync: castFreeVote, isPending: isVoting } = useCastFreeVote();
-  const [isFreeVoteAvailable, setIsFreeVoteAvailable] = useState(false);
 
-  // Combined useEffect to handle both API and local state efficiently
-  useEffect(() => {
+  // Determine free vote availability based on API data
+  const isFreeVoteAvailable = useMemo(() => {
+    console.log("Recalculating isFreeVoteAvailable:", {
+      freeVoteAvailable: freeVoteAvailability?.available,
+      lastFreeVoteAt: voterProfile?.lastFreeVoteAt,
+      voterProfile: voterProfile,
+    });
+
     if (freeVoteAvailability?.available) {
-      setIsFreeVoteAvailable(true);
+      return true;
     } else if (voterProfile?.lastFreeVoteAt) {
       const { canVote } = getTimeRemainingForNextVote(voterProfile.lastFreeVoteAt);
-      setIsFreeVoteAvailable(canVote);
-    } else {
-      setIsFreeVoteAvailable(false);
+      return canVote;
     }
-  }, [freeVoteAvailability, voterProfile?.lastFreeVoteAt]);
+    return false;
+  }, [freeVoteAvailability?.available, voterProfile]);
 
   const closeLightbox = () => {
     setLightboxImage(null);
@@ -134,8 +139,8 @@ export function ContestsParticipationSection({ profile, participations, onVoteSu
             description: `You have cast your free vote for ${voteeName}`,
           });
 
-          // Update local state immediately for better UX
-          setIsFreeVoteAvailable(false);
+          // Explicitly refetch queries to ensure immediate UI update
+          await Promise.all([refetchFreeVoteAvailability(), refetchVoterProfile()]);
 
           // Call the callback to refresh data
           onVoteSuccess();
@@ -151,7 +156,7 @@ export function ContestsParticipationSection({ profile, participations, onVoteSu
         // Don't update state on error - keep the button enabled
       }
     },
-    [castFreeVote, onVoteSuccess]
+    [castFreeVote, onVoteSuccess, refetchFreeVoteAvailability, refetchVoterProfile]
   );
 
   const handleVoteButtonClick = useCallback(
@@ -437,7 +442,6 @@ export function ContestsParticipationSection({ profile, participations, onVoteSu
         profile={profile}
         voterProfile={voterProfile}
         isFreeVoteAvailable={isFreeVoteAvailable}
-        onAvailabilityChange={setIsFreeVoteAvailable}
         onFreeVoteRequest={(participation) => {
           // Handle free vote request from modal
           if (selectedParticipation) {

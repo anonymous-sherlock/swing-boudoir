@@ -8,8 +8,10 @@ import { BioSection } from "@/components/profile/BioSection";
 import { ContestsParticipationSection } from "@/components/profile/ContestsParticipationSection";
 import { PortfolioGallery } from "@/components/profile/PortfolioGallery";
 import { PublicProfileHeroSection } from "@/components/profile/ProfileMain";
+import { BuyVotesModal } from "@/components/profile/BuyVotesModal";
 import { Route } from "@/routes/_public/profile.$username";
 import { shareProfile } from "@/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function PublicProfilePage() {
   const {profile:modelProfile} = Route.useRouteContext();
@@ -17,6 +19,10 @@ export default function PublicProfilePage() {
   const { username } = useParams({ from: "/_public/profile/$username" });
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<{ url: string; caption: string } | null>(null);
+  const [isBuyVotesModalOpen, setIsBuyVotesModalOpen] = useState(false);
+  
+  // Auth hook
+  const { isAuthenticated } = useAuth();
 
 
   const handleImageClick = (image: { url: string; caption: string }) => {
@@ -25,6 +31,10 @@ export default function PublicProfilePage() {
 
   const closeLightbox = () => {
     setLightboxImage(null);
+  };
+
+  const handleBuyMoreVotesClick = () => {
+    setIsBuyVotesModalOpen(true);
   };
 
   // Process participations data for display
@@ -49,7 +59,7 @@ export default function PublicProfilePage() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Button variant="outline" size="sm" className="text-gray-600 hover:text-gray-800 border-gray-300 hidden sm:flex">
+              <Button onClick={handleBuyMoreVotesClick} variant="outline" size="sm" className="text-gray-600 hover:text-gray-800 border-gray-300 hidden sm:flex">
                 <DollarSign className="w-4 h-4 mr-1" />
                 Buy More Votes
               </Button>
@@ -89,7 +99,7 @@ export default function PublicProfilePage() {
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            <Button onClick={() => {}} variant="outline" size="sm" className="text-gray-600 hover:text-gray-800 border-gray-300 hidden sm:flex">
+            <Button onClick={handleBuyMoreVotesClick} variant="outline" size="sm" className="text-gray-600 hover:text-gray-800 border-gray-300 hidden sm:flex">
               <DollarSign className="w-4 h-4 mr-1" />
               Buy More Votes
             </Button>
@@ -142,7 +152,7 @@ export default function PublicProfilePage() {
       {showMobileMenu && (
         <div className="fixed top-16 left-0 right-0 z-40 bg-white border-b border-gray-200 shadow-lg sm:hidden">
           <div className="p-4 space-y-3">
-            <Button onClick={() => {}} variant="outline" size="sm" className="w-full text-gray-600 hover:text-gray-800 border-gray-300">
+            <Button onClick={handleBuyMoreVotesClick} variant="outline" size="sm" className="w-full text-gray-600 hover:text-gray-800 border-gray-300">
               <DollarSign className="w-4 h-4 mr-2" />
               Buy More Votes
             </Button>
@@ -155,6 +165,14 @@ export default function PublicProfilePage() {
       )}
 
       {lightboxImage && <Lightbox image={lightboxImage} onClose={closeLightbox} />}
+
+      {/* Buy Votes Modal */}
+      <BuyVotesModal
+        open={isBuyVotesModalOpen}
+        onOpenChange={setIsBuyVotesModalOpen}
+        participations={activeParticipations || []}
+        profile={modelProfile}
+      />
     </>
   );
 }

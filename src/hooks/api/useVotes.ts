@@ -17,6 +17,13 @@ import {
 } from "@/types/votes.types";
 import { toast } from "sonner";
 
+// Helper function to extract error message from API response
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getErrorMessage = (response: any): string => {
+  const errorData = extractApiError(response);
+  return typeof errorData === 'string' ? errorData : errorData?.error || "An unknown error occurred";
+};
+
 // API endpoint functions for dynamic parameters
 const VOTES_ENDPOINTS = {
   freeVote: () => "/api/v1/contest/vote/free",
@@ -39,22 +46,18 @@ export const useCastFreeVote = () => {
     mutationFn: async (voteData: FreeVoteRequest): Promise<Vote> => {
       const response = await api.post<Vote>(VOTES_ENDPOINTS.freeVote(), voteData);
       if (!isApiSuccess(response)) {
-        throw new Error(extractApiError(response) || "An unknown error occurred");
+        throw new Error(getErrorMessage(response));
       }
       return response.data;
     },
     onSuccess: (data, variables) => {
       // Invalidate relevant queries - be more specific to prevent unnecessary refetches
       queryClient.invalidateQueries({ queryKey: ["votes"] });
-      queryClient.invalidateQueries({ queryKey: ["freeVoteAvailability", variables.voterId] });
-      // Only invalidate the specific voter's profile, not all profiles
-      queryClient.invalidateQueries({ queryKey: ["profile", "detail", "user", variables.voterId] });
+      queryClient.invalidateQueries({ queryKey: ["freeVoteAvailability"] });
+      // Invalidate profile queries - both by profile ID and user ID patterns
+      queryClient.invalidateQueries({ queryKey: ["profile", "detail", "user"] });
+      queryClient.invalidateQueries({ queryKey: ["profile", "detail", variables.voterId] });
       queryClient.invalidateQueries({ queryKey: ["contest"] });
-    },
-    onError: (error) => {
-      toast.error("Failed to cast free vote", {
-        description: error instanceof Error ? error.message : "An unexpected error occurred. Please try again.",
-      });
     },
   });
 };
@@ -67,7 +70,7 @@ export const useCastPaidVote = () => {
     mutationFn: async (voteData: PaidVoteRequest): Promise<{ url: string }> => {
       const response = await api.post<{ url: string }>(VOTES_ENDPOINTS.paidVote(), voteData);
       if (!isApiSuccess(response)) {
-        throw new Error(extractApiError(response) || "An unknown error occurred");
+        throw new Error(getErrorMessage(response));
       }
       return response.data;
     },
@@ -92,7 +95,7 @@ export const useCheckFreeVoteAvailability = (params: FreeVoteAvailabilityRequest
         params
       );
       if (!isApiSuccess(response)) {
-        throw new Error(extractApiError(response) || "An unknown error occurred");
+        throw new Error(getErrorMessage(response));
       }
       return response.data;
     },
@@ -114,7 +117,7 @@ export const useLatestVotes = (params: { search?: string; page?: number; limit?:
         `${VOTES_ENDPOINTS.latestVotes()}?${queryParams.toString()}`
       );
       if (!isApiSuccess(response)) {
-        throw new Error(extractApiError(response) || "An unknown error occurred");
+        throw new Error(getErrorMessage(response));
       }
       return response.data;
     },
@@ -124,7 +127,7 @@ export const useLatestVotes = (params: { search?: string; page?: number; limit?:
 // Get votes by profile ID
 export const useProfileVotes = (
   profileId: string,
-  params: { search?: string; page?: number; limit?: number,onlyPaid?:boolean } = {}
+  params: { search?: string; page?: number; limit?: number, onlyPaid?: boolean } = {}
 ) => {
   return useQuery({
     queryKey: ["profileVotes", profileId, params],
@@ -138,7 +141,7 @@ export const useProfileVotes = (
         `${VOTES_ENDPOINTS.profileVotes(profileId)}?${queryParams.toString()}`
       );
       if (!isApiSuccess(response)) {
-        throw new Error(extractApiError(response) || "An unknown error occurred");
+        throw new Error(getErrorMessage(response));
       }
 
       console.log("response.data", response.data);
@@ -155,7 +158,7 @@ export const useTopVoters = (profileId: string) => {
     queryFn: async (): Promise<TopVoter[]> => {
       const response = await api.get<TopVoter[]>(VOTES_ENDPOINTS.topVoters(profileId));
       if (!isApiSuccess(response)) {
-        throw new Error(extractApiError(response) || "An unknown error occurred");
+        throw new Error(getErrorMessage(response));
       }
       return response.data;
     },
@@ -175,7 +178,7 @@ export const useVoteMultipliers = (params: { search?: string; page?: number; lim
 
       const response = await api.get(`${VOTES_ENDPOINTS.voteMultipliers()}?${queryParams.toString()}`);
       if (!isApiSuccess(response)) {
-        throw new Error(extractApiError(response) || "An unknown error occurred");
+        throw new Error(getErrorMessage(response));
       }
       return response.data;
     },
@@ -189,7 +192,7 @@ export const useActiveVoteMultiplier = () => {
     queryFn: async (): Promise<VoteMultiplierPeriod | null> => {
       const response = await api.get<VoteMultiplierPeriod | null>(VOTES_ENDPOINTS.activeVoteMultiplier());
       if (!isApiSuccess(response)) {
-        throw new Error(extractApiError(response) || "An unknown error occurred");
+        throw new Error(getErrorMessage(response));
       }
       return response.data;
     },
@@ -204,7 +207,7 @@ export const useCreateVoteMultiplier = () => {
     mutationFn: async (data: CreateVoteMultiplierRequest): Promise<VoteMultiplierPeriod> => {
       const response = await api.post<VoteMultiplierPeriod>(VOTES_ENDPOINTS.voteMultipliers(), data);
       if (!isApiSuccess(response)) {
-        throw new Error(extractApiError(response) || "An unknown error occurred");
+        throw new Error(getErrorMessage(response));
       }
       return response.data;
     },
@@ -223,7 +226,7 @@ export const useUpdateVoteMultiplier = () => {
     mutationFn: async ({ id, data }: { id: string; data: UpdateVoteMultiplierRequest }): Promise<VoteMultiplierPeriod> => {
       const response = await api.put<VoteMultiplierPeriod>(`${VOTES_ENDPOINTS.voteMultipliers()}/${id}`, data);
       if (!isApiSuccess(response)) {
-        throw new Error(extractApiError(response) || "An unknown error occurred");
+        throw new Error(getErrorMessage(response));
       }
       return response.data;
     },
@@ -242,7 +245,7 @@ export const useDeleteVoteMultiplier = () => {
     mutationFn: async (id: string): Promise<{ message: string }> => {
       const response = await api.delete<{ message: string }>(`${VOTES_ENDPOINTS.voteMultipliers()}/${id}`);
       if (!isApiSuccess(response)) {
-        throw new Error(extractApiError(response) || "An unknown error occurred");
+        throw new Error(getErrorMessage(response));
       }
       return response.data;
     },
@@ -254,10 +257,10 @@ export const useDeleteVoteMultiplier = () => {
 };
 
 // Get all votes for admin panel
-export const useAdminVotes = (params: { 
-  search?: string; 
-  page?: number; 
-  limit?: number; 
+export const useAdminVotes = (params: {
+  search?: string;
+  page?: number;
+  limit?: number;
   type?: 'FREE' | 'PAID';
   from_date?: string;
   to_date?: string;
@@ -277,7 +280,7 @@ export const useAdminVotes = (params: {
         `${VOTES_ENDPOINTS.adminVotes()}?${queryParams.toString()}`
       );
       if (!isApiSuccess(response)) {
-        throw new Error(extractApiError(response) || "An unknown error occurred");
+        throw new Error(getErrorMessage(response));
       }
       return response.data;
     },
@@ -291,7 +294,7 @@ export const useVotesAnalytics = () => {
     queryFn: async (): Promise<VotesAnalyticsResponse> => {
       const response = await api.get<VotesAnalyticsResponse>(VOTES_ENDPOINTS.votesAnalytics());
       if (!isApiSuccess(response)) {
-        throw new Error(extractApiError(response) || "An unknown error occurred");
+        throw new Error(getErrorMessage(response));
       }
       return response.data;
     },

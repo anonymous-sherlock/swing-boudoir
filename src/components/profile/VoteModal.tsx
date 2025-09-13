@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { Profile } from "@/types/profile.types";
-import { useCastPaidVote } from "@/hooks/api/useVotes";
+import { useCastPaidVote, useCastFreeVote } from "@/hooks/api/useVotes";
 import { ContestParticipation } from "@/types/competitions.types";
 import { CreditCard, Gift, Star } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -18,7 +18,7 @@ type VoteModalProps = {
   profile: Profile;
   voterProfile?: Profile; // Pass voter profile from parent
   isFreeVoteAvailable: boolean; // Pass availability from parent
-  onAvailabilityChange: (available: boolean) => void; // Callback to update parent
+  onAvailabilityChange?: (available: boolean) => void; // Callback to update parent
   onFreeVoteRequest: (participation: ContestParticipation) => void; // Callback for free vote requests
 };
 
@@ -28,10 +28,13 @@ const VoteModal = ({ open, onOpenChange, participation, profile, voterProfile, i
   const [customVoteCount, setCustomVoteCount] = useState<number>(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const { mutateAsync: castPaidVote, isPending: isPaidVoting } = useCastPaidVote();
+  const { mutateAsync: castFreeVote, isPending: isFreeVoting } = useCastFreeVote();
 
   const voteOptions = useMemo(
-    () => [
-      { id: "free", title: "Free Vote", description: "Daily free vote", votes: 1, price: 0, icon: Gift, available: isFreeVoteAvailable },
+    () => {
+      console.log('VoteModal - isFreeVoteAvailable:', isFreeVoteAvailable);
+      return [
+        { id: "free", title: "Free Vote", description: "Daily free vote", votes: 1, price: 0, icon: Gift, available: isFreeVoteAvailable },
       { id: "single", title: "5 Votes", description: "5 votes for $1", votes: 5, price: 1, icon: Star },
       {
         id: "pack5",
@@ -59,7 +62,8 @@ const VoteModal = ({ open, onOpenChange, participation, profile, voterProfile, i
         icon: Star,
         isCustom: true,
       },
-    ],
+      ];
+    },
     [customVoteCount, isFreeVoteAvailable]
   );
 
@@ -72,9 +76,23 @@ const VoteModal = ({ open, onOpenChange, participation, profile, voterProfile, i
 
     try {
       if (selectedVoteType === "free") {
-        // Free vote logic - delegate to parent component
-        onFreeVoteRequest(participation);
-        return; // Don't close modal here, let parent handle it
+        // Free vote logic - handle directly
+        const freeVoteData = {
+          contestId: participation.contest.id,
+          voteeId: profile.id,
+          voterId: user.profileId,
+          comment: "", // Add required comment field
+        };
+
+        await castFreeVote(freeVoteData);
+        
+        toast.success("Free vote cast successfully!", {
+          description: `You've voted for ${profile.user.name}`,
+        });
+
+        // Close modal after successful vote
+        onOpenChange(false);
+        return;
       } else {
         // Paid vote logic
         const voteCount =
@@ -149,7 +167,10 @@ const VoteModal = ({ open, onOpenChange, participation, profile, voterProfile, i
                         <h4 className="font-semibold text-lg">{option.title}</h4>
                         <p className="text-gray-600 text-sm">{option.description}</p>
                         {isDisabled && option.id === "free" && voterProfile?.lastFreeVoteAt && (
-                          <CountdownTimer lastVoteAt={voterProfile.lastFreeVoteAt} onAvailabilityChange={onAvailabilityChange} />
+                          <CountdownTimer 
+                            lastVoteAt={voterProfile.lastFreeVoteAt} 
+                            onAvailabilityChange={onAvailabilityChange || ((canVote: boolean) => {})} 
+                          />
                         )}
                         {isDisabled && option.id === "free" && !voterProfile?.lastFreeVoteAt && <p className="text-gray-500 text-sm">Free vote not available</p>}
                         {option.isCustom && selectedVoteType === "custom" && (
@@ -186,8 +207,8 @@ const VoteModal = ({ open, onOpenChange, participation, profile, voterProfile, i
                 <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)} disabled={isProcessing}>
                   Cancel
                 </Button>
-                <Button className="flex-1 bg-blue-600 hover:bg-blue-700" onClick={handleVoteClick} disabled={!selectedVoteType || isProcessing || isPaidVoting}>
-                  {isProcessing || isPaidVoting ? (
+                <Button className="flex-1 bg-blue-600 hover:bg-blue-700" onClick={handleVoteClick} disabled={!selectedVoteType || isProcessing || isPaidVoting || isFreeVoting}>
+                  {isProcessing || isPaidVoting || isFreeVoting ? (
                     <div className="flex items-center">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                       {selectedVoteType === "free" ? "Processing..." : "Redirecting to payment..."}
