@@ -65,7 +65,7 @@ export function DataTablePagination<TData>({
                 // Force URL update via direct window manipulation first
                 // This ensures the URL gets updated before the table state changes
                 const url = new URL(window.location.href);
-                url.searchParams.set('pageSize', value);
+                url.searchParams.set('limit', value);
                 url.searchParams.set('page', '1'); // Always reset to page 1
                 window.history.replaceState({}, '', url.toString());
                 

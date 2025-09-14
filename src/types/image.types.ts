@@ -1,7 +1,7 @@
 /**
  * Image size variants for different use cases
  */
-export type ImageSize = 'thumbnail' | 'small' | 'medium' | 'large' | 'full' | 'original' | "banner" | "gallery";
+export type ImageSize = 'avatar' | 'thumbnail' | 'small' | 'medium' | 'large' | 'full' | 'original' | "banner" | "gallery";
 
 /**
  * Image transformation options based on the actual API specification

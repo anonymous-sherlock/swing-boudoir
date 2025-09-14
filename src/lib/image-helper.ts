@@ -18,6 +18,7 @@ import { API_CONFIG } from './config';
  * Predefined image size configurations for common use cases
  */
 const IMAGE_SIZE_CONFIGS: Record<ImageSize, ImageSizeConfig> = {
+    avatar: { w: 80, h: 80, q: 80, f: 'webp', fit: 'cover' },
     thumbnail: { w: 150, h: 150, q: 80, f: 'webp', fit: 'cover' },
     small: { w: 300, h: 300, q: 85, f: 'webp', fit: 'cover' },
     medium: { w: 600, h: 600, q: 90, f: 'webp', fit: 'cover' },

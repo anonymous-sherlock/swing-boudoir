@@ -64,7 +64,9 @@ export function useUrlState<T>(
     ((value: string) => {
       try {
         if (typeof defaultValue === "number") {
-          const num = Number(value);
+          // Remove quotes if they exist (fix for double-encoded URL params)
+          const cleanValue = value.replace(/^"(.*)"$/, '$1');
+          const num = Number(cleanValue);
           return Number.isNaN(num) ? defaultValue : (num as unknown as T);
         }
         if (typeof defaultValue === "boolean") {
@@ -108,6 +110,8 @@ export function useUrlState<T>(
     if (key === "search" && typeof defaultValue === "string") {
       return decodeURIComponent(paramValue) as unknown as T;
     }
+    
+    
     return deserialize(paramValue);
   }, [searchParams, key, deserialize, defaultValue]);
 

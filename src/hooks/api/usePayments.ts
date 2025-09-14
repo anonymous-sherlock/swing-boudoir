@@ -65,3 +65,31 @@ export function usePaymentHistory(profileId: string, page: number = 1, limit: nu
     enabled: !!profileId,
   })
 }
+
+// Payments analytics interface
+export interface PaymentsAnalyticsResponse {
+  totalPayments: number;
+  completedPayments: number;
+  pendingPayments: number;
+  failedPayments: number;
+  amounts: {
+    total: number;
+    completed: number;
+    pending: number;
+    failed: number;
+  };
+}
+
+// Hook for getting payments analytics
+export function usePaymentsAnalytics() {
+  return useQuery({
+    queryKey: ['paymentsAnalytics'],
+    queryFn: async (): Promise<PaymentsAnalyticsResponse> => {
+      const response = await api.get('/api/v1/payments/analytics');
+      if (!response.success) {
+        throw new Error('Failed to fetch payments analytics');
+      }
+      return response.data;
+    },
+  });
+}
