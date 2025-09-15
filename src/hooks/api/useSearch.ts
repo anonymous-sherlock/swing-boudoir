@@ -1,16 +1,8 @@
 import { useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { api } from '../lib/api';
+import { api } from '../../lib/api';
+import { Pagination, SearchParams, User_Type } from '@/types';
 
-// Search types based on the API specification
-export interface SearchParams {
-  page?: number;
-  limit?: number;
-  query?: string;
-  search?: string;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-}
 
 export interface ProfileSearchParams extends SearchParams {
   city?: string;
@@ -35,15 +27,6 @@ export interface UserSearchParams extends SearchParams {
   hasProfile?: boolean;
 }
 
-// Response types
-export interface PaginationInfo {
-  total: number;
-  totalPages: number;
-  hasNextPage: boolean;
-  hasPreviousPage: boolean;
-  nextPage: number | null;
-  previousPage: number | null;
-}
 
 export interface ProfileSearchResult {
   id: string;
@@ -62,6 +45,7 @@ export interface ProfileSearchResult {
     name: string;
     email: string;
     image: string | null;
+    type: User_Type
   };
 }
 
@@ -78,7 +62,7 @@ export interface ContestSearchResult {
   status: 'active' | 'upcoming' | 'ended';
   slug: string;
   isVotingEnabled: boolean;
-  images:{
+  images: {
     id: string;
     key: string;
     url: string;
@@ -102,13 +86,13 @@ export interface UserSearchResult {
 
 export interface SearchResponse<T> {
   data: T[];
-  pagination: PaginationInfo;
+  pagination: Pagination;
 }
 
 // Hook return type
 export interface UseSearchReturn<T> {
   data: T[] | undefined;
-  pagination: PaginationInfo | undefined;
+  pagination: Pagination | undefined;
   isLoading: boolean;
   error: Error | null;
   refetch: () => void;

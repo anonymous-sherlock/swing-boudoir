@@ -17,6 +17,8 @@ export async function fetchVotes(params: {
     sortOrder: string;
     type: string;
     contestId?: string | null;
+    voterId?: string | null;
+    modelId?: string | null;
 }) {
 
     // Create search params, only include type if it's not empty
@@ -37,6 +39,14 @@ export async function fetchVotes(params: {
 
     if (params.contestId) {
         searchParams.append('contestId', params.contestId);
+    }
+
+    if (params.voterId) {
+        searchParams.append('voterId', params.voterId);
+    }
+
+    if (params.modelId) {
+        searchParams.append('modelId', params.modelId);
     }
 
     console.log('🌐 API Request URL:', `/api/v1/admin/votes?${searchParams.toString()}`);
@@ -92,6 +102,8 @@ export function useVotesData(
     caseConfig: CaseFormatConfig = DEFAULT_CASE_CONFIG,
     type: "all" | "FREE" | "PAID" | "",
     contestId?: string | null,
+    voterId?: string | null,
+    modelId?: string | null,
 ) {
     // Debug logging for the hook
     // console.log('🎣 useVotesData Hook Debug:', {
@@ -116,6 +128,8 @@ export function useVotesData(
             caseConfig,
             type,
             contestId,
+            voterId,
+            modelId,
         ],
         queryFn: async () => {
             const result = await fetchVotes({
@@ -128,6 +142,8 @@ export function useVotesData(
                 sortOrder: sortOrder,
                 type: type,
                 contestId: contestId,
+                voterId: voterId || null,
+                modelId: modelId || null,
             });
 
             // Return in the format expected by DataTable

@@ -18,7 +18,9 @@ import { VoteData } from "./schema";
 // ** Import Auth Context
 import { useAuth } from "@/contexts/AuthContext";
 import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
+import { useIsFetching } from "@tanstack/react-query";
 import { useCallback } from "react";
+import { Loader2 } from "lucide-react";
 
 /**
  * VotesTable Component
@@ -42,6 +44,11 @@ export default function VotesTable() {
   const { user } = useAuth();
   const [contestId, setContestId] = useQueryState<string>("contestId", parseAsString);
   const [type, setType] = useQueryState<VoteFilterType>("type", parseAsStringLiteral(["all", "FREE", "PAID"]).withDefault("all"));
+  const [voterId] = useQueryState<string>("voterId", parseAsString);
+  const [modelId] = useQueryState<string>("modelId", parseAsString);
+
+  // Top loading indicator when votes data is fetching
+  const isFetchingVotes = useIsFetching({ queryKey: ["votes-admin-list"] }) > 0;
 
   // Create a wrapper function that includes the current user ID
   const getColumnsWithUser = useCallback(
@@ -63,7 +70,7 @@ export default function VotesTable() {
   ) => {
     // Only pass the type filter if it's not "all"
     const typeFilter = type === "all" ? "" : type;
-    return useVotesData(page, pageSize, search, dateRange, sortBy, sortOrder, caseConfig, typeFilter, contestId);
+    return useVotesData(page, pageSize, search, dateRange, sortBy, sortOrder, caseConfig, typeFilter, contestId, voterId || null, modelId || null);
   };
 
   // Set the isQueryHook property so DataTable knows this is a React Query hook
@@ -120,7 +127,11 @@ export default function VotesTable() {
   const exportConfig = useExportConfig();
 
   return (
-    <DataTable<VoteData, unknown>
+    <div className="relative">
+      {isFetchingVotes && (
+        <Loader2 className="h-4 w-4 text-blue-500 animate-spin absolute right-0 -top-10 z-10" />
+      )}
+      <DataTable<VoteData, unknown>
       getColumns={getColumnsWithUser}
       exportConfig={exportConfig}
       fetchDataFn={useFilteredVotesData}
@@ -153,5 +164,6 @@ export default function VotesTable() {
         enableExport: true,
       }}
     />
+    </div>
   );
 }

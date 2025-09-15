@@ -16,6 +16,7 @@ import { VoteData } from "../schema";
 import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
 import { Heart, Calendar, Trophy, User, DollarSign } from "lucide-react";
+import { getImageUrl } from "@/lib/image-helper";
 
 export const getColumns = (handleRowDeselection: ((rowId: string) => void) | null | undefined, currentUserId?: string): ColumnDef<VoteData>[] => {
   // Base columns without the select column
@@ -49,14 +50,16 @@ export const getColumns = (handleRowDeselection: ((rowId: string) => void) | nul
       enableSorting: false,
     },
     {
-      accessorKey: "votee",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Votee" />,
+      accessorKey: "model",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Model" />,
       cell: ({ row }) => {
         const votee = row.original.votee;
+        const optimizedImage = getImageUrl(votee.profilePicture, "avatar");
+
         return (
           <Link to="/admin/profiles/$id" params={{ id: votee.id }} className="flex items-center space-x-3 truncate hover:bg-gray-50 p-1 rounded transition-colors">
             <Avatar className="h-8 w-8 bg-gray-200 flex items-center justify-center rounded-full overflow-hidden flex-shrink-0">
-              <AvatarImage src={votee.profilePicture} alt={votee.name} className="object-cover object-center w-full h-full" />
+              <AvatarImage src={optimizedImage} alt={votee.name} className="object-cover object-center w-full h-full" />
               <AvatarFallback className="text-xs">{votee.name.charAt(0).toUpperCase()}</AvatarFallback>
             </Avatar>
             <div className="min-w-0">

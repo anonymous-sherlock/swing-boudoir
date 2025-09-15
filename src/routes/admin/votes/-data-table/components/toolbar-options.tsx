@@ -30,9 +30,6 @@ export function ToolbarOptions({ selectedVotes, allSelectedVoteIds, totalSelecte
     parse: (value) => value || "",
     serialize: (value) => value || "",
   });
-  const handleBulkDelete = () => {
-    setShowBulkDeletePopup(true);
-  };
 
   const handleConfirmBulkDelete = () => {
     // TODO: Implement bulk delete functionality

@@ -4,6 +4,9 @@ import { Heart, User, Trophy } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import VotesTable from "./-data-table";
 import { useVotesAnalytics } from "@/hooks/api/useVotes";
+import { ProfileSearchFilter } from "@/components/admin/ProfileSearchFilter";
+import { useState } from "react";
+import { ProfileSearchResult } from "@/hooks/api/useSearch";
 
 export const Route = createFileRoute("/admin/votes/")({
   component: () => <AdminVotesPage />,
@@ -11,6 +14,8 @@ export const Route = createFileRoute("/admin/votes/")({
 
 function AdminVotesPage() {
   const { data: analytics, isLoading, error } = useVotesAnalytics();
+  const [selectedVoter, setSelectedVoter] = useState<ProfileSearchResult | null>(null);
+  const [selectedModel, setSelectedModel] = useState<ProfileSearchResult | null>(null);
 
   return (
     <div className="space-y-6">
@@ -19,42 +24,49 @@ function AdminVotesPage() {
           <h1 className="text-2xl font-bold tracking-tight">Votes Management</h1>
           <p className="text-muted-foreground text-sm">Monitor all votes across the platform with advanced filtering and export capabilities</p>
         </div>
+        <ProfileSearchFilter
+          onVoterSelect={setSelectedVoter}
+          onModelSelect={setSelectedModel}
+          selectedVoter={selectedVoter}
+          selectedModel={selectedModel}
+          className="flex-shrink-0"
+        />
       </div>
 
       {/* Stats Cards - First Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+        <Card className="bg-gradient-to-br from-red-50 to-red-100/50 border-red-200">
           <CardContent className="pt-6">
-            <div className="flex items-center space-x-2">
-              <Heart className="h-5 w-5 text-red-500" />
+            <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Votes</p>
-                <p className="text-2xl font-bold">{isLoading ? "..." : error ? "Error" : analytics?.totalVotes || 0}</p>
+                <p className="text-2xl font-bold text-red-800">{isLoading ? "..." : error ? "Error" : analytics?.totalVotes || 0}</p>
               </div>
+              <Heart className="h-8 w-8 text-red-500 opacity-60" />
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200">
           <CardContent className="pt-6">
-            <div className="flex items-center space-x-2">
-              <User className="h-5 w-5 text-blue-500" />
+            <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Paid Votes</p>
-                <p className="text-2xl font-bold">{isLoading ? "..." : error ? "Error" : analytics?.paidVotes || 0}</p>
+                <p className="text-2xl font-bold text-blue-800">{isLoading ? "..." : error ? "Error" : analytics?.paidVotes || 0}</p>
               </div>
+              <User className="h-8 w-8 text-blue-500 opacity-60" />
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gradient-to-br from-green-50 to-green-100/50 border-green-200">
           <CardContent className="pt-6">
-            <div className="flex items-center space-x-2">
-              <Trophy className="h-5 w-5 text-green-500" />
+            <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Free Votes</p>
-                <p className="text-2xl font-bold">{isLoading ? "..." : error ? "Error" : analytics?.freeVotes || 0}</p>
+                <p className="text-2xl font-bold text-green-800">{isLoading ? "..." : error ? "Error" : analytics?.freeVotes || 0}</p>
               </div>
+              <Trophy className="h-8 w-8 text-green-500 opacity-60" />
             </div>
           </CardContent>
         </Card>

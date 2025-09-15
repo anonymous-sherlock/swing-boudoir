@@ -21,3 +21,15 @@ export interface PaginatedResponse<T> {
     data: T[];
     pagination: Pagination;
 }
+
+/**
+ * Search parameters
+ */
+export interface SearchParams {
+    page?: number;
+    limit?: number;
+    query?: string;
+    search?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+}

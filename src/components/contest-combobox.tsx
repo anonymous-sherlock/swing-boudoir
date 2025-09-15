@@ -6,9 +6,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useContestSearch, ContestSearchParams, ContestSearchResult } from "@/hooks/useSearch";
+import { useContestSearch, ContestSearchParams, ContestSearchResult } from "@/hooks/api/useSearch";
 import { useContests } from "@/hooks/api/useContests";
 import { Contest } from "@/types/contest.types";
+import { getImageUrl } from "@/lib/image-helper";
 
 // Unified contest type for the combobox
 type UnifiedContest = ContestSearchResult | Contest;
@@ -46,7 +47,7 @@ export function ContestCombobox({ value, onValueChange, placeholder = "Select co
   const searchParams: ContestSearchParams = {
     query: debouncedSearchQuery || undefined,
     limit: 50,
-    status: (filters.status && filters.status !== "all") ? filters.status as "active" | "upcoming" | "ended" | "booked" : undefined,
+    status: filters.status && filters.status !== "all" ? (filters.status as "active" | "upcoming" | "ended" | "booked") : undefined,
   };
 
   // Run search if query OR filters are applied
@@ -59,7 +60,10 @@ export function ContestCombobox({ value, onValueChange, placeholder = "Select co
   const getContestStatus = useCallback((c: UnifiedContest) => (c as Contest).status ?? "", []);
   const getContestDates = useCallback((c: UnifiedContest) => ({ startDate: c.startDate, endDate: c.endDate }), []);
   const getContestImage = useCallback((c: UnifiedContest) => {
-    if ("images" in c && Array.isArray(c.images) && c.images.length > 0) return c.images[0].url;
+    if ("images" in c && Array.isArray(c.images) && c.images.length > 0) {
+      const optimizedContestImage = getImageUrl(c.images[0].url, "thumbnail");
+      return optimizedContestImage;
+    }
     return null;
   }, []);
 
