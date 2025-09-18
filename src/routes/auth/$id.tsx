@@ -1,12 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from 'react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
-import { useAuth } from '@/contexts/AuthContext';
-import { PageLoader } from '@/components/PageLoader';
-import { toast } from '@/components/ui/use-toast';
-// Removed AUTH_TOKEN_KEY import as we're using cookies now
+import { PageLoader } from "@/components/PageLoader";
+import { toast } from "@/components/ui/sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { useCreateVoterProfile } from "@/hooks/api/users";
 import Auth from "@/pages/AuthPage";
 import NotFound from "@/pages/NotFound";
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
 
 // Define valid auth route IDs
 type AuthRouteId = "sign-in" | "sign-up" | "callback";
@@ -17,6 +16,7 @@ interface AuthSearchParams {
   token?: string;
   error?: string;
   redirectTo?: string;
+  userType?: "MODEL" | "VOTER";
 }
 
 export const Route = createFileRoute("/auth/$id")({
@@ -29,6 +29,7 @@ export const Route = createFileRoute("/auth/$id")({
       token: typeof search.token === "string" ? search.token : undefined,
       error: typeof search.error === "string" ? search.error : undefined,
       redirectTo: typeof search.redirectTo === "string" ? search.redirectTo : undefined,
+      userType: search.userType === "MODEL" || search.userType === "VOTER" ? (search.userType as "MODEL" | "VOTER") : undefined,
     };
   },
   params: {
@@ -50,10 +51,10 @@ export const Route = createFileRoute("/auth/$id")({
 
 function AuthPage() {
   const { id } = Route.useParams();
-  const search = useSearch({ from: '/auth/$id' });
+  const search = useSearch({ from: "/auth/$id" });
 
   // Handle OAuth callback
-  if (id === 'callback') {
+  if (id === "callback") {
     return <OAuthCallbackPage />;
   }
 
@@ -66,75 +67,64 @@ const OAuthCallbackPage = () => {
   const navigate = useNavigate();
   const { revalidateSession, checkUserNeedsOnboarding } = useAuth();
   const [isProcessing, setIsProcessing] = useState(true);
-  const search = useSearch({ from: '/auth/$id' });
+  const search = Route.useSearch();
+  const createVoterProfile = useCreateVoterProfile();
+  const hasHandledRef = useRef(false);
+  const redirectTo = search.redirectTo as string | undefined;
+  const desiredUserType = search.userType as "MODEL" | "VOTER" | undefined;
 
   useEffect(() => {
+    if (hasHandledRef.current) return;
+    hasHandledRef.current = true;
     const handleOAuthCallback = async () => {
       try {
-        const redirectTo = search.redirectTo as string;
-
-        // Revalidate session to get fresh user data
-        const session = await revalidateSession();
-
-        console.log("OAuth callback session:", session);
+        let session = await revalidateSession();
+        try {
+          if (desiredUserType && session.user?.type && session.user.type !== desiredUserType) {
+            if (desiredUserType === "VOTER") {
+              await createVoterProfile.mutateAsync(session.user.id);
+            }
+          }
+        } catch (e) {
+          console.warn("Failed to finalize user type on callback:", e);
+        } finally {
+          const newSession = await revalidateSession();
+          session = newSession;
+        }
 
         if (!session.session) {
           throw new Error("No session received from OAuth callback");
         }
 
-        // Wait for AuthContext to update with the new session
-        await new Promise(resolve => setTimeout(resolve, 300));
+        if (session.user && session.user.type === "VOTER") {
+          navigate({ to: redirectTo, replace: true });
+          toast.success("Successfully signed in with Google");
+          return;
+        }
 
-        // Check if user needs onboarding BEFORE redirecting
-        // Use the session data directly to avoid race conditions
         const needsOnboarding = !session.user.profileId || !session.session.profileId;
-        console.log("OAuth callback - User needs onboarding:", needsOnboarding, {
-          userProfileId: session.user.profileId,
-          sessionProfileId: session.session.profileId
-        });
 
-        // Double-check with AuthContext as fallback (in case of race conditions)
-        const authContextNeedsOnboarding = checkUserNeedsOnboarding();
-        console.log("OAuth callback - AuthContext check:", authContextNeedsOnboarding);
-        
-        // Use the more reliable check (session data is more reliable than context state)
-        const finalNeedsOnboarding = needsOnboarding || authContextNeedsOnboarding;
-
-        // Determine redirect path - prioritize onboarding over dashboard
-        let targetPath = '/dashboard';
-        
-        if (finalNeedsOnboarding) {
-          targetPath = '/onboarding';
-        } else if (redirectTo && redirectTo !== '/dashboard') {
-          // Only use custom redirect if user doesn't need onboarding
+        let targetPath = "/dashboard";
+        if (needsOnboarding) {
+          targetPath = "/onboarding";
+        } else if (redirectTo && redirectTo !== "/dashboard") {
           targetPath = redirectTo;
         }
 
-        console.log("OAuth callback redirecting to:", targetPath);
-        
-        // Navigate to the determined path
         navigate({ to: targetPath, replace: true });
-        
-        toast({
-          title: 'Welcome!',
-          description: 'Successfully signed in with Google',
-        });
 
+        toast.success("Successfully signed in with Google");
       } catch (error) {
-        console.error('Error processing OAuth callback:', error);
-        toast({
-          title: 'Authentication Error',
-          description: 'Failed to complete authentication',
-          variant: 'destructive',
-        });
-        navigate({ to: '/auth/$id', params: { id: 'sign-in' }, replace: true });
+        console.error("Error processing OAuth callback:", error);
+        toast.error("Failed to complete authentication");
+        navigate({ to: "/auth/$id", params: { id: "sign-in" }, replace: true });
       } finally {
         setIsProcessing(false);
       }
     };
 
     handleOAuthCallback();
-  }, [search, navigate, revalidateSession, checkUserNeedsOnboarding]);
+  }, [redirectTo, desiredUserType, navigate, revalidateSession, checkUserNeedsOnboarding, createVoterProfile]);
 
   if (isProcessing) {
     return (

@@ -7,6 +7,7 @@ import { useState } from "react";
 const LoginWithGoogle = ({ callbackURL, loginAs, onSuccess }: { callbackURL: string; loginAs: User_Type; onSuccess?: () => void }) => {
   const { handleLoginWithGoogle } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+
   const handleGoogleLogin = async () => {
     try {
       await handleLoginWithGoogle(callbackURL, loginAs);
@@ -14,6 +15,8 @@ const LoginWithGoogle = ({ callbackURL, loginAs, onSuccess }: { callbackURL: str
     } catch (error) {
       // Error handling is done in the AuthContext
       console.error("Google login error in component:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
   return (

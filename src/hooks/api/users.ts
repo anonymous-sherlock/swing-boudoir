@@ -39,16 +39,18 @@ export type UpdateUserData = Partial<Omit<CreateUserData, 'password'>> & {
 
 // API response type for paginated users
 export interface UsersResponse {
-    users: User[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
+    data: User[];
+    pagination: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    };
 }
 
 // API functions
 const createUser = async (userData: CreateUserData): Promise<User> => {
-    const response = await api.post("/api/v1/users", userData);
+    const response = await api.post("/users", userData);
     if (!response.success) {
         throw new Error(response.error);
     }
@@ -72,27 +74,85 @@ const getUsers = async (params?: {
 
     const endpoint = queryParams.toString() ? `/users?${queryParams.toString()}` : '/users';
     const response = await api.get(endpoint);
-    return response.data;
+    if (!response.success) {
+        throw new Error(response.error);
+    }
+    return response.data as UsersResponse;
 };
 
 const getUserById = async (id: string): Promise<User> => {
     const response = await api.get(`/users/${id}`);
-    return response.data;
+    if (!response.success) {
+        throw new Error(response.error);
+    }
+    return response.data as User;
+};
+
+const getUserByEmail = async (email: string): Promise<User> => {
+    const response = await api.get(`/users/email/${encodeURIComponent(email)}`);
+    if (!response.success) {
+        throw new Error(response.error);
+    }
+    return response.data as User;
+};
+
+const getUserByUsername = async (username: string): Promise<User> => {
+    const response = await api.get(`/users/username/${encodeURIComponent(username)}`);
+    if (!response.success) {
+        throw new Error(response.error);
+    }
+    return response.data as User;
 };
 
 const updateUser = async ({ id, data }: { id: string; data: UpdateUserData }): Promise<User> => {
-    const response = await api.put(`/users/${id}`, data);
-    return response.data;
+    const response = await api.patch(`/users/${id}`, data);
+    if (!response.success) {
+        throw new Error(response.error);
+    }
+    return response.data as User;
 };
 
 const deleteUser = async (id: string): Promise<{ message: string }> => {
     const response = await api.delete(`/users/${id}`);
-    return response.data;
+    if (!response.success) {
+        throw new Error(response.error);
+    }
+    return response.data as { message: string };
 };
 
 const changeUserType = async ({ id, type }: { id: string; type: "MODEL" | "VOTER" }): Promise<User> => {
     const response = await api.patch(`/users/${id}/type`, { type });
-    return response.data;
+    if (!response.success) {
+        throw new Error(response.error);
+    }
+    return response.data as User;
+};
+
+type UserProfile = Record<string, unknown>;
+
+const getUserProfile = async (id: string): Promise<UserProfile> => {
+    const response = await api.get(`/users/${id}/profile`);
+    if (!response.success) {
+        throw new Error(response.error);
+    }
+    return response.data as UserProfile;
+};
+
+const updateNullUsernames = async (): Promise<{ message: string; updatedCount: number; users: Array<{ id: string; email: string; oldUsername: string | null; newUsername: string; }> }> => {
+    const response = await api.post(`/users/update-null-usernames`);
+    if (!response.success) {
+        throw new Error(response.error);
+    }
+    return response.data as { message: string; updatedCount: number; users: Array<{ id: string; email: string; oldUsername: string | null; newUsername: string; }>; };
+};
+
+const createVoterProfile = async (id: string): Promise<{ message: string }> => {
+    const response = await api.post(`/users/${id}/voter/profile/create`);
+    if (!response.success) {
+        throw new Error(response.error);
+    }
+    // Backend may return extra fields (user, profile). We only type the message here.
+    return response.data as { message: string };
 };
 
 // React Query hooks
@@ -156,6 +216,36 @@ export const useGetUserById = (id: string) => {
         enabled: !!id,
         staleTime: 5 * 60 * 1000, // 5 minutes
         gcTime: 10 * 60 * 1000, // 10 minutes
+    });
+};
+
+export const useGetUserByEmail = (email: string) => {
+    return useQuery({
+        queryKey: ["users", "email", email],
+        queryFn: () => getUserByEmail(email),
+        enabled: !!email,
+        staleTime: 5 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
+    });
+};
+
+export const useGetUserByUsername = (username: string) => {
+    return useQuery({
+        queryKey: ["users", "username", username],
+        queryFn: () => getUserByUsername(username),
+        enabled: !!username,
+        staleTime: 5 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
+    });
+};
+
+export const useGetUserProfile = (id: string) => {
+    return useQuery({
+        queryKey: ["users", id, "profile"],
+        queryFn: () => getUserProfile(id),
+        enabled: !!id,
+        staleTime: 5 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
     });
 };
 
@@ -268,6 +358,38 @@ export const useBulkDeleteUsers = () => {
         },
         onError: (error) => {
             console.error("Failed to bulk delete users:", error);
+        },
+    });
+};
+
+export const useUpdateNullUsernames = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: updateNullUsernames,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["users"] });
+        },
+        onError: (error) => {
+            console.error("Failed to update null usernames:", error);
+        },
+    });
+};
+
+export const useCreateVoterProfile = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: createVoterProfile,
+        onSuccess: (_data, id) => {
+            // Invalidate caches related to this user
+            queryClient.invalidateQueries({ queryKey: ["users", id] });
+            queryClient.invalidateQueries({ queryKey: ["users", id, "profile"] });
+            queryClient.invalidateQueries({ queryKey: ["users"] });
+            queryClient.invalidateQueries({ queryKey: ["users-admin-list"] });
+        },
+        onError: (error) => {
+            console.error("Failed to create voter profile:", error);
         },
     });
 };

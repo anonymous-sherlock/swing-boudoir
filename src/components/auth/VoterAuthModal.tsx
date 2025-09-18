@@ -1,15 +1,4 @@
-/**
- * Voter Authentication Modal Component
- *
- * This component provides a simplified authentication flow for voters:
- * - Email/password registration (VOTER type)
- * - Email/password login
- * - Form validation
- * - Loading states
- * - No profile creation required
- */
-
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import React, { useState } from "react";
 import { VoterLoginForm } from "./VoterLoginForm";
@@ -53,7 +42,7 @@ export const VoterAuthModal: React.FC<VoterAuthModalProps> = ({ isOpen, onClose,
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-center text-2xl font-bold">Vote for Your Favorite Models</DialogTitle>
-          <p className="text-center text-sm text-gray-600 mt-2">Register or login to start voting in competitions</p>
+          <DialogDescription className="text-center text-sm text-gray-600 mt-2">Register or login to start voting in competitions</DialogDescription>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "login" | "register")}>

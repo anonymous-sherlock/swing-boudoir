@@ -21,8 +21,6 @@ export default function PublicProfilePage() {
   const [lightboxImage, setLightboxImage] = useState<{ url: string; caption: string } | null>(null);
   const [isBuyVotesModalOpen, setIsBuyVotesModalOpen] = useState(false);
   
-  // Auth hook
-  const { isAuthenticated } = useAuth();
 
 
   const handleImageClick = (image: { url: string; caption: string }) => {
@@ -40,10 +38,7 @@ export default function PublicProfilePage() {
   // Process participations data for display
   const activeParticipations = useMemo(() => {
     if (!participations?.data) return [];
-    console.log("Raw participations data:", participations);
-    // Temporarily show all participations for debugging
     const filtered = participations.data;
-    console.log("All participations (no filtering):", filtered);
     return filtered;
   }, [participations]);
 

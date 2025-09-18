@@ -29,7 +29,7 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { getAuthUrl, getCallbackUrl, getOAuthCallbackUrl } from "../lib/config";
+import { getAuthUrl, getCallbackUrl, getOAuthCallbackUrl, getFullCallbackUrl } from "../lib/config";
 
 interface AuthContextType {
   user: User | null;
@@ -159,8 +159,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const revalidateSession = async () => {
     const response = await authApi.getOAuthSession<GetSessionResponse>();
-    console.log("revalidateSession", response);
     if (!response.success) throw new Error("Session fetch failed");
+    localStorage.setItem(AUTH_TOKEN_KEY, response.data.session.token);
     setSession(response.data.session);
     setUser(response.data.user);
     setIsAuthenticated(true);
@@ -183,8 +183,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (!response.success) {
-        console.error("Register error response:", response.error);
-        // Don't store any data on error - throw immediately
         throw new Error(response.error || "Registration failed");
       }
 
@@ -194,7 +192,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // For new registrations, always go to login
       router.navigate({ to: "/auth/$id", params: { id: "sign-in" }, search: { callback: data.callbackURL || authPages.login }, replace: true });
     } catch (error: unknown) {
-      console.error("Register error:", error);
       if (error instanceof Error) {
         setError(error.message || "Registration failed");
       } else {
@@ -225,7 +222,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (!response.success) {
-        console.error("Voter register error response:", response.error);
         throw new Error(response.error || "Voter registration failed");
       }
 
@@ -238,7 +234,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       queryClient.invalidateQueries({ queryKey: ["session"] });
       const redirectTo = callbackURL || DEFAULT_AFTER_LOGIN_REDIRECT;
       setTimeout(() => {
-        console.log("AuthContext - Executing navigation to:", redirectTo);
         router.navigate({ to: redirectTo, replace: true });
       }, 100);
 
@@ -248,7 +243,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         username: username,
       };
     } catch (error: unknown) {
-      console.error("Voter register error:", error);
       if (error instanceof Error) {
         setError(error.message || "Voter registration failed");
       } else {
@@ -267,10 +261,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Login with email
   const handleLoginWithEmail = async (data: SignInWithEmailRequest) => {
     const { email, password, callbackURL } = data;
-    console.log("AuthContext - Email login called with:", { email, callbackURL });
     setIsLoading(true);
     setError(null);
-    console.log(email, password);
+
     try {
       const response = await authApi.login<SignInWithEmailResponse>({
         email,
@@ -278,7 +271,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (!response.success) {
-        console.error("Login error response:", response.error);
         throw new Error(response.error || "Login failed");
       }
 
@@ -288,21 +280,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Store token first
       localStorage.setItem(AUTH_TOKEN_KEY, response.data.token);
-
-      // Redirect to callback URL if provided, otherwise go to dashboard
       const redirectTo = callbackURL || DEFAULT_AFTER_LOGIN_REDIRECT;
-      console.log("AuthContext - Email login redirect:", { callbackURL, redirectTo, DEFAULT_AFTER_LOGIN_REDIRECT });
 
       // Use setTimeout to ensure navigation happens after state updates
       setTimeout(() => {
-        console.log("AuthContext - Executing navigation to:", redirectTo);
         router.navigate({ to: redirectTo, replace: true });
       }, 100);
 
       // Invalidate and refetch session data after navigation
       queryClient.invalidateQueries({ queryKey: ["session"] });
     } catch (error: unknown) {
-      console.error("Login error:", error);
       if (error instanceof Error) {
         setError(error.message || "Login failed");
         toast({
@@ -339,7 +326,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (!response.success) {
-        console.error("Username login error response:", response.error);
         throw new Error(response.error || "Login failed");
       }
 
@@ -352,18 +338,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Redirect to callback URL if provided, otherwise go to dashboard
       const redirectTo = callbackURL || DEFAULT_AFTER_LOGIN_REDIRECT;
-      console.log("AuthContext - Username login redirect:", { callbackURL, redirectTo, DEFAULT_AFTER_LOGIN_REDIRECT });
 
       // Use setTimeout to ensure navigation happens after state updates
       setTimeout(() => {
-        console.log("AuthContext - Executing navigation to:", redirectTo);
         router.navigate({ to: redirectTo, replace: true });
       }, 100);
 
       // Invalidate and refetch session data after navigation
       queryClient.invalidateQueries({ queryKey: ["session"] });
     } catch (error: unknown) {
-      console.error("Username login error:", error);
       if (error instanceof Error) {
         setError(error.message || "Login failed");
         toast({
@@ -386,15 +369,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
   // Login with Google OAuth
   const handleLoginWithGoogle = async (callbackURL?: string, type?: User_Type) => {
-    console.log("AuthContext - Google login called with:", { callbackURL });
     setIsLoading(true);
     setError(null);
 
     try {
-      // Create OAuth callback URL that includes the intended redirect destination
       const finalRedirectUrl = callbackURL ?? DEFAULT_AFTER_LOGIN_REDIRECT;
-      const oauthCallbackUrl = getOAuthCallbackUrl(finalRedirectUrl);
+      // Build callback URL with redirectTo and userType so the callback page can update type
+      const baseCallback = getFullCallbackUrl("/auth/callback");
+      const searchParams = new URLSearchParams();
+      if (finalRedirectUrl) searchParams.set("redirectTo", finalRedirectUrl);
+      if (type) searchParams.set("userType", type);
+      const oauthCallbackUrl = `${baseCallback}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
 
+      console.log("oauthCallbackUrl", oauthCallbackUrl);
       const response = await authApi.loginWithGoogle<SocialSignInResponse>({
         provider: "google",
         callbackURL: oauthCallbackUrl,
@@ -402,30 +389,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (!response.success) {
-        console.error("Google login error response:", response.error);
         throw new Error(response.error || "Google login failed");
       }
 
       // Check if response has redirect URL (OAuth flow)
       if (response.data?.redirect && response.data.url) {
         // Redirect to OAuth provider
-        console.log("Google login redirect:", response.data.url);
         window.location.href = response.data.url;
         return;
       }
-
-      // Direct login response (with token)
-      // if (!response.data?.redirect && response.data?.token && response.data?.user) {
-      //   // Store token first
-      //   localStorage.setItem(AUTH_TOKEN_KEY, response.data.token);
-
-      //   // Invalidate and refetch session data after navigation
-      //   queryClient.invalidateQueries({ queryKey: ["session"] });
-      // } else {
-      //   throw new Error("Invalid response from server");
-      // }
     } catch (error: unknown) {
-      console.error("Google login error:", error);
       if (error instanceof Error) {
         setError(error.message || "Google login failed");
         toast({
@@ -513,7 +486,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const updatedUser = await response.json();
       setUser(updatedUser);
     } catch (error) {
-      console.error("Update user error:", error);
       setError(error instanceof Error ? error.message : "Update failed");
       throw error;
     }
@@ -542,7 +514,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error(errorData.message || "Password change failed");
       }
     } catch (error) {
-      console.error("Change password error:", error);
       setError(error instanceof Error ? error.message : "Password change failed");
       throw error;
     }
@@ -574,7 +545,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsAuthenticated(false);
       router.navigate({ to: "/" });
     } catch (error) {
-      console.error("Delete user error:", error);
       setError(error instanceof Error ? error.message : "Account deletion failed");
       throw error;
     }
@@ -599,7 +569,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error(errorData.message || "Password reset request failed");
       }
     } catch (error) {
-      console.error("Request password reset error:", error);
       setError(error instanceof Error ? error.message : "Password reset request failed");
       throw error;
     }
@@ -624,7 +593,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error(errorData.message || "Password reset failed");
       }
     } catch (error) {
-      console.error("Reset password error:", error);
       setError(error instanceof Error ? error.message : "Password reset failed");
       throw error;
     }
@@ -649,7 +617,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error(errorData.message || "Verification email send failed");
       }
     } catch (error) {
-      console.error("Send verification email error:", error);
       setError(error instanceof Error ? error.message : "Verification email send failed");
       throw error;
     }
@@ -675,7 +642,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser({ ...user, emailVerified: true });
       }
     } catch (error) {
-      console.error("Verify email error:", error);
       setError(error instanceof Error ? error.message : "Email verification failed");
       throw error;
     }
@@ -702,7 +668,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return await response.json();
     } catch (error) {
-      console.error("List sessions error:", error);
       setError(error instanceof Error ? error.message : "Failed to list sessions");
       throw error;
     }
@@ -728,7 +693,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error(errorData.message || "Failed to revoke session");
       }
     } catch (error) {
-      console.error("Revoke session error:", error);
       setError(error instanceof Error ? error.message : "Failed to revoke session");
       throw error;
     }
@@ -760,7 +724,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsAuthenticated(false);
       router.navigate({ to: "/" });
     } catch (error) {
-      console.error("Revoke all sessions error:", error);
       setError(error instanceof Error ? error.message : "Failed to revoke all sessions");
       throw error;
     }
@@ -785,7 +748,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error(errorData.message || "Failed to revoke other sessions");
       }
     } catch (error) {
-      console.error("Revoke other sessions error:", error);
       setError(error instanceof Error ? error.message : "Failed to revoke other sessions");
       throw error;
     }

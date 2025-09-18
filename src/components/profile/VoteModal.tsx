@@ -32,7 +32,6 @@ const VoteModal = ({ open, onOpenChange, participation, profile, voterProfile, i
 
   const voteOptions = useMemo(
     () => {
-      console.log('VoteModal - isFreeVoteAvailable:', isFreeVoteAvailable);
       return [
         { id: "free", title: "Free Vote", description: "Daily free vote", votes: 1, price: 0, icon: Gift, available: isFreeVoteAvailable },
       { id: "single", title: "5 Votes", description: "5 votes for $1", votes: 5, price: 1, icon: Star },

@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import LoginWithGoogle from "./LoginWithGoogle";
 
 interface VoterLoginFormProps {
   onSuccess?: () => void;
@@ -67,7 +68,7 @@ export function VoterLoginForm({ onSuccess, callbackURL: propCallbackURL }: Vote
     <div className="space-y-4">
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div className="flex flex-col gap-4">
-          {/* <LoginWithGoogle callbackURL={propCallbackURL || "/voters"} loginAs="VOTER" onSuccess={onSuccess} /> */}
+          <LoginWithGoogle callbackURL={propCallbackURL || "/voters"} loginAs="VOTER" onSuccess={onSuccess} />
         </div>
 
         {/* Divider */}

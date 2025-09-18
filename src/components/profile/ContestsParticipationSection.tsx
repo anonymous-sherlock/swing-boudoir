@@ -103,14 +103,8 @@ export function ContestsParticipationSection({ profile, participations, onVoteSu
   });
   const { mutateAsync: castFreeVote, isPending: isVoting } = useCastFreeVote();
 
-  // Determine free vote availability based on API data
+  // Determine free vote availability
   const isFreeVoteAvailable = useMemo(() => {
-    console.log("Recalculating isFreeVoteAvailable:", {
-      freeVoteAvailable: freeVoteAvailability?.available,
-      lastFreeVoteAt: voterProfile?.lastFreeVoteAt,
-      voterProfile: voterProfile,
-    });
-
     if (freeVoteAvailability?.available) {
       return true;
     } else if (voterProfile?.lastFreeVoteAt) {
