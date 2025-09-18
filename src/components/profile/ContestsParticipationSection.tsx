@@ -320,7 +320,7 @@ export function ContestsParticipationSection({ profile, participations, onVoteSu
                       <Users className="w-4 h-4 text-purple-600" />
                       <div>
                         <span className="text-xs text-gray-500">Participants</span>
-                        <div className="font-semibold text-purple-600 text-sm">{"N/A"}</div>
+                        <div className="font-semibold text-purple-600 text-sm">{participation.contest?.totalParticipants || "N/A"}</div>
                       </div>
                     </div>
                   </div>

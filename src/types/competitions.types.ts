@@ -90,6 +90,7 @@ export interface ContestParticipation {
     winnerProfileId: string | null;
     createdAt: string;
     updatedAt: string;
+    totalParticipants: number;
     awards: Array<{
       id: string;
       name: string;
