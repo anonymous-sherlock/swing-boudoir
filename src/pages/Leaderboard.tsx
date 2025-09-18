@@ -4,14 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
-import { useGetModelRanks, ModelRank } from "@/hooks/api/useModelRanks";
-import { getImageUrl, ImageHelper } from "@/lib/image-helper";
-import { AvatarImage } from "@/components/ui/transformed-image";
-import { Award, Crown, Heart, Medal, Search, Trophy, Users, Target, Pin } from "lucide-react";
-import { useCallback, useEffect, useState, useRef, useMemo } from "react";
+import { ModelRank, useGetModelRanks } from "@/hooks/api/useModelRanks";
+import { ImageHelper } from "@/lib/image-helper";
 import { Link } from "@tanstack/react-router";
-import React from "react";
-import { useQueryState, parseAsString } from "nuqs";
+import { Award, Crown, Heart, Medal, Pin, Search, Trophy } from "lucide-react";
+import { parseAsString, useQueryState } from "nuqs";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type LeaderboardStats = {
   totalModels: number;
@@ -308,18 +306,55 @@ export default function Leaderboard() {
 
   const getRankIcon = (rank: number | "N/A") => {
     if (rank === "N/A") {
-      return <span className="text-lg font-bold text-gray-400">N/A</span>;
+      return (
+        <Badge
+          variant="secondary"
+          className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 border border-gray-200"
+        >
+          N/A
+        </Badge>
+      );
     }
-    switch (rank) {
-      case 1:
-        return <Crown className="w-6 h-6 text-yellow-500" />;
-      case 2:
-        return <Medal className="w-6 h-6 text-gray-400" />;
-      case 3:
-        return <Award className="w-6 h-6 text-amber-600" />;
-      default:
-        return <span className="text-lg font-bold text-gray-600">#{rank}</span>;
+
+    const NumberPill = ({ value }: { value: number }) => (
+      <span className="absolute -bottom-1 -right-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-white/90 text-gray-900 shadow-sm border border-black/5">
+        #{value}
+      </span>
+    );
+
+    if (rank === 1) {
+      return (
+        <div className="relative w-12 h-12 rounded-full flex items-center justify-center bg-gradient-to-br from-yellow-400 via-amber-300 to-orange-400 ring-2 ring-yellow-300/60 ring-offset-2 ring-offset-white shadow-[0_8px_20px_-8px_rgba(234,179,8,0.7)]">
+          <Crown className="w-6 h-6 text-white drop-shadow" />
+          <NumberPill value={rank} />
+        </div>
+      );
     }
+    if (rank === 2) {
+      return (
+        <div className="relative w-12 h-12 rounded-full flex items-center justify-center bg-gradient-to-br from-slate-200 via-gray-200 to-zinc-300 ring-2 ring-slate-300/60 ring-offset-2 ring-offset-white shadow-[0_8px_20px_-8px_rgba(148,163,184,0.6)]">
+          <Medal className="w-6 h-6 text-white drop-shadow" />
+          <NumberPill value={rank} />
+        </div>
+      );
+    }
+    if (rank === 3) {
+      return (
+        <div className="relative w-12 h-12 rounded-full flex items-center justify-center bg-gradient-to-br from-amber-300 via-orange-300 to-amber-500 ring-2 ring-amber-300/60 ring-offset-2 ring-offset-white shadow-[0_8px_20px_-8px_rgba(251,191,36,0.6)]">
+          <Award className="w-6 h-6 text-white drop-shadow" />
+          <NumberPill value={rank} />
+        </div>
+      );
+    }
+
+    return (
+      <Badge
+        variant="outline"
+        className="px-2 py-1 text-sm font-semibold bg-white/60 backdrop-blur border border-gray-200 text-gray-800 shadow-sm"
+      >
+        #{rank}
+      </Badge>
+    );
   };
 
   const formatNumber = (num: number) => {
