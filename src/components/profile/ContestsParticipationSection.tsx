@@ -8,19 +8,18 @@ import { Contest_Status } from "@/lib/validations/contest.schema";
 import { ContestParticipation } from "@/types/competitions.types";
 import { Link } from "@tanstack/react-router";
 import { Calendar, Eye, Gift, Heart, Trophy, Users } from "lucide-react";
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Icons } from "../icons";
 import { Lightbox } from "../Lightbox";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useCastFreeVote, useCheckFreeVoteAvailability } from "@/hooks/api/useVotes";
+import { getImageUrl } from "@/lib/image-helper";
+import { Profile } from "@/types/profile.types";
 import FlipClockCountdown from "@leenguyen/react-flip-clock-countdown";
 import "@leenguyen/react-flip-clock-countdown/dist/index.css";
 import { toast } from "sonner";
 import VoteModal from "./VoteModal";
-import CountdownTimer from "./CountdownTimer";
-import { Profile } from "@/types/profile.types";
-import { getImageUrl } from "@/lib/image-helper";
 
 interface ContestsParticipationSectionProps {
   participations: ContestParticipation[];
@@ -380,46 +379,14 @@ export function ContestsParticipationSection({ profile, participations, onVoteSu
                   {/* Voting Button Section */}
                   <div className="pt-3 mt-3 border-t border-gray-100">
                     <div className="">
-                      {isFreeVoteAvailable ? (
-                        <Button
-                          size="lg"
-                          className="w-full truncate text-sm md:text-base bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white py-3 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-                          onClick={() => {
-                            if (!isAuthenticated) {
-                              setIsAuthModalOpen(true);
-                              return;
-                            }
-                            giveFreeVote({
-                              contestId: participation.contest.id,
-                              voteeId: profile.id,
-                              voteeName: profile.user?.name || "",
-                              voterId: user?.profileId || "",
-                            });
-                          }}
-                          disabled={isVoting}
-                        >
-                          {isVoting ? (
-                            <div className="flex items-center">
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                              Voting...
-                            </div>
-                          ) : (
-                            <>
-                              <Heart className="w-5 h-5 mr-2" />
-                              Cast a Free Vote for {profile.user?.name || "this model"}
-                            </>
-                          )}
-                        </Button>
-                      ) : (
-                        <Button
-                          size="lg"
-                          className="w-full text-sm md:text-base bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white py-3 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-                          onClick={() => handleVoteButtonClick(participation)}
-                        >
-                          <Heart className="w-5 h-5 mr-2" />
-                          Vote for {profile.user?.name || "this model"}
-                        </Button>
-                      )}
+                      <Button
+                        size="lg"
+                        className="w-full text-sm md:text-base bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white py-3 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                        onClick={() => handleVoteButtonClick(participation)}
+                      >
+                        <Heart className="w-5 h-5 mr-2" />
+                        Vote for {profile.user?.name || "this model"}
+                      </Button>
                     </div>
                   </div>
                 </div>
