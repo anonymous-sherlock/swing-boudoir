@@ -57,6 +57,7 @@ export interface Profile {
         email: string;
         type: User_Type
     };
+    rank: number | "N/A";
 }
 
 // Profile Stats interface
@@ -68,7 +69,5 @@ export interface ProfileStats {
     totalVotes: number;
     totalVotesReceived: number;
     winRate: number;
-    averageRank: number;
-    bestRank: number;
     totalParticipants: number;
 }

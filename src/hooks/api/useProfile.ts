@@ -5,21 +5,7 @@ import { ContestParticipation, User_Type } from '@/types';
 import { Profile, ProfileStats } from '@/types/profile.types';
 import { QueryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import z from 'zod';
-
-
-
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  pagination: {
-    total: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
-    nextPage: number | null;
-    previousPage: number | null;
-  };
-}
+import { PaginatedResponse } from '@/types/common.types';
 
 export interface CreateProfileRequest {
   userId: string;

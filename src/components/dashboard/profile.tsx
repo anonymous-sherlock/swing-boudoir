@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
-import {  useJoinedContests } from "@/hooks/api/useContests";
+import { useJoinedContests } from "@/hooks/api/useContests";
 import { useProfile } from "@/hooks/api/useProfile";
 import { useToast } from "@/hooks/use-toast";
 import { formatUsdAbbrev } from "@/lib/utils";
@@ -16,6 +16,7 @@ import { Icons } from "../icons";
 import { Lightbox } from "../Lightbox";
 import { Contest } from "@/types/contest.types";
 import { Award } from "@/types";
+import { getImageUrl } from "@/lib/image-helper";
 
 export function PublicProfile() {
   const { user } = useAuth();
@@ -184,7 +185,7 @@ export function PublicProfile() {
         {/* Banner Image */}
         <div className="relative h-48 sm:h-72 bg-gradient-to-r from-blue-500 to-purple-600">
           {userProfile?.bannerImage?.url ? (
-            <img src={userProfile.bannerImage.url} alt="Profile Banner" className="w-full h-full object-cover" />
+            <img src={getImageUrl(userProfile.bannerImage.url, "banner")} alt="Profile Banner" className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
               <Camera className="h-16 w-16 text-white opacity-50" />
@@ -218,7 +219,7 @@ export function PublicProfile() {
             <div className="w-32 h-32 rounded-full border-none p-[6px] shadow-lg bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500">
               <div className="w-full h-full bg-white rounded-full p-1">
                 {userProfile?.coverImage?.url ? (
-                  <img src={userProfile.coverImage.url} alt="Profile" className="w-full h-full rounded-full object-cover" />
+                  <img src={getImageUrl(userProfile.coverImage.url, "small")} alt="Profile" className="w-full h-full rounded-full object-cover" />
                 ) : (
                   <div className="w-full h-full bg-gray-100 rounded-full flex items-center justify-center">
                     <span className="text-4xl font-bold text-gray-600">{user?.name?.charAt(0) || "U"}</span>
@@ -369,7 +370,7 @@ export function PublicProfile() {
               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-2xl font-bold text-gray-900">{profileStats?.currentRank || 20}</p>
+                    <p className="text-2xl font-bold text-gray-900">{userProfile?.rank}</p>
                     <p className="text-gray-600 text-sm font-medium">Current Rank</p>
                   </div>
                   <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
@@ -536,7 +537,7 @@ export function PublicProfile() {
                               <div className="w-full lg:w-80">
                                 {competition.images && competition.images[0] ? (
                                   <img
-                                    src={competition.images[0].url}
+                                    src={getImageUrl(competition.images[0].url, "medium")}
                                     alt={competition.name}
                                     className="w-full aspect-video object-cover rounded-lg shadow-sm border border-gray-200"
                                   />
@@ -650,7 +651,7 @@ export function PublicProfile() {
                   {userProfile.profilePhotos.map((photo, index) => (
                     <div key={photo.id} className="relative group aspect-square">
                       <img
-                        src={photo.url}
+                        src={getImageUrl(photo.url, "medium")}
                         alt={photo.caption || `Portfolio photo ${index + 1}`}
                         className="w-full h-full object-cover rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200"
                         onError={(e) => {

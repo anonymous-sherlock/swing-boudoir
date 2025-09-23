@@ -6,6 +6,7 @@ import { Link } from "@tanstack/react-router";
 import React from "react";
 import { Separator } from "../ui/separator";
 import { formatPrize } from "./utils";
+import { getImageUrl } from "@/lib/image-helper";
 
 interface CompetitionCardProps {
   contest: Contest;
@@ -13,32 +14,19 @@ interface CompetitionCardProps {
 }
 
 export const CompetitionCard: React.FC<CompetitionCardProps> = ({ contest, showJoinButton = true }) => {
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  // Helper function to extract prize value from award name
-  const extractPrizeValue = (awardName: string): number | null => {
-    const match = awardName.match(/\$?(\d+(?:,\d+)*(?:\.\d+)?)/);
-    if (match) {
-      return parseFloat(match[1].replace(/,/g, ""));
-    }
-    return null;
-  };
-
   if (!contest) {
     return null;
   }
   return (
     <>
-      <Card className="w-full w-full overflow-hidden relative">
+      <Card className="w-full overflow-hidden relative">
         <Link to="/competitions/$slug" params={{ slug: contest.slug }} className="block">
           <div className="relative cursor-pointer">
-            <img src={contest?.images?.[0]?.url || (defaultImage as unknown as string)} alt={contest.name} className="w-full object-cover aspect-video" />
+            <img
+              src={getImageUrl(contest?.images?.[0]?.url ?? "", "medium") || (defaultImage as unknown as string)}
+              alt={contest.name}
+              className="w-full object-cover aspect-video"
+            />
             {/* Prize Pool Overlay - Top Right */}
             <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg">
               <span className="text-xs text-muted-foreground uppercase tracking-wide block">Prize Pool</span>
