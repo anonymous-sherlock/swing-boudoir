@@ -88,12 +88,14 @@ export const useGetModelRanks = (params?: {
   page?: number;
   limit?: number;
   search?: string;
+  profileId?: string;
 }) => {
   return useQuery({
     queryKey: ["model-ranks", params],
     queryFn: () => getModelRanks(params),
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !!params?.profileId,
   });
 };
 

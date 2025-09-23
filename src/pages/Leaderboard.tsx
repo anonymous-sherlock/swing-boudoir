@@ -10,13 +10,6 @@ import { Link } from "@tanstack/react-router";
 import { Award, Crown, Heart, Medal, Pin, Search, Trophy } from "lucide-react";
 import { parseAsString, useQueryState } from "nuqs";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-
-type LeaderboardStats = {
-  totalModels: number;
-  totalVotes: number;
-  activeContests: number;
-};
-
 interface LeaderboardModel extends ModelRank {
   displayName: string;
   totalVotes: number;
@@ -40,28 +33,23 @@ const UserEntry = React.memo(
   ({
     model,
     index,
-    isSticky = false,
     ref,
-    currentUserRank,
-    isAuthenticated,
+    currentProfileRank,
     getRankIcon,
     formatNumber,
   }: {
     model: LeaderboardModel;
     index: number;
-    isSticky?: boolean;
     ref?: React.RefObject<HTMLDivElement>;
-    currentUserRank?: number | "N/A";
-    isAuthenticated: boolean;
+    currentProfileRank?: number | "N/A";
     getRankIcon: (rank: number | "N/A") => JSX.Element;
     formatNumber: (num: number) => string;
   }) => {
     const shouldBlurRank =
-      isAuthenticated &&
-      currentUserRank !== undefined &&
+      currentProfileRank !== undefined &&
       typeof model.rank === "number" &&
-      typeof currentUserRank === "number" &&
-      model.rank < currentUserRank &&
+      typeof currentProfileRank === "number" &&
+      model.rank < currentProfileRank &&
       !model.isCurrentUser;
 
     return (
@@ -70,7 +58,7 @@ const UserEntry = React.memo(
         ref={ref}
         className={`p-6 border-b border-gray-100 hover:bg-gray-50 transition-colors relative ${
           model.isCurrentUser
-            ? `bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 ${isSticky ? "sticky bottom-0 z-10 shadow-md" : ""}`
+            ? `bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200`
             : index === 0
               ? "bg-gradient-to-r from-yellow-50 to-orange-50"
               : ""
@@ -144,7 +132,7 @@ const UserEntry = React.memo(
 UserEntry.displayName = "UserEntry";
 
 export default function Leaderboard() {
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const [allData, setAllData] = useState<LeaderboardModel[]>([]);
   const [paginatedData, setPaginatedData] = useState<PaginatedData | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -169,6 +157,7 @@ export default function Leaderboard() {
   }, [search]);
 
   // Use the useModelRanks hook to fetch data
+  const profileId = user?.profileId;
   const {
     data: modelRanksData,
     isLoading,
@@ -177,7 +166,19 @@ export default function Leaderboard() {
     page: currentPage,
     limit: ITEMS_PER_PAGE,
     search: debouncedSearch || undefined,
+    profileId,
   });
+
+  // Persist last known current profile rank to avoid brief unblur during page fetches
+  const [effectiveProfileRank, setEffectiveProfileRank] = useState<number | undefined>(
+    typeof modelRanksData?.currentProfile?.rank === "number" ? (modelRanksData.currentProfile.rank as number) : undefined
+  );
+
+  useEffect(() => {
+    if (typeof modelRanksData?.currentProfile?.rank === "number") {
+      setEffectiveProfileRank(modelRanksData.currentProfile.rank as number);
+    }
+  }, [modelRanksData?.currentProfile?.rank]);
 
   // Transform data when new data arrives
   const transformData = useCallback(
@@ -365,6 +366,11 @@ export default function Leaderboard() {
     }
     return num.toString();
   };
+
+  // If no profileId, don't render leaderboard
+  if (!profileId) {
+    return null;
+  }
 
   // Only show full page loader on initial load (page 1) and no data, and not when searching
   if (isLoading && currentPage === 1 && allData.length === 0 && !debouncedSearch) {
@@ -569,8 +575,8 @@ export default function Leaderboard() {
                 {/* Blurred cards for ranks above current user + gaps in admin-assigned ranks - only show when not searching */}
                 {!debouncedSearch &&
                   (() => {
-                    const currentUserRank = visibleData.find((m) => m.isCurrentUser)?.rank;
-                    if (!isAuthenticated || !currentUserRank || typeof currentUserRank !== "number") {
+                    const currentProfileRank = effectiveProfileRank;
+                    if (currentProfileRank === undefined) {
                       return null;
                     }
 
@@ -586,7 +592,7 @@ export default function Leaderboard() {
 
                     // Get ranks above current user
                     const ranksAboveCurrentUser = visibleData
-                      .filter((model) => typeof model.rank === "number" && model.rank < currentUserRank && !model.isCurrentUser)
+                      .filter((model) => typeof model.rank === "number" && (model.rank as number) < currentProfileRank && !model.isCurrentUser)
                       .sort((a, b) => (a.rank as number) - (b.rank as number));
 
                     // Combine missing admin ranks and ranks above current user
@@ -682,14 +688,12 @@ export default function Leaderboard() {
 
                 {/* Regular leaderboard entries (excluding ranks above current user) */}
                 {visibleData.map((model, index) => {
-                    // Skip ranks above current user as they're handled separately above
-                    const currentUserRank = visibleData.find((m) => m.isCurrentUser)?.rank;
+                    // Skip ranks above current profile rank as they're handled separately above
+                    const currentProfileRank = effectiveProfileRank;
                     const isRankAboveCurrentUser =
-                      isAuthenticated &&
-                      currentUserRank !== undefined &&
+                      currentProfileRank !== undefined &&
                       typeof model.rank === "number" &&
-                      typeof currentUserRank === "number" &&
-                      model.rank < currentUserRank &&
+                      model.rank < currentProfileRank &&
                       !model.isCurrentUser;
 
                     if (isRankAboveCurrentUser) {
@@ -701,9 +705,7 @@ export default function Leaderboard() {
                         key={model.id}
                         model={model}
                         index={index}
-                        isSticky={false}
-                        currentUserRank={currentUserRank}
-                        isAuthenticated={isAuthenticated}
+                        currentProfileRank={currentProfileRank}
                         getRankIcon={getRankIcon}
                         formatNumber={formatNumber}
                       />
