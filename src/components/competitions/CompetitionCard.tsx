@@ -23,7 +23,13 @@ export const CompetitionCard: React.FC<CompetitionCardProps> = ({ contest, showJ
         <Link to="/competitions/$slug" params={{ slug: contest.slug }} className="block">
           <div className="relative cursor-pointer">
             <img
-              src={getImageUrl(contest?.images?.[0]?.url ?? "", "medium") || (defaultImage as unknown as string)}
+              src={
+                getImageUrl(contest?.images?.[0]?.url ?? "", "medium", {
+                  q: 75,
+                  w: 500,
+                  f: "webp",
+                }) || (defaultImage as unknown as string)
+              }
               alt={contest.name}
               className="w-full object-cover aspect-video"
             />
