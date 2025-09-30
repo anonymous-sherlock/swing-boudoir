@@ -6,17 +6,17 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useJoinedContests } from "@/hooks/api/useContests";
 import { useProfile } from "@/hooks/api/useProfile";
 import { useToast } from "@/hooks/use-toast";
+import { getImageUrl } from "@/lib/image-helper";
 import { formatUsdAbbrev } from "@/lib/utils";
+import { Award } from "@/types";
+import { Contest } from "@/types/contest.types";
 import { getSocialMediaUrls } from "@/utils/social-media";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
-import { AlertCircle, Camera, Clock, Edit, Eye, Gift, Globe, MapPin, RefreshCw, Share2, TrendingUp, Trophy, Users } from "lucide-react";
+import { AlertCircle, Camera, Clock, Edit, Eye, Gift, Globe, Heart, MapPin, RefreshCw, Share2, TrendingUp, Trophy, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Icons } from "../icons";
 import { Lightbox } from "../Lightbox";
-import { Contest } from "@/types/contest.types";
-import { Award } from "@/types";
-import { getImageUrl } from "@/lib/image-helper";
 
 export function PublicProfile() {
   const { user } = useAuth();
@@ -352,68 +352,80 @@ export function PublicProfile() {
         </CardHeader>
         <CardContent>
           {isLoadingStats ? (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {[...Array(4)].map((_, index) => (
-                <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+              {[...Array(5)].map((_, index) => (
+                <div key={index} className="p-4 rounded-lg border border-gray-200 bg-gradient-to-br from-white to-gray-50 shadow-sm">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <div className="h-8 bg-gray-200 rounded animate-pulse mb-2"></div>
-                      <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="flex-1">
+                      <div className="h-7 w-20 bg-gray-200 rounded mb-2 animate-pulse"></div>
+                      <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
                     </div>
-                    <div className="w-10 h-10 bg-gray-200 rounded-full animate-pulse"></div>
+                    <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse"></div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="p-4 rounded-lg border border-gray-100 bg-gradient-to-br from-white to-gray-50 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-2xl font-bold text-gray-900">{userProfile?.rank}</p>
                     <p className="text-gray-600 text-sm font-medium">Current Rank</p>
                   </div>
-                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                    <Trophy className="h-5 w-5 text-gray-600" />
+                  <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                    <Trophy className="h-5 w-5 text-amber-600" />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <div className="p-4 rounded-lg border border-gray-100 bg-gradient-to-br from-white to-gray-50 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-2xl font-bold text-gray-900">{profileStats?.totalCompetitions || 0}</p>
                     <p className="text-gray-600 text-sm font-medium">Competitions</p>
                   </div>
-                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                    <Users className="h-5 w-5 text-gray-600" />
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Users className="h-5 w-5 text-blue-600" />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <div className="p-4 rounded-lg border border-gray-100 bg-gradient-to-br from-white to-gray-50 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-2xl font-bold text-gray-900">{formatUsdAbbrev(profileStats?.totalEarnings || 0)}</p>
                     <p className="text-gray-600 text-sm font-medium">Total Earnings</p>
                   </div>
-                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                    <Gift className="h-5 w-5 text-gray-600" />
+                  <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                    <Gift className="h-5 w-5 text-emerald-600" />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <div className="p-4 rounded-lg border border-gray-100 bg-gradient-to-br from-white to-gray-50 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-2xl font-bold text-gray-900">{profileStats?.activeContests || 0}</p>
                     <p className="text-gray-600 text-sm font-medium">Active Now</p>
                   </div>
-                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                    <Clock className="h-5 w-5 text-gray-600" />
+                  <div className="w-10 h-10 bg-violet-100 rounded-full flex items-center justify-center">
+                    <Clock className="h-5 w-5 text-violet-600" />
                   </div>
                 </div>
               </div>
+
+              <Link to="/dashboard/$section" params={{ section: "votes" }} className="p-4 rounded-lg border border-gray-100 bg-gradient-to-br from-white to-gray-50 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{(profileStats?.totalVotesReceived || 0).toLocaleString()}</p>
+                    <p className="text-gray-600 text-sm font-medium">Total Votes</p>
+                  </div>
+                  <div className="w-10 h-10 bg-rose-100 rounded-full flex items-center justify-center">
+                    <Heart className="h-5 w-5 text-rose-600" />
+                  </div>
+                </div>
+              </Link>
             </div>
           )}
         </CardContent>
@@ -435,16 +447,33 @@ export function PublicProfile() {
         {/* Competitions Tab */}
         <TabsContent value="competitions" className="space-y-6">
           {isLoadingJoined ? (
-            <div className="flex items-center justify-center py-16">
-              <div className="text-center space-y-4">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
-                  <RefreshCw className="h-8 w-8 text-gray-600 animate-spin" />
+            <div className="space-y-4 py-6">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="border border-gray-200 rounded-lg p-6 bg-white shadow-sm">
+                  <div className="flex flex-col lg:flex-row gap-6">
+                    <div className="flex-1 space-y-3">
+                      <div className="h-6 w-40 bg-gray-200 rounded animate-pulse"></div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <div className="h-4 w-28 bg-gray-200 rounded animate-pulse"></div>
+                          <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="h-4 w-40 bg-gray-200 rounded animate-pulse"></div>
+                          <div className="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <div className="h-9 w-28 bg-gray-200 rounded animate-pulse"></div>
+                        <div className="h-9 w-36 bg-gray-200 rounded animate-pulse"></div>
+                      </div>
+                    </div>
+                    <div className="w-full lg:w-80">
+                      <div className="w-full aspect-video bg-gray-200 rounded-lg animate-pulse"></div>
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <h3 className="text-xl font-semibold text-gray-900">Loading competitions</h3>
-                  <p className="text-gray-600">Getting everything ready...</p>
-                </div>
-              </div>
+              ))}
             </div>
           ) : (joinedCompetitions?.length || 0) === 0 ? (
             <Card className="border-0 shadow-lg">

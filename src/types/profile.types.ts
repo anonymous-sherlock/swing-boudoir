@@ -66,8 +66,10 @@ export interface ProfileStats {
     totalCompetitions: number;
     totalEarnings: number;
     activeContests: number;
-    totalVotes: number;
+    totalVotesGiven: number;
     totalVotesReceived: number;
     winRate: number;
     totalParticipants: number;
+    freeVotesReceived: number;
+    paidVotesReceived: number;
 }

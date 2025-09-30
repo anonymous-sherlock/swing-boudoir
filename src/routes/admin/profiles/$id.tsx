@@ -565,16 +565,8 @@ function ProfileDetailsPage() {
                   <p className="text-2xl font-bold">${profileStats?.totalEarnings || 0}</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Best Rank</p>
-                  <p className="text-2xl font-bold">{profileStats?.bestRank || "N/A"}</p>
-                </div>
-                <div className="text-center">
                   <p className="text-sm text-muted-foreground">Total Competitions</p>
                   <p className="text-2xl font-bold">{profileStats?.totalCompetitions || 0}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Average Rank</p>
-                  <p className="text-2xl font-bold">{profileStats?.averageRank || "N/A"}</p>
                 </div>
               </div>
             )}
