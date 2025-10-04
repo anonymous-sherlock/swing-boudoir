@@ -5,7 +5,7 @@ import { Profile } from "@/types/profile.types";
 import { useCastPaidVote, useCastFreeVote } from "@/hooks/api/useVotes";
 import { ContestParticipation } from "@/types/competitions.types";
 import { CreditCard, Gift, Star } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Modal, ModalBody, ModalContent, ModalDescription, ModalFooter, ModalHeader, ModalTitle } from "../global/modal";
 import { Badge } from "../ui/badge";
@@ -125,9 +125,20 @@ const VoteModal = ({ open, onOpenChange, participation, profile, voterProfile, i
     }
   };
 
+  // If modal is not open, don't render anything to avoid DOM conflicts
+  if (!open) {
+    return null;
+  }
+
   return (
-    <Modal open={open} onOpenChange={onOpenChange} backdrop="opaque" size="lg" classNames={{ content: "max-h-[95%] min-h-[95%] md:max-h-full md:min-h-auto" }}>
-      <ModalContent className="md:overflow-y-auto">
+    <Modal 
+      open={open} 
+      onOpenChange={onOpenChange} 
+      backdrop="opaque" 
+      size="lg" 
+      classNames={{ content: "max-h-[95%] min-h-[95%] md:max-h-full md:min-h-auto notranslate" }}
+    >
+      <ModalContent className="md:overflow-y-auto notranslate">
         <ModalHeader>
           <ModalTitle>Vote for {profile.user.name}</ModalTitle>
           <ModalDescription>
@@ -142,18 +153,28 @@ const VoteModal = ({ open, onOpenChange, participation, profile, voterProfile, i
               const Icon = option.icon;
               const isDisabled = option.id === "free" && !option.available;
 
-              return (
-                <div
-                  key={option.id}
-                  className={`relative border-2 rounded-xl p-4 cursor-pointer transition-all duration-300 ${
-                    selectedVoteType === option.id
-                      ? "border-blue-500 bg-blue-50"
-                      : isDisabled
-                        ? "border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed"
-                        : "border-gray-200 hover:border-blue-300 hover:bg-blue-25"
-                  }`}
-                  onClick={() => !isDisabled && setSelectedVoteType(option.id as "free" | "single" | "pack5" | "pack10" | "pack25" | "custom")}
-                >
+               return (
+                 <div
+                   key={option.id}
+                   className={`relative border-2 rounded-xl p-4 cursor-pointer transition-all duration-300 ${
+                     selectedVoteType === option.id
+                       ? "border-blue-500 bg-blue-50"
+                       : isDisabled
+                         ? "border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed"
+                         : "border-gray-200 hover:border-blue-300 hover:bg-blue-25"
+                   }`}
+                   onClick={() => !isDisabled && setSelectedVoteType(option.id as "free" | "single" | "pack5" | "pack10" | "pack25" | "custom")}
+                   role="button"
+                   tabIndex={0}
+                   onKeyDown={(e) => {
+                     if (e.key === 'Enter' || e.key === ' ') {
+                       e.preventDefault();
+                       if (!isDisabled) {
+                         setSelectedVoteType(option.id as "free" | "single" | "pack5" | "pack10" | "pack25" | "custom");
+                       }
+                     }
+                   }}
+                 >
                   {option.popular && <Badge className="absolute -top-2 left-4 bg-orange-500 text-white">Most Popular</Badge>}
 
                   <div className="flex items-center justify-between">
@@ -195,9 +216,9 @@ const VoteModal = ({ open, onOpenChange, participation, profile, voterProfile, i
                         {option.votes} vote{option.votes > 1 ? "s" : ""}
                       </div>
                     </div>
-                  </div>
-                </div>
-              );
+                   </div>
+                 </div>
+               );
             })}
           </div>
           <ModalFooter className="flex flex-col gap-4">
