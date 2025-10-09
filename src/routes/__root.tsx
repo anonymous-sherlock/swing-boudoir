@@ -10,7 +10,7 @@ import { authRoutes, isPublicRoute } from "@/routes";
 import { QueryClient } from "@tanstack/react-query";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { NuqsAdapter } from "nuqs/adapters/react";
-import { JoyrideTour } from "@/components/JoyrideTour";
+import { CompetitionsTour } from "@/components/product-flow/competions-tour";
 import { useProductTour } from "@/hooks/useProductTour";
 
 function AppShell() {
@@ -32,7 +32,7 @@ function AppShell() {
       {!isAdminPage && <FloatingChatButton />}
       
       {/* Global Product Tour */}
-      <JoyrideTour
+      <CompetitionsTour
         isOpen={shouldShowTour}
         onClose={markTourCompleted}
         onComplete={markTourCompleted}

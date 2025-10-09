@@ -2,6 +2,7 @@ import React, { useState, useCallback } from "react";
 import Joyride, { CallBackProps, STATUS, EVENTS, ACTIONS, Step } from "react-joyride";
 import { Trophy, Sparkles, CheckCircle } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { TOUR_STORAGE_KEY } from "@/hooks/useProductTour";
 
 // Extended step type for custom navigation and delay handling
 interface ExtendedStep extends Step {
@@ -22,9 +23,8 @@ interface JoyrideTourProps {
   onComplete: () => void;
 }
 
-const TOUR_STORAGE_KEY = "swing-boudoir-product-tour-completed";
 
-export const JoyrideTour: React.FC<JoyrideTourProps> = ({ isOpen, onClose, onComplete }) => {
+export const CompetitionsTour: React.FC<JoyrideTourProps> = ({ isOpen, onClose, onComplete }) => {
   const [run, setRun] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);

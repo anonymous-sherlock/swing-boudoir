@@ -18,7 +18,7 @@ import { DashboardSection } from "@/routes/dashboard/$section";
 import Leaderboard from "@/pages/Leaderboard";
 import { CompetitionsPage } from "@/components/competitions/CompetitionsPage";
 import { useProductTour } from "@/hooks/useProductTour";
-import { TourTrigger } from "@/components/TourTrigger";
+import { TourTrigger } from "@/components/product-flow/TourTrigger";
 
 function DashboardLayout({
   activeSection = "profile",
@@ -57,7 +57,7 @@ function DashboardLayout({
         {/* Main content */}
         <main className={`flex-1 overflow-y-auto p-4 sm:p-6 transition-all duration-300 ${isSidebarExpanded ? 'md:ml-64' : 'md:ml-16'}`}>
           {/* Tour trigger button for testing - remove in production */}
-          {process.env.NODE_ENV === 'development' && triggerTour && (
+          {triggerTour && (
             <div className="mb-4 flex justify-end">
               <TourTrigger onStartTour={triggerTour} />
             </div>
