@@ -71,6 +71,7 @@ const Header = ({ onSidebarToggle }: HeaderProps) => {
               }
             }}
             className="p-2"
+            data-tour="mobile-hamburger-menu"
           >
             <Menu className="w-5 h-5" />
           </Button>
@@ -146,12 +147,12 @@ const Header = ({ onSidebarToggle }: HeaderProps) => {
           {/* Navigation - Center */}
           <nav className="flex items-center space-x-2">
             <Link to="/competitions">
-              <Button variant="ghost" size="sm" className="text-sm">
+              <Button variant="ghost" size="sm" className="text-sm" data-tour="header-competitions">
                 Competitions
               </Button>
             </Link>
             <Link to="/leaderboard">
-              <Button variant="ghost" size="sm" className="text-sm">
+              <Button variant="ghost" size="sm" className="text-sm" data-tour="leaderboard">
                 Leaderboard
               </Button>
             </Link>

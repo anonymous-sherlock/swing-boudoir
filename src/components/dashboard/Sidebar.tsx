@@ -60,6 +60,7 @@ export function Sidebar({ activeSection, setActiveSection, isMobile = false, isO
         <div
           className={`fixed left-0 top-0 h-full w-64 bg-white border-r border-border transition-transform duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
           onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside sidebar
+          data-tour="mobile-sidebar-container"
         >
           <div className="w-full h-full flex flex-col bg-white shadow-2xl">
             <div className="p-4 border-b border-border bg-white flex justify-between">
@@ -81,6 +82,7 @@ export function Sidebar({ activeSection, setActiveSection, isMobile = false, isO
                       setActiveSection(item.id);
                       onToggle?.();
                     }}
+                    data-tour={item.id}
                   >
                     <Icon className="mr-3 h-4 w-4" />
                     {item.label}
@@ -102,6 +104,7 @@ export function Sidebar({ activeSection, setActiveSection, isMobile = false, isO
                         setActiveSection(item.id);
                         onToggle?.();
                       }}
+                      data-tour={item.id}
                     >
                       <Icon className="mr-3 h-4 w-4" />
                       {item.label}
@@ -130,7 +133,7 @@ export function Sidebar({ activeSection, setActiveSection, isMobile = false, isO
 
   // Desktop sidebar
   return (
-    <div className={`bg-card border-r border-border h-screen flex flex-col transition-all duration-300 fixed left-0 top-16 z-40 ${isExpanded ? "w-64" : "w-16"} will-change-transform`}>
+    <div className={`bg-card border-r border-border h-screen flex flex-col transition-all duration-300 fixed left-0 top-16 z-40 ${isExpanded ? "w-64" : "w-16"} will-change-transform`} data-tour="sidebar-container">
       <div className="p-4 border-b border-border flex items-center justify-between">
         {isExpanded ? (
           <h2 className="text-xl font-bold text-foreground">Dashboard</h2>
@@ -140,7 +143,7 @@ export function Sidebar({ activeSection, setActiveSection, isMobile = false, isO
           //   <span className="text-primary-foreground font-bold text-sm">S</span>
           // </div>
         )}
-        <Button variant="ghost" size="sm" onClick={toggleExpand} className="p-1 h-8 w-8">
+        <Button variant="ghost" size="sm" onClick={toggleExpand} className="p-1 h-8 w-8" data-tour="sidebar-toggle">
           {isExpanded ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </Button>
       </div>
@@ -155,6 +158,7 @@ export function Sidebar({ activeSection, setActiveSection, isMobile = false, isO
               className={`w-full transition-all duration-200 ${isExpanded ? "justify-start" : "justify-center"}`}
               onClick={() => setActiveSection(item.id)}
               title={!isExpanded ? item.label : undefined}
+              data-tour={item.id}
             >
               <Icon className={`h-4 w-4 ${isExpanded ? "mr-3" : ""}`} />
               {isExpanded && item.label}
@@ -174,6 +178,7 @@ export function Sidebar({ activeSection, setActiveSection, isMobile = false, isO
                 className={`w-full transition-all duration-200 ${isExpanded ? "justify-start" : "justify-center"}`}
                 onClick={() => setActiveSection(item.id)}
                 title={!isExpanded ? item.label : undefined}
+                data-tour={item.id}
               >
                 <Icon className={`h-4 w-4 ${isExpanded ? "mr-3" : ""}`} />
                 {isExpanded && item.label}

@@ -244,8 +244,8 @@ export function CompetitionsPage() {
           {activeCompetitions.length > 0 ? (
             <>
               <div className="grid grid-cols-1 gap-6">
-                {paginatedCompetitions.map((contest) => (
-                  <Card key={contest.id} className="border border-gray-200 hover:shadow-md transition-shadow">
+                {paginatedCompetitions.map((contest, index) => (
+                  <Card key={contest.id} className="border border-gray-200 hover:shadow-md transition-shadow" data-tour={index === 0 ? "first-competition-card" : undefined}>
                     <CardContent className="p-6">
                       <div className="flex flex-col lg:flex-row gap-6">
                         <div className="flex-1 space-y-4">
@@ -288,12 +288,14 @@ export function CompetitionsPage() {
 
                           <div className="flex flex-wrap gap-2">
                             {joinedIds.has(contest.id) ? (
-                              <Button variant="outline" onClick={() => shareCompetition(contest.name)}>
+                              <Button variant="outline" onClick={() => shareCompetition(contest.name)} data-tour={index === 0 ? "share-profile-button" : undefined}>
                                 <Share className="mr-2 h-4 w-4" />
                                 Share Profile
                               </Button>
                             ) : (
-                              <ContestJoinButton contest={contest} />
+                              <div data-tour={index === 0 ? "join-contest-button" : undefined}>
+                                <ContestJoinButton contest={contest} />
+                              </div>
                             )}
                             <Button variant="outline" asChild>
                               <Link to="/competitions/$slug" params={{ slug: contest.slug }}>

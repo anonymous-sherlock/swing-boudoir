@@ -97,7 +97,13 @@ export const VoterOnlyMenu: React.FC<VoterOnlyMenuProps> = ({ isOpen, onClose })
           {menuItems.map((item) => {
             const Icon = item.icon;
             return (
-              <Button key={item.id} variant="ghost" className="w-full justify-start h-12" onClick={item.onClick}>
+              <Button 
+                key={item.id} 
+                variant="ghost" 
+                className="w-full justify-start h-12" 
+                onClick={item.onClick}
+                data-tour={item.id}
+              >
                 <Icon className="mr-3 h-5 w-5" />
                 <span className="text-base">{item.label}</span>
               </Button>

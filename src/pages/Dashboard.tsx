@@ -17,15 +17,19 @@ import { ONBOARDING_REDIRECT } from "@/routes";
 import { DashboardSection } from "@/routes/dashboard/$section";
 import Leaderboard from "@/pages/Leaderboard";
 import { CompetitionsPage } from "@/components/competitions/CompetitionsPage";
+import { useProductTour } from "@/hooks/useProductTour";
+import { TourTrigger } from "@/components/TourTrigger";
 
 function DashboardLayout({
   activeSection = "profile",
   setActiveSection,
   children,
+  triggerTour,
 }: {
   activeSection: DashboardSection;
   setActiveSection: (section: DashboardSection) => void;
   children: React.ReactNode;
+  triggerTour?: () => void;
 }) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
@@ -51,7 +55,15 @@ function DashboardLayout({
         <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} isMobile={true} isOpen={isMobileSidebarOpen} onToggle={() => setIsMobileSidebarOpen(false)} />
 
         {/* Main content */}
-        <main className={`flex-1 overflow-y-auto p-4 sm:p-6 transition-all duration-300 ${isSidebarExpanded ? 'md:ml-64' : 'md:ml-16'}`}>{children}</main>
+        <main className={`flex-1 overflow-y-auto p-4 sm:p-6 transition-all duration-300 ${isSidebarExpanded ? 'md:ml-64' : 'md:ml-16'}`}>
+          {/* Tour trigger button for testing - remove in production */}
+          {process.env.NODE_ENV === 'development' && triggerTour && (
+            <div className="mb-4 flex justify-end">
+              <TourTrigger onStartTour={triggerTour} />
+            </div>
+          )}
+          {children}
+        </main>
       </div>
     </div>
   );
@@ -65,6 +77,7 @@ export default function Dashboard() {
   const { isAuthenticated, isLoading, checkUserNeedsOnboarding } = useAuth();
   const [activeSection, setActiveSection] = useState<DashboardSection>(currentSection || "profile");
   const [isNavigating, setIsNavigating] = useState(false);
+  const { triggerTour } = useProductTour();
 
   // Auth and onboarding checks
   useEffect(() => {
@@ -148,8 +161,15 @@ export default function Dashboard() {
   }
 
   return (
-    <DashboardLayout activeSection={activeSection} setActiveSection={handleSetActiveSection}>
-      {renderContent}
-    </DashboardLayout>
+    <>
+      <DashboardLayout 
+        activeSection={activeSection} 
+        setActiveSection={handleSetActiveSection}
+        triggerTour={triggerTour}
+      >
+        {renderContent}
+      </DashboardLayout>
+      
+    </>
   );
 }

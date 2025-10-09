@@ -1,3 +1,4 @@
+import React from "react";
 import FloatingChatButton from "@/components/layout/floating-chat-btn";
 import { PageLoader } from "@/components/PageLoader";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
@@ -9,10 +10,13 @@ import { authRoutes, isPublicRoute } from "@/routes";
 import { QueryClient } from "@tanstack/react-query";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { NuqsAdapter } from "nuqs/adapters/react";
+import { JoyrideTour } from "@/components/JoyrideTour";
+import { useProductTour } from "@/hooks/useProductTour";
 
 function AppShell() {
   const { isLoading } = useAuth();
   const isAdminPage = location.pathname.startsWith("/admin");
+  const { shouldShowTour, markTourCompleted } = useProductTour();
 
   // Show loading spinner while checking authentication
   if (isLoading && !isPublicRoute(location.pathname) && !authRoutes.includes(location.pathname)) {
@@ -26,6 +30,13 @@ function AppShell() {
       <Toaster />
       <SonnerToaster />
       {!isAdminPage && <FloatingChatButton />}
+      
+      {/* Global Product Tour */}
+      <JoyrideTour
+        isOpen={shouldShowTour}
+        onClose={markTourCompleted}
+        onComplete={markTourCompleted}
+      />
     </div>
   );
 }

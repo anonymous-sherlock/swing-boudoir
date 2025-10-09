@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { TOUR_STORAGE_KEY, TOUR_TRIGGER_KEY } from "@/hooks/useProductTour";
 interface FinalSceneProps {
   formData: FormData;
   updateFormData: (updates: Partial<FormData>) => void;
@@ -22,6 +23,7 @@ const FinalScene: React.FC<FinalSceneProps> = ({ formData }) => {
   const handleComplete = () => {
     console.log("Finalizing profile with data:", formData);
     if (!isLoading && !user) return;
+
     createProfile
       .mutateAsync({
         userId: user?.id ?? "",
@@ -68,8 +70,13 @@ const FinalScene: React.FC<FinalSceneProps> = ({ formData }) => {
         // Show success toast and redirect to dashboard
         toast.success("🎉 Welcome to the modeling platform! Your profile is now live.");
 
-        // Small delay to let user see the toast before redirecting
+        // Set flag to show tour on dashboard
+        localStorage.removeItem(TOUR_STORAGE_KEY); // Clear any previous completion
+        localStorage.setItem(TOUR_TRIGGER_KEY, 'true'); // Trigger the tour
+        
+        
         setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('tour-triggered'));
           router.navigate({ to: "/dashboard" });
         }, 1500);
       })

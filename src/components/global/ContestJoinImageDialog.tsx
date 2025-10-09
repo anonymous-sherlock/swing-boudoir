@@ -74,7 +74,13 @@ export const ContestJoinImageDialog: React.FC<ContestJoinImageDialogProps> = ({ 
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        className="sm:max-w-md"
+        data-tour="image-uploader-dialog"
+        onInteractOutside={(e) => {
+          e.preventDefault();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Join {contestName}</DialogTitle>
           <DialogDescription>Upload a cover image for your contest participation. This image is required and will be displayed on your contest entry.</DialogDescription>
@@ -89,6 +95,7 @@ export const ContestJoinImageDialog: React.FC<ContestJoinImageDialogProps> = ({ 
               isDragActive ? "border-primary bg-primary/10" : "border-gray-300 hover:border-primary hover:bg-primary/5",
               previewUrl && "border-green-500 bg-green-50"
             )}
+            data-tour="image-uploader"
           >
             <input {...getInputProps()} />
 
@@ -96,11 +103,7 @@ export const ContestJoinImageDialog: React.FC<ContestJoinImageDialogProps> = ({ 
               <div className="space-y-4">
                 <div className="relative inline-block group">
                   <div className="relative overflow-hidden rounded-xl shadow-lg ring-2 ring-green-200 ring-offset-2 ring-offset-white">
-                    <img 
-                      src={previewUrl} 
-                      alt="Preview" 
-                      className="w-40 h-40 object-cover transition-transform duration-300 group-hover:scale-105" 
-                    />
+                    <img src={previewUrl} alt="Preview" className="w-40 h-40 object-cover transition-transform duration-300 group-hover:scale-105" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </div>
                   <Button
@@ -130,9 +133,7 @@ export const ContestJoinImageDialog: React.FC<ContestJoinImageDialogProps> = ({ 
                   <div className="absolute inset-0 w-20 h-20 mx-auto rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-gray-700">
-                    {isDragActive ? "Drop your image here" : "Drop your image here or click to browse"}
-                  </p>
+                  <p className="text-sm font-medium text-gray-700">{isDragActive ? "Drop your image here" : "Drop your image here or click to browse"}</p>
                   <p className="text-xs text-gray-500">JPG, PNG, WEBP up to 10MB</p>
                 </div>
               </div>
@@ -144,7 +145,7 @@ export const ContestJoinImageDialog: React.FC<ContestJoinImageDialogProps> = ({ 
           <Button type="button" variant="outline" onClick={handleClose} disabled={isProcessing}>
             Cancel
           </Button>
-          <Button type="button" onClick={handleJoin} disabled={isProcessing || !selectedFile} className="min-w-[100px]">
+          <Button type="button" onClick={handleJoin} disabled={isProcessing || !selectedFile} className="min-w-[100px]" data-tour="join-contest-dialog-button">
             {isProcessing ? (
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
