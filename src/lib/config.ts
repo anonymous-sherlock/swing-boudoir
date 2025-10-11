@@ -13,6 +13,9 @@ const isLocalhost = window.location.hostname === 'localhost' || window.location.
 const DEV_HOST = (import.meta.env.VITE_API_HOST as string) || 'http://localhost:9999';
 const PROD_HOST = 'https://api.swingboudoirmag.com';
 
+
+export const BASE_HOST_URL = isDevelopment || isLocalhost ? "http://localhost:5173" : "https://app.swingboudoirmag.com";
+
 // API Base URLs - Using env-aware values
 export const API_CONFIG = {
   // Better Auth API

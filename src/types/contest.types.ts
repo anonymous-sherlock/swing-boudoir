@@ -38,7 +38,9 @@ export interface ContestImage {
     url: string
 }
 
-export type UpdateContestData = Partial<Omit<Contest, "id" | "createdAt" | "updatedAt" | "images" | "awards">>
+export type UpdateContestData = Partial<Omit<Contest, "id" | "createdAt" | "updatedAt" | "images"|"awards" >> & {
+  awards: Array<Pick<Award, "name" | "icon">> | undefined
+}
 
 // Contest Participation Types
 export interface ContestParticipation {

@@ -1,30 +1,31 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import * as React from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmojiPicker } from "@/components/ui/emoji-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { EmojiPicker } from "@/components/ui/emoji-picker";
 
 import { DateTimePicker } from "@/components/lingua-time/datetime-picker";
 import { Badge } from "@/components/ui/badge";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormLabel as ShadFormLabel } from "@/components/ui/form";
-import { useUpdateContest, useUploadContestImages, useRemoveContestImage } from "@/hooks/api/useContests";
-import { FileTextIcon, ImageIcon, CalendarIcon } from "@radix-ui/react-icons";
-import { GripVertical, Plus, RotateCcw, Trash2, Trophy, Upload, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { UnsavedChangesBar } from "@/components/UnsavedChangesBar";
+import { useRemoveContestImage, useUpdateContest, useUploadContestImages } from "@/hooks/api/useContests";
+import { api } from "@/lib/api";
+import { BASE_HOST_URL } from "@/lib/config";
 import { cn } from "@/lib/utils";
+import { Contest_Status, Contest_Visibility, ContestEditSchema, ContestSchema } from "@/lib/validations/contest.schema";
+import { CalendarIcon, FileTextIcon, ImageIcon } from "@radix-ui/react-icons";
+import { GripVertical, Plus, RotateCcw, Trash2, Trophy, Upload, X } from "lucide-react";
 import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
-import { Contest_Status, Contest_Visibility, ContestEditSchema, ContestSchema } from "@/lib/validations/contest.schema";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { api } from "@/lib/api";
-import { UnsavedChangesBar } from "@/components/UnsavedChangesBar";
 
 export const Route = createFileRoute("/admin/contests/$id/edit")({
   loader: async ({ params: { id } }) => {
@@ -322,7 +323,7 @@ function EditNewContestPage() {
                     <FormControl>
                       <div className="*:not-first:mt-2">
                         <div className="flex rounded-md shadow-xs">
-                          <span className="border-input bg-gray-200 text-black inline-flex items-center rounded-s-md border px-3 text-sm">{"https://localhost:9999/contests"}</span>
+                          <span className="border-input bg-gray-200 text-black inline-flex items-center rounded-s-md border px-3 text-sm">{`${BASE_HOST_URL}/contests`}</span>
                           <Input className="-ms-px rounded-s-none shadow-none" placeholder="google.com" type="text" {...field} />
                         </div>
                       </div>
