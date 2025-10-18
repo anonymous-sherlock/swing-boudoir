@@ -1,13 +1,19 @@
 import { getContext, Provider as TanStackQueryProvider } from "@/integrations/tanstack-query/root-provider.tsx";
+import * as Sentry from "@sentry/react";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { RouterProvider } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+import { Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import "./App.css";
 import "./index.css";
 import { router } from "./router";
-import { Suspense } from "react";
-import { PageLoader } from "./components/PageLoader";
+
+Sentry.init({
+  dsn: "https://743bf0056f5046983e48af707f62ca11@o4510210415656960.ingest.us.sentry.io/4510210417688576",
+  sendDefaultPii: true,
+  environment: import.meta.env.MODE === "development" ? "development" : "production",
+});
 
 const TanStackQueryProviderContext = getContext();
 
