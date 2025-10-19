@@ -61,6 +61,7 @@ export interface ContestParticipation {
   profileId: string;
   contestId: string;
   mediaId: string | null;
+  rank: number | null;
   coverImage: {
     id: string;
     url: string;

@@ -311,7 +311,7 @@ export function ContestsParticipationSection({ profile, participations, onVoteSu
                       <Trophy className="w-4 h-4 text-yellow-600" />
                       <div>
                         <span className="text-xs text-gray-500">Your Rank</span>
-                        <div className="font-semibold text-yellow-600 text-sm">{"N/A"}</div>
+                        <div className="font-semibold text-yellow-600 text-sm">{participation.rank ? participation.rank : "N/A"}</div>
                       </div>
                     </div>
 
