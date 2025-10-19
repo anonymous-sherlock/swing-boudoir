@@ -1,9 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { useBlocker } from "@tanstack/react-router";
-import { ContestEncouragementModal } from "./ContestEncouragementModal";
-import { useAuth } from "@/contexts/AuthContext";
-import { useJoinedContests } from "@/hooks/api/useContests";
 import { COMPETITIONS_JOINED_COUNT_KEY, COMPETITIONS_JOINED_KEY } from "@/constants/keys.constants";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ContestEncouragementModal } from "./ContestEncouragementModal";
 
 export interface ContestBrowserLeaveBlockerProps {
   enabled: boolean;
@@ -25,70 +22,53 @@ export function ContestBrowserLeaveBlocker({
   onConfirmLeave,
 }: ContestBrowserLeaveBlockerProps) {
   const [showDialog, setShowDialog] = useState(false);
-  const { user, isAuthenticated, isLoading, checkUserNeedsOnboarding } = useAuth();
+  const showDialogRef = useRef(showDialog);
 
-  // Check if user has joined any competitions
-  const { data: joinedContestsData } = useJoinedContests(user?.profileId || "", 1, 1);
-  const hasJoinedContests = joinedContestsData?.data && joinedContestsData.data.length > 0;
+  // Keep ref updated
+  useEffect(() => {
+    showDialogRef.current = showDialog;
+  }, [showDialog]);
 
-  // Also check localStorage as backup
-  const localStorageJoinedStatus = localStorage.getItem(COMPETITIONS_JOINED_KEY);
-  const hasJoinedFromStorage = localStorageJoinedStatus === "true";
-
-  // TanStack Router navigation blocker - only block browser navigation, not internal routing
-  const { proceed, reset, status } = useBlocker({
-    shouldBlockFn: () => false, // Never block internal navigation
-    enableBeforeUnload: enabled, // Only block browser tab close / refresh
-    withResolver: true,
-    disabled: hasJoinedFromStorage || hasJoinedContests,
-  });
+  // Check localStorage
+  const hasJoinedFromStorage = localStorage.getItem(COMPETITIONS_JOINED_KEY) === "true";
 
   const handleClose = useCallback(() => {
     setShowDialog(false);
-    reset?.(); // Cancel the blocked navigation
-  }, [reset]);
+  }, []);
 
   const handleSuccess = useCallback(() => {
     setShowDialog(false);
-    // Update localStorage to indicate user has joined a contest
     localStorage.setItem(COMPETITIONS_JOINED_KEY, "true");
     const currentCount = parseInt(localStorage.getItem(COMPETITIONS_JOINED_COUNT_KEY) || "0");
     localStorage.setItem(COMPETITIONS_JOINED_COUNT_KEY, (currentCount + 1).toString());
     onLeaveAllowed?.();
   }, [onLeaveAllowed]);
 
-  // Handle browser beforeunload events
+  // Handle browser tab close / refresh
   useEffect(() => {
-    if (!enabled || !isAuthenticated || !user || user.profileId === "" || checkUserNeedsOnboarding()) return;
-
-    // Only show modal if user hasn't joined any competitions
-    if (hasJoinedContests || hasJoinedFromStorage) return;
+    if (!enabled || hasJoinedFromStorage) return;
 
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      // Only prevent default and show custom modal, don't set returnValue
       event.preventDefault();
       setShowDialog(true);
       onBeforeLeave?.();
-      // Don't set event.returnValue to avoid browser's default dialog
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
-
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, [enabled, onBeforeLeave, hasJoinedContests, hasJoinedFromStorage, isAuthenticated, user, checkUserNeedsOnboarding]);
+  }, [enabled, hasJoinedFromStorage, onBeforeLeave]);
 
   // Handle mouse leave to show modal
   useEffect(() => {
-    if (!enabled || !showOnMouseLeave || !isAuthenticated || !user || user.profileId === "" || checkUserNeedsOnboarding()) return;
-
-    // Only show modal if user hasn't joined any competitions
-    if (hasJoinedContests || hasJoinedFromStorage) return;
+    if (!enabled || !showOnMouseLeave || hasJoinedFromStorage) return;
 
     let timeoutId: NodeJS.Timeout;
 
     const handleMouseLeave = (event: MouseEvent) => {
+      if (showDialogRef.current) return;
+
       const isLeavingTop = event.clientY <= 0;
       const isLeavingLeft = event.clientX <= 0;
       const isLeavingRight = event.clientX >= window.innerWidth;
@@ -96,9 +76,11 @@ export function ContestBrowserLeaveBlocker({
 
       if (isLeavingTop || isLeavingLeft || isLeavingRight || isLeavingBottom) {
         timeoutId = setTimeout(() => {
-          setShowDialog(true);
-          onBeforeLeave?.();
-        }, 300); // Small delay to prevent accidental triggers
+          if (!showDialogRef.current) {
+            setShowDialog(true);
+            onBeforeLeave?.();
+          }
+        }, 300);
       }
     };
 
@@ -110,9 +92,15 @@ export function ContestBrowserLeaveBlocker({
       document.removeEventListener("mouseleave", handleMouseLeave);
       document.removeEventListener("mouseout", handleMouseLeave);
     };
-  }, [enabled, showOnMouseLeave, onBeforeLeave, hasJoinedContests, hasJoinedFromStorage, isAuthenticated, user, checkUserNeedsOnboarding]);
+  }, [enabled, showOnMouseLeave, hasJoinedFromStorage, onBeforeLeave]);
 
-  if (isLoading || !isAuthenticated || !user || user.profileId === "" || checkUserNeedsOnboarding()) return null;
-
-  return <ContestEncouragementModal isOpen={showDialog} onClose={handleClose} onSuccess={handleSuccess} title={title} message={message} />;
+  return (
+    <ContestEncouragementModal
+      isOpen={showDialog}
+      onClose={handleClose}
+      onSuccess={handleSuccess}
+      title={title}
+      message={message}
+    />
+  );
 }
