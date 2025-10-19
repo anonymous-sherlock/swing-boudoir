@@ -6,9 +6,10 @@ import { useCheckContestParticipation, useJoinContest, useLeaveContest } from "@
 import { useToast } from "@/hooks/use-toast";
 import { notificationService } from "@/lib/notificationService";
 import { Contest } from "@/types/contest.types";
+import { useNavigate } from "@tanstack/react-router";
 import React, { useState } from "react";
 import { ContestJoinImageDialog } from "./ContestJoinImageDialog";
-import { useNavigate } from "@tanstack/react-router";
+import { COMPETITIONS_JOINED_COUNT_KEY, COMPETITIONS_JOINED_KEY } from "@/constants/keys.constants";
 
 interface ContestJoinButtonProps {
   contest: Contest;
@@ -108,6 +109,8 @@ export const ContestJoinButton: React.FC<ContestJoinButtonProps> = ({
           });
           toast({ title: "Success!", description: `You have joined ${contest.name} with cover image` });
           
+          localStorage.setItem(COMPETITIONS_JOINED_KEY, 'true');
+          localStorage.setItem(COMPETITIONS_JOINED_COUNT_KEY, (parseInt(localStorage.getItem(COMPETITIONS_JOINED_COUNT_KEY) || '0') + 1).toString());
           // Send in-app notification
           if (profileId) {
             await notificationService.notifyCompetitionJoined(

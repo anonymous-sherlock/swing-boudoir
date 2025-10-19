@@ -1,17 +1,17 @@
-import React from "react";
 import FloatingChatButton from "@/components/layout/floating-chat-btn";
 import { PageLoader } from "@/components/PageLoader";
+import { CompetitionsTour } from "@/components/product-flow/competions-tour";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
+import { useProductTour } from "@/hooks/useProductTour";
 import ModalProvider from "@/providers/modal-provider";
 import { authRoutes, isPublicRoute } from "@/routes";
 import { QueryClient } from "@tanstack/react-query";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { NuqsAdapter } from "nuqs/adapters/react";
-import { CompetitionsTour } from "@/components/product-flow/competions-tour";
-import { useProductTour } from "@/hooks/useProductTour";
+import { ContestBrowserLeaveBlocker } from "../components/encouragement/ContestBrowserLeaveBlocker";
 
 function AppShell() {
   const { isLoading } = useAuth();
@@ -30,13 +30,16 @@ function AppShell() {
       <Toaster />
       <SonnerToaster />
       {!isAdminPage && <FloatingChatButton />}
-      
+
       {/* Global Product Tour */}
-      <CompetitionsTour
-        isOpen={shouldShowTour}
-        onClose={markTourCompleted}
-        onComplete={markTourCompleted}
-      />
+      <CompetitionsTour isOpen={shouldShowTour} onClose={markTourCompleted} onComplete={markTourCompleted} />
+       <ContestBrowserLeaveBlocker 
+         enabled={!location.pathname.includes('/auth/')} 
+         showOnMouseLeave={true}
+         title="Don't leave yet!"
+         message="You're about to miss out on this amazing competition. Are you sure you want to leave?"
+       />
+      
     </div>
   );
 }

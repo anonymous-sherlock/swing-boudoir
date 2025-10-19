@@ -1,13 +1,14 @@
 import backgroundVideo from "@/assets/final-video.mp4";
-import React from "react";
-import { CheckCircle, Sparkles, Star, Camera } from "lucide-react";
-import { FormData } from "./index";
-import { useProfile } from "@/hooks/api/useProfile";
+import { COMPETITIONS_JOINED_COUNT_KEY, COMPETITIONS_JOINED_KEY } from "@/constants/keys.constants";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRouter } from "@tanstack/react-router";
-import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { useProfile } from "@/hooks/api/useProfile";
 import { TOUR_STORAGE_KEY, TOUR_TRIGGER_KEY } from "@/hooks/useProductTour";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "@tanstack/react-router";
+import { Camera, Sparkles, Star } from "lucide-react";
+import React from "react";
+import { toast } from "sonner";
+import { FormData } from "./index";
 interface FinalSceneProps {
   formData: FormData;
   updateFormData: (updates: Partial<FormData>) => void;
@@ -73,7 +74,8 @@ const FinalScene: React.FC<FinalSceneProps> = ({ formData }) => {
         // Set flag to show tour on dashboard
         localStorage.removeItem(TOUR_STORAGE_KEY); // Clear any previous completion
         localStorage.setItem(TOUR_TRIGGER_KEY, 'true'); // Trigger the tour
-        
+        localStorage.setItem(COMPETITIONS_JOINED_KEY, 'false');
+        localStorage.setItem(COMPETITIONS_JOINED_COUNT_KEY, '0');
         
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent('tour-triggered'));
