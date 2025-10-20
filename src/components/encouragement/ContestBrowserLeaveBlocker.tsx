@@ -1,6 +1,7 @@
 import { COMPETITIONS_JOINED_COUNT_KEY, COMPETITIONS_JOINED_KEY } from "@/constants/keys.constants";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ContestEncouragementModal } from "./ContestEncouragementModal";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface ContestBrowserLeaveBlockerProps {
   enabled: boolean;
@@ -23,6 +24,7 @@ export function ContestBrowserLeaveBlocker({
 }: ContestBrowserLeaveBlockerProps) {
   const [showDialog, setShowDialog] = useState(false);
   const showDialogRef = useRef(showDialog);
+  const { isAuthenticated, checkUserNeedsOnboarding } = useAuth();
 
   // Keep ref updated
   useEffect(() => {
@@ -30,7 +32,9 @@ export function ContestBrowserLeaveBlocker({
   }, [showDialog]);
 
   // Check localStorage
+  const hasKeyForJoinedCompetitions = localStorage.getItem(COMPETITIONS_JOINED_KEY);
   const hasJoinedFromStorage = localStorage.getItem(COMPETITIONS_JOINED_KEY) === "true";
+
 
   const handleClose = useCallback(() => {
     setShowDialog(false);
@@ -46,7 +50,7 @@ export function ContestBrowserLeaveBlocker({
 
   // Handle browser tab close / refresh
   useEffect(() => {
-    if (!enabled || hasJoinedFromStorage) return;
+    if (!enabled || !isAuthenticated || !hasKeyForJoinedCompetitions || hasJoinedFromStorage || checkUserNeedsOnboarding()) return;
 
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault();
@@ -58,11 +62,11 @@ export function ContestBrowserLeaveBlocker({
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, [enabled, hasJoinedFromStorage, onBeforeLeave]);
+  }, [enabled, isAuthenticated, hasKeyForJoinedCompetitions, hasJoinedFromStorage, checkUserNeedsOnboarding, onBeforeLeave]);
 
   // Handle mouse leave to show modal
   useEffect(() => {
-    if (!enabled || !showOnMouseLeave || hasJoinedFromStorage) return;
+    if (!enabled || !isAuthenticated || !showOnMouseLeave || !hasKeyForJoinedCompetitions || hasJoinedFromStorage || checkUserNeedsOnboarding()) return;
 
     let timeoutId: NodeJS.Timeout;
 
@@ -92,7 +96,7 @@ export function ContestBrowserLeaveBlocker({
       document.removeEventListener("mouseleave", handleMouseLeave);
       document.removeEventListener("mouseout", handleMouseLeave);
     };
-  }, [enabled, showOnMouseLeave, hasJoinedFromStorage, onBeforeLeave]);
+  }, [enabled, isAuthenticated, showOnMouseLeave, hasKeyForJoinedCompetitions, hasJoinedFromStorage, checkUserNeedsOnboarding, onBeforeLeave]);
 
   return (
     <ContestEncouragementModal

@@ -12,6 +12,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { NuqsAdapter } from "nuqs/adapters/react";
 import { ContestBrowserLeaveBlocker } from "../components/encouragement/ContestBrowserLeaveBlocker";
+import { OnboardingLeaveBlocker } from "../components/encouragement/OnboardingLeaveBlocker";
 
 function AppShell() {
   const { isLoading } = useAuth();
@@ -33,12 +34,20 @@ function AppShell() {
 
       {/* Global Product Tour */}
       <CompetitionsTour isOpen={shouldShowTour} onClose={markTourCompleted} onComplete={markTourCompleted} />
-       <ContestBrowserLeaveBlocker 
-         enabled={!location.pathname.includes('/auth/')} 
-         showOnMouseLeave={true}
-         title="Don't leave yet!"
-         message="You're about to miss out on this amazing competition. Are you sure you want to leave?"
-       />
+      
+      {/* Onboarding Leave Blocker - for users who haven't completed profile */}
+      <OnboardingLeaveBlocker 
+        enabled={!location.pathname.includes('/auth/')} 
+        showOnMouseLeave={true}
+      />
+      
+      {/* Contest Leave Blocker - for users with completed profiles */}
+      <ContestBrowserLeaveBlocker 
+        enabled={!location.pathname.includes('/auth/')} 
+        showOnMouseLeave={true}
+        title="You haven't joined the competition yet"
+        message="You're about to miss out on this amazing competition. You haven't joined the competition yet — don't leave without securing your spot!"
+      />
       
     </div>
   );

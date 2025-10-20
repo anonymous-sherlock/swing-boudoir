@@ -1,5 +1,5 @@
 import backgroundVideo from "@/assets/final-video.mp4";
-import { COMPETITIONS_JOINED_COUNT_KEY, COMPETITIONS_JOINED_KEY } from "@/constants/keys.constants";
+import { COMPETITIONS_JOINED_COUNT_KEY, COMPETITIONS_JOINED_KEY, ONBOARDING_COMPLETED_KEY } from "@/constants/keys.constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/api/useProfile";
 import { TOUR_STORAGE_KEY, TOUR_TRIGGER_KEY } from "@/hooks/useProductTour";
@@ -72,14 +72,15 @@ const FinalScene: React.FC<FinalSceneProps> = ({ formData }) => {
         toast.success("🎉 Welcome to the modeling platform! Your profile is now live.");
 
         // Set flag to show tour on dashboard
-        localStorage.removeItem(TOUR_STORAGE_KEY); // Clear any previous completion
-        localStorage.setItem(TOUR_TRIGGER_KEY, 'true'); // Trigger the tour
-        localStorage.setItem(COMPETITIONS_JOINED_KEY, 'false');
-        localStorage.setItem(COMPETITIONS_JOINED_COUNT_KEY, '0');
-        
+        localStorage.setItem(ONBOARDING_COMPLETED_KEY, "true");
+        // localStorage.removeItem(TOUR_STORAGE_KEY);
+        // localStorage.setItem(TOUR_TRIGGER_KEY, 'true');
+        localStorage.setItem(COMPETITIONS_JOINED_KEY, "false");
+        localStorage.setItem(COMPETITIONS_JOINED_COUNT_KEY, "0");
+
         setTimeout(() => {
-          window.dispatchEvent(new CustomEvent('tour-triggered'));
-          router.navigate({ to: "/dashboard" });
+          window.dispatchEvent(new CustomEvent("tour-triggered"));
+          router.navigate({ to: "/dashboard", replace: true });
         }, 1500);
       })
       .catch((error) => {
@@ -98,12 +99,10 @@ const FinalScene: React.FC<FinalSceneProps> = ({ formData }) => {
         </video>
         {/* Overlay for better text readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-black via-black/40 to-black" />
-
       </div>
 
       <div className="scene-content !pt-28">
         <div className="max-w-4xl mx-auto text-center animate-fade-in-up">
-
           <h1 className="headline mb-6">
             Your profile is ready
             <br />
