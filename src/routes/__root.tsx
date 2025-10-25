@@ -45,8 +45,8 @@ function AppShell() {
       <ContestBrowserLeaveBlocker 
         enabled={!location.pathname.includes('/auth/')} 
         showOnMouseLeave={true}
-        title="You haven't joined the competition yet"
-        message="You're about to miss out on this amazing competition. You haven't joined the competition yet — don't leave without securing your spot!"
+        title="You have not joined the competition. Check out these active ones below!"
+        message="You're about to miss out on this amazing competition. Don't leave without securing your spot!"
       />
       
     </div>

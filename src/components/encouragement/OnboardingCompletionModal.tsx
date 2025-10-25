@@ -56,9 +56,9 @@ export function OnboardingCompletionModal({ isOpen, onClose }: OnboardingComplet
             </div>
 
             <ModalDescription className="text-gray-700 text-lg leading-relaxed max-w-md text-center">
-              <span className="font-semibold text-gray-800">Ready to showcase your talent?</span>
+              <span className="font-semibold text-gray-800">Caught you! Your profile’s still unfinished</span>
               <br />
-              Complete your profile in just a few minutes to unlock competitions, connect with opportunities, and personalize your experience.
+              Don’t let that stop your spotlight moment complete it now and unlock everything waiting for you 
             </ModalDescription>
           </ModalHeader>
 
