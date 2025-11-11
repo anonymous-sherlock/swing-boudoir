@@ -51,6 +51,9 @@ const PublicTermsOfServicesLazyRouteImport = createFileRoute(
   '/_public/terms-of-services',
 )()
 const PublicRulesLazyRouteImport = createFileRoute('/_public/rules')()
+const PublicRefundAndCancellationLazyRouteImport = createFileRoute(
+  '/_public/refund-and-cancellation',
+)()
 const PublicPrivacyLazyRouteImport = createFileRoute('/_public/privacy')()
 const PublicFaqLazyRouteImport = createFileRoute('/_public/faq')()
 const PublicContactLazyRouteImport = createFileRoute('/_public/contact')()
@@ -126,6 +129,16 @@ const PublicRulesLazyRoute = PublicRulesLazyRouteImport.update({
   path: '/rules',
   getParentRoute: () => PublicRouteRoute,
 } as any).lazy(() => import('./routes/_public/rules.lazy').then((d) => d.Route))
+const PublicRefundAndCancellationLazyRoute =
+  PublicRefundAndCancellationLazyRouteImport.update({
+    id: '/refund-and-cancellation',
+    path: '/refund-and-cancellation',
+    getParentRoute: () => PublicRouteRoute,
+  } as any).lazy(() =>
+    import('./routes/_public/refund-and-cancellation.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const PublicPrivacyLazyRoute = PublicPrivacyLazyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
@@ -305,6 +318,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof PublicContactLazyRoute
   '/faq': typeof PublicFaqLazyRoute
   '/privacy': typeof PublicPrivacyLazyRoute
+  '/refund-and-cancellation': typeof PublicRefundAndCancellationLazyRoute
   '/rules': typeof PublicRulesLazyRoute
   '/terms-of-services': typeof PublicTermsOfServicesLazyRoute
   '/admin/notifications': typeof AdminNotificationsLazyRoute
@@ -343,6 +357,7 @@ export interface FileRoutesByTo {
   '/contact': typeof PublicContactLazyRoute
   '/faq': typeof PublicFaqLazyRoute
   '/privacy': typeof PublicPrivacyLazyRoute
+  '/refund-and-cancellation': typeof PublicRefundAndCancellationLazyRoute
   '/rules': typeof PublicRulesLazyRoute
   '/terms-of-services': typeof PublicTermsOfServicesLazyRoute
   '/admin/notifications': typeof AdminNotificationsLazyRoute
@@ -386,6 +401,7 @@ export interface FileRoutesById {
   '/_public/contact': typeof PublicContactLazyRoute
   '/_public/faq': typeof PublicFaqLazyRoute
   '/_public/privacy': typeof PublicPrivacyLazyRoute
+  '/_public/refund-and-cancellation': typeof PublicRefundAndCancellationLazyRoute
   '/_public/rules': typeof PublicRulesLazyRoute
   '/_public/terms-of-services': typeof PublicTermsOfServicesLazyRoute
   '/admin/notifications': typeof AdminNotificationsLazyRoute
@@ -430,6 +446,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/faq'
     | '/privacy'
+    | '/refund-and-cancellation'
     | '/rules'
     | '/terms-of-services'
     | '/admin/notifications'
@@ -468,6 +485,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/faq'
     | '/privacy'
+    | '/refund-and-cancellation'
     | '/rules'
     | '/terms-of-services'
     | '/admin/notifications'
@@ -510,6 +528,7 @@ export interface FileRouteTypes {
     | '/_public/contact'
     | '/_public/faq'
     | '/_public/privacy'
+    | '/_public/refund-and-cancellation'
     | '/_public/rules'
     | '/_public/terms-of-services'
     | '/admin/notifications'
@@ -634,6 +653,13 @@ declare module '@tanstack/react-router' {
       path: '/rules'
       fullPath: '/rules'
       preLoaderRoute: typeof PublicRulesLazyRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
+    '/_public/refund-and-cancellation': {
+      id: '/_public/refund-and-cancellation'
+      path: '/refund-and-cancellation'
+      fullPath: '/refund-and-cancellation'
+      preLoaderRoute: typeof PublicRefundAndCancellationLazyRouteImport
       parentRoute: typeof PublicRouteRoute
     }
     '/_public/privacy': {
@@ -863,6 +889,7 @@ interface PublicRouteRouteChildren {
   PublicContactLazyRoute: typeof PublicContactLazyRoute
   PublicFaqLazyRoute: typeof PublicFaqLazyRoute
   PublicPrivacyLazyRoute: typeof PublicPrivacyLazyRoute
+  PublicRefundAndCancellationLazyRoute: typeof PublicRefundAndCancellationLazyRoute
   PublicRulesLazyRoute: typeof PublicRulesLazyRoute
   PublicTermsOfServicesLazyRoute: typeof PublicTermsOfServicesLazyRoute
   PublicCompetitionsSlugRouteRoute: typeof PublicCompetitionsSlugRouteRouteWithChildren
@@ -875,6 +902,7 @@ const PublicRouteRouteChildren: PublicRouteRouteChildren = {
   PublicContactLazyRoute: PublicContactLazyRoute,
   PublicFaqLazyRoute: PublicFaqLazyRoute,
   PublicPrivacyLazyRoute: PublicPrivacyLazyRoute,
+  PublicRefundAndCancellationLazyRoute: PublicRefundAndCancellationLazyRoute,
   PublicRulesLazyRoute: PublicRulesLazyRoute,
   PublicTermsOfServicesLazyRoute: PublicTermsOfServicesLazyRoute,
   PublicCompetitionsSlugRouteRoute:
