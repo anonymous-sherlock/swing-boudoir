@@ -17,17 +17,17 @@ const Footer = () => {
       // { label: "Guidelines", href: "/guidelines" }
     ],
     Legal: [
-      { label: "Terms of Service", href: "/terms-of-services" },
+      { label: "Official Rules", href: "/official-rules" },
       { label: "Privacy Policy", href: "/privacy" },
+      { label: "Terms of Service", href: "/terms-of-services" },
       { label: "Refund & Cancellation", href: "/refund-and-cancellation" },
       // { label: "Cookie Policy", href: "/cookies" },
-      // { label: "Contest Rules", href: "/contest-rules" }
     ],
   };
 
   const socialLinks = [
     { icon: Instagram, href: "https://www.instagram.com/swingboudoirmag", label: "Instagram" },
-    { icon: Youtube, href: "https://www.youtube.com/@swingboudoirmag", label: "YouTube" }
+    { icon: Youtube, href: "https://www.youtube.com/@swingboudoirmag", label: "YouTube" },
   ];
 
   return (

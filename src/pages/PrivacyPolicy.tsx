@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield } from "lucide-react";
 
-export function PrivacyPolicy() {
+export function PrivacyPolicy(): JSX.Element {
   return (
     <div className="max-w-6xl mx-auto space-y-6 sm:p-4">
       <h1 className="text-2xl font-bold text-foreground">Privacy Policy</h1>
@@ -13,141 +13,168 @@ export function PrivacyPolicy() {
             Privacy & Data Protection
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <section className="text-muted-foreground">
-            <p>
-               <h4 className="text-lg font-bold text-foreground mb-3">Swing Boudoir</h4> operates the Ultimate Cover Model Competition platform ("Service"), 
-              which includes our website, contest entry system, voting platform, and related promotional activities.
+
+        <CardContent className="space-y-6 text-muted-foreground">
+          <section>
+            <p className="mb-2">
+              <strong>Last Updated:</strong> December 2, 2025
             </p>
             <p>
-              By using our Service, you agree to the terms of this Privacy Policy. If you do not agree, please do not use our platform.
+              Swing Boudoir ("we", "us", "our") operates the Ultimate Cover Model Competition platform (the "Service"), which includes our website, contestant portal, voting
+              system, checkout pages, and promotional channels. By using our Service, you agree to the practices described in this Privacy Policy.
             </p>
           </section>
 
+          {/* 1. Information We Collect */}
           <section>
             <h3 className="text-lg font-bold text-foreground mb-3">1. Information We Collect</h3>
-            <div className="text-muted-foreground">
-              <p><strong>A. Contestant Information</strong></p>
-              <ul className="list-disc list-inside">
-                <li>Name, contact details, location, and biography.</li>
-                <li>Social media handles (Instagram, TikTok, WhatsApp, Snapchat).</li>
-                <li>3-5 high-quality photos, videos, and other submitted media.</li>
-                <li>Entry category and promotional material provided.</li>
-                <li>Personal voting profile link usage data.</li>
-              </ul>
-              <p className="mt-3"><strong>B. Voter Information</strong></p>
-              <ul className="list-disc list-inside">
-                <li>Name and email address (for free daily votes).</li>
-                <li>Payment details for paid votes (processed via third-party payment gateways).</li>
-                <li>IP address and device information to prevent fraudulent voting.</li>
-                <li>Voter reward wheel participation and prizes won.</li>
-              </ul>
-              <p className="mt-3"><strong>C. General Platform Data</strong></p>
-              <ul className="list-disc list-inside">
-                <li>User activity on SwingBoudoir.com (pages viewed, time spent).</li>
-                <li>Referral source (e.g., via contestant personal voting links).</li>
-                <li>CRM notes (onboarding status, interview completion, promotional activity).</li>
-                <li>Leaderboard rankings and vote counts.</li>
-              </ul>
+
+            <div className="space-y-4">
+              <div>
+                <p className="font-semibold mb-1">A. Contestant Information</p>
+                <ul className="list-disc list-inside">
+                  <li>Name, email, phone, location and biography.</li>
+                  <li>Social media handles (Instagram, TikTok, WhatsApp, Snapchat).</li>
+                  <li>Submitted photos, videos, and media required for the competition.</li>
+                  <li>Contest round progress and leaderboard ranking information.</li>
+                  <li>Entry forms, onboarding documents, and interview scheduling data.</li>
+                </ul>
+              </div>
+
+              <div>
+                <p className="font-semibold mb-1">B. Voter Information</p>
+                <ul className="list-disc list-inside">
+                  <li>Email address (for free daily voting verification).</li>
+                  <li>Payment details for digital product purchases (processed by Stripe/Razorpay/PayPal).</li>
+                  <li>IP address, device info, and browser details (for anti-fraud protection).</li>
+                  <li>Free vote logs, paid vote logs, and reward wheel activity (if applicable).</li>
+                </ul>
+              </div>
+
+              <div>
+                <p className="font-semibold mb-1">C. General Platform Data</p>
+                <ul className="list-disc list-inside">
+                  <li>User activity: pages visited, clicks, time spent, session data.</li>
+                  <li>Referral source (e.g., contestant’s personal voting link).</li>
+                  <li>CRM notes, onboarding status, content compliance checks.</li>
+                  <li>Leaderboard rankings, total votes, and contestant performance metrics.</li>
+                </ul>
+              </div>
             </div>
           </section>
 
+          {/* 2. How We Use Information */}
           <section>
             <h3 className="text-lg font-bold text-foreground mb-3">2. How We Use Your Information</h3>
-            <ul className="list-disc list-inside text-muted-foreground">
-              <li>Process contest applications and manage contestant onboarding forms.</li>
-              <li>Verify and count votes (both free daily votes and paid votes).</li>
-              <li>Communicate contest updates, deadlines, and winner announcements.</li>
-              <li>Display contestant names, photos, and real-time rankings on public leaderboards.</li>
-              <li>Process payments for optional digital upgrades and vote purchases.</li>
-              <li>Detect and prevent fraudulent or abusive voting patterns.</li>
-              <li>Create and publish magazine features, Instagram collaborations, and promotional content.</li>
-              <li>Manage the $999 cash prize distribution and magazine cover feature fulfillment.</li>
-              <li>Operate the voter reward wheel system and distribute prizes.</li>
+            <ul className="list-disc list-inside space-y-2">
+              <li>Manage contestant entries, onboarding, and verification.</li>
+              <li>Record, verify, and count free and paid votes.</li>
+              <li>Process digital product purchases and subscription payments.</li>
+              <li>Publish contestant photos, rankings, biographies, and promotional content.</li>
+              <li>Display public leaderboards and round eliminations.</li>
+              <li>Prevent fraud, duplicate voting, or suspicious activity.</li>
+              <li>Send emails and notifications about contest updates, deadlines, rewards, and results.</li>
+              <li>Create and publish magazine features and social media promotions.</li>
             </ul>
           </section>
 
+          {/* 3. Sharing Information */}
           <section>
             <h3 className="text-lg font-bold text-foreground mb-3">3. Sharing of Information</h3>
-            <div className="text-muted-foreground">
-              <p>We may share your information with:</p>
-              <ul className="list-disc list-inside">
-                <li>Payment Processors (Stripe, Razorpay, PayPal) for vote purchases and cash prize distribution.</li>
-                <li>CRM & Scheduling Tools (Airtable, Calendly, Fireflies) for onboarding and interview management.</li>
-                <li>Marketing Platforms (Mailchimp, ConvertKit) for sending competition updates and promotional emails.</li>
-                <li>
-                  Public Display – Contestant names, photos, videos, vote counts, and leaderboard rankings 
-                  are displayed on our website, social media, and in Swing Boudoir Magazine.
-                </li>
-                <li>Social Media Platforms for Instagram collab posts and promotional content featuring contestants.</li>
-              </ul>
-              <p className="mt-2">We do not sell your personal data to third parties for commercial purposes.</p>
-            </div>
+            <p>We may share your information with:</p>
+            <ul className="list-disc list-inside space-y-2 mt-2">
+              <li>
+                <strong>Payment Gateways</strong> — Stripe, Razorpay, PayPal (for processing payments).
+              </li>
+              <li>
+                <strong>CRM Tools</strong> — Airtable, Trello, Calendly (onboarding + scheduling).
+              </li>
+              <li>
+                <strong>Email Marketing Platforms</strong> — Mailchimp, ConvertKit (notifications + updates).
+              </li>
+              <li>
+                <strong>Analytics Providers</strong> — analytics tools to measure performance and safety.
+              </li>
+              <li>
+                <strong>Public Display:</strong> contestants’ names, photos, votes, rankings, and features may be displayed publicly on the website and in Swing Boudoir Magazine.
+              </li>
+              <li>
+                <strong>Social Media Platforms:</strong> Instagram collab posts, video reels, and promotional media.
+              </li>
+            </ul>
+
+            <p className="mt-3">We do NOT sell your personal data to third parties.</p>
           </section>
 
+          {/* 4. Data Retention */}
           <section>
             <h3 className="text-lg font-bold text-foreground mb-3">4. Data Retention</h3>
-            <p className="text-muted-foreground">
-              We retain contestant and voting records for the duration of the competition and for historical 
-              magazine archives. Winner and Top 10 information may be permanently featured in our "Hall of Fame" 
-              and promotional materials. You can request deletion of personal data after the competition concludes, 
-              subject to our legitimate business interests and applicable law.
+            <p>
+              We retain contestant and voter data for the duration of the competition and for historical magazine archives. Winners and finalists may be permanently featured in
+              promotional content and Hall of Fame sections. You may request data deletion after the competition ends, subject to legal and business requirements.
             </p>
           </section>
 
+          {/* 5. Security */}
           <section>
-            <h3 className="text-lg font-bold text-foreground mb-3">5. Security</h3>
-            <p className="text-muted-foreground">
-              We implement industry-standard security measures to protect your data, including secure payment 
-              processing and fraud detection systems. However, no online platform is 100% secure, and we cannot 
-              guarantee absolute security of transmitted information.
+            <h3 className="text-lg font-bold text-foreground mb-3">5. Security Measures</h3>
+            <p>
+              We use industry-standard encryption, secure checkout providers, device fingerprinting, and fraud prevention systems. While we strive to protect your data, no online
+              system is entirely secure, and we cannot guarantee absolute protection.
             </p>
           </section>
 
+          {/* 6. User Rights */}
           <section>
             <h3 className="text-lg font-bold text-foreground mb-3">6. Your Rights</h3>
-            <div className="text-muted-foreground">
-              <p>Depending on your location, you may have rights to:</p>
-              <ul className="list-disc list-inside">
-                <li>Access the personal data we hold about you and your competition status.</li>
-                <li>Request correction of inaccurate personal data or contest information.</li>
-                <li>Request deletion of your personal data (subject to contest completion and legal requirements).</li>
-                <li>Withdraw consent for non-essential marketing communications.</li>
-              </ul>
-              <p className="mt-2">
-                To exercise these rights, contact us at submit@swingboudoirmag.com
-              </p>
-            </div>
+            <p>You may request:</p>
+
+            <ul className="list-disc list-inside mt-2">
+              <li>Access to your personal data.</li>
+              <li>Correction of inaccurate or outdated information.</li>
+              <li>Deletion of your data (after contest completion).</li>
+              <li>Opt-out from marketing communications.</li>
+            </ul>
+
+            <p className="mt-2">Requests can be submitted to: submit@swingboudoirmag.com</p>
           </section>
 
+          {/* 7. Age Requirements */}
           <section>
             <h3 className="text-lg font-bold text-foreground mb-3">7. Age Requirements</h3>
-            <p className="text-muted-foreground">
-              The Swing Boudoir Ultimate Cover Model Competition is intended for participants aged 18 and above only. 
-              We do not knowingly collect personal information from minors. If we discover we have collected 
-              information from someone under 18, we will delete it immediately and remove them from the competition.
+            <p>
+              Participation in the Ultimate Cover Model Competition is restricted to individuals aged 18+ only. We do not knowingly collect data from minors. If a minor is
+              discovered, their data will be deleted and their account removed from the Competition.
             </p>
           </section>
 
+          {/* 8. Updates */}
           <section>
             <h3 className="text-lg font-bold text-foreground mb-3">8. Changes to This Policy</h3>
-            <p className="text-muted-foreground">
-              We may update this Privacy Policy to reflect changes in our practices or applicable laws. 
-              Updated versions will be posted with a revised "Last Updated" date. Continued participation in 
-              the competition constitutes acceptance of any updated terms.
+            <p>
+              We may update this Privacy Policy periodically. The updated version will include a new “Last Updated” date. Continued use of the Service constitutes acceptance of any
+              changes.
             </p>
           </section>
 
+          {/* 9. Contact */}
           <section>
             <h3 className="text-lg font-bold text-foreground mb-3">9. Contact Us</h3>
-            <p className="text-muted-foreground">
-              If you have questions about this Privacy Policy or our data handling practices:
-            </p>
-            <p className="text-muted-foreground">Email: submit@swingboudoirmag.com</p>
-            <p className="text-muted-foreground">Competition Support: submit@swingboudoirmag.com</p>
-            <p className="text-muted-foreground">Swing Boudoir Magazine<br/>
-            [Business Address]<br/>
-            [City, State, ZIP Code]</p>
+            <p>If you have questions about this Privacy Policy or your data rights, contact:</p>
+
+            <div className="mt-2 space-y-1">
+              <p>Email: submit@swingboudoirmag.com</p>
+              <p>Competition Support: submit@swingboudoirmag.com</p>
+              <p>
+                Swing Boudoir Magazine
+                <br />
+                30 N Gould St STE
+                <br />
+                Sheridan, WY 82801
+                <br />
+                United States
+              </p>
+            </div>
           </section>
         </CardContent>
       </Card>

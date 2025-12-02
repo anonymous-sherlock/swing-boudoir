@@ -55,6 +55,9 @@ const PublicRefundAndCancellationLazyRouteImport = createFileRoute(
   '/_public/refund-and-cancellation',
 )()
 const PublicPrivacyLazyRouteImport = createFileRoute('/_public/privacy')()
+const PublicOfficialRulesLazyRouteImport = createFileRoute(
+  '/_public/official-rules',
+)()
 const PublicFaqLazyRouteImport = createFileRoute('/_public/faq')()
 const PublicContactLazyRouteImport = createFileRoute('/_public/contact')()
 const AdminUsersIndexLazyRouteImport = createFileRoute('/admin/users/')()
@@ -145,6 +148,13 @@ const PublicPrivacyLazyRoute = PublicPrivacyLazyRouteImport.update({
   getParentRoute: () => PublicRouteRoute,
 } as any).lazy(() =>
   import('./routes/_public/privacy.lazy').then((d) => d.Route),
+)
+const PublicOfficialRulesLazyRoute = PublicOfficialRulesLazyRouteImport.update({
+  id: '/official-rules',
+  path: '/official-rules',
+  getParentRoute: () => PublicRouteRoute,
+} as any).lazy(() =>
+  import('./routes/_public/official-rules.lazy').then((d) => d.Route),
 )
 const PublicFaqLazyRoute = PublicFaqLazyRouteImport.update({
   id: '/faq',
@@ -317,6 +327,7 @@ export interface FileRoutesByFullPath {
   '/payments/success': typeof PaymentsSuccessRoute
   '/contact': typeof PublicContactLazyRoute
   '/faq': typeof PublicFaqLazyRoute
+  '/official-rules': typeof PublicOfficialRulesLazyRoute
   '/privacy': typeof PublicPrivacyLazyRoute
   '/refund-and-cancellation': typeof PublicRefundAndCancellationLazyRoute
   '/rules': typeof PublicRulesLazyRoute
@@ -356,6 +367,7 @@ export interface FileRoutesByTo {
   '/payments/success': typeof PaymentsSuccessRoute
   '/contact': typeof PublicContactLazyRoute
   '/faq': typeof PublicFaqLazyRoute
+  '/official-rules': typeof PublicOfficialRulesLazyRoute
   '/privacy': typeof PublicPrivacyLazyRoute
   '/refund-and-cancellation': typeof PublicRefundAndCancellationLazyRoute
   '/rules': typeof PublicRulesLazyRoute
@@ -400,6 +412,7 @@ export interface FileRoutesById {
   '/payments/success': typeof PaymentsSuccessRoute
   '/_public/contact': typeof PublicContactLazyRoute
   '/_public/faq': typeof PublicFaqLazyRoute
+  '/_public/official-rules': typeof PublicOfficialRulesLazyRoute
   '/_public/privacy': typeof PublicPrivacyLazyRoute
   '/_public/refund-and-cancellation': typeof PublicRefundAndCancellationLazyRoute
   '/_public/rules': typeof PublicRulesLazyRoute
@@ -445,6 +458,7 @@ export interface FileRouteTypes {
     | '/payments/success'
     | '/contact'
     | '/faq'
+    | '/official-rules'
     | '/privacy'
     | '/refund-and-cancellation'
     | '/rules'
@@ -484,6 +498,7 @@ export interface FileRouteTypes {
     | '/payments/success'
     | '/contact'
     | '/faq'
+    | '/official-rules'
     | '/privacy'
     | '/refund-and-cancellation'
     | '/rules'
@@ -527,6 +542,7 @@ export interface FileRouteTypes {
     | '/payments/success'
     | '/_public/contact'
     | '/_public/faq'
+    | '/_public/official-rules'
     | '/_public/privacy'
     | '/_public/refund-and-cancellation'
     | '/_public/rules'
@@ -667,6 +683,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PublicPrivacyLazyRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
+    '/_public/official-rules': {
+      id: '/_public/official-rules'
+      path: '/official-rules'
+      fullPath: '/official-rules'
+      preLoaderRoute: typeof PublicOfficialRulesLazyRouteImport
       parentRoute: typeof PublicRouteRoute
     }
     '/_public/faq': {
@@ -888,6 +911,7 @@ const PublicCompetitionsSlugRouteRouteWithChildren =
 interface PublicRouteRouteChildren {
   PublicContactLazyRoute: typeof PublicContactLazyRoute
   PublicFaqLazyRoute: typeof PublicFaqLazyRoute
+  PublicOfficialRulesLazyRoute: typeof PublicOfficialRulesLazyRoute
   PublicPrivacyLazyRoute: typeof PublicPrivacyLazyRoute
   PublicRefundAndCancellationLazyRoute: typeof PublicRefundAndCancellationLazyRoute
   PublicRulesLazyRoute: typeof PublicRulesLazyRoute
@@ -901,6 +925,7 @@ interface PublicRouteRouteChildren {
 const PublicRouteRouteChildren: PublicRouteRouteChildren = {
   PublicContactLazyRoute: PublicContactLazyRoute,
   PublicFaqLazyRoute: PublicFaqLazyRoute,
+  PublicOfficialRulesLazyRoute: PublicOfficialRulesLazyRoute,
   PublicPrivacyLazyRoute: PublicPrivacyLazyRoute,
   PublicRefundAndCancellationLazyRoute: PublicRefundAndCancellationLazyRoute,
   PublicRulesLazyRoute: PublicRulesLazyRoute,
