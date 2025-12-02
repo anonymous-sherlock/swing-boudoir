@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Modal, ModalBody, ModalContent, ModalDescription, ModalFooter, ModalHeader, ModalTitle } from "../global/modal";
 import { Badge } from "../ui/badge";
 import CountdownTimer from "./CountdownTimer";
+import { Link } from "@tanstack/react-router";
 
 type VoteModalProps = {
   open: boolean;
@@ -30,41 +31,38 @@ const VoteModal = ({ open, onOpenChange, participation, profile, voterProfile, i
   const { mutateAsync: castPaidVote, isPending: isPaidVoting } = useCastPaidVote();
   const { mutateAsync: castFreeVote, isPending: isFreeVoting } = useCastFreeVote();
 
-  const voteOptions = useMemo(
-    () => {
-      return [
-        { id: "free", title: "Free Vote", description: "Daily free vote", votes: 1, price: 0, icon: Gift, available: isFreeVoteAvailable },
-      { id: "single", title: "5 Votes", description: "5 votes for $1", votes: 5, price: 1, icon: Star },
+  const voteOptions = useMemo(() => {
+    return [
+      { id: "free", title: "Free Vote", description: "Daily free vote", votes: 1, price: 0, icon: Gift, available: isFreeVoteAvailable },
+      { id: "single", title: "1 Swing Boudoir Issue", description: "Digital magazine issue + 1 bonus vote", votes: 1, price: 1, icon: Star },
       {
         id: "pack5",
-        title: "25 Votes",
-        description: "25 votes for $5",
-        votes: 25,
+        title: "5 Swing Boudoir Issues",
+        description: "Digital magazine bundle + 5 bonus votes",
+        votes: 5,
         price: 5,
         icon: Star,
       },
       {
         id: "pack10",
-        title: "50 Votes",
+        title: "10 Swing Boudoir Issues",
         popular: true,
-        description: "50 votes for $10",
-        votes: 50,
+        description: "Digital magazine bundle + 10 bonus votes",
+        votes: 10,
         price: 10,
         icon: Star,
       },
       {
         id: "custom",
-        title: "Custom Votes",
-        description: "Choose your own number of votes",
-        votes: customVoteCount,
-        price: customVoteCount * 0.2, // $0.20 per vote
+        title: "Custom Support",
+        description: "How many Swing Boudoir NEXT Issues would you like to buy?",
+        votes: customVoteCount, // 1 vote per issue
+        price: customVoteCount, // $1 per issue
         icon: Star,
         isCustom: true,
       },
-      ];
-    },
-    [customVoteCount, isFreeVoteAvailable]
-  );
+    ];
+  }, [customVoteCount, isFreeVoteAvailable]);
 
   const handleVoteClick = async () => {
     if (!selectedVoteType || !user?.profileId) {
@@ -84,7 +82,7 @@ const VoteModal = ({ open, onOpenChange, participation, profile, voterProfile, i
         };
 
         await castFreeVote(freeVoteData);
-        
+
         toast.success("Free vote cast successfully!", {
           description: `You've voted for ${profile.user.name}`,
         });
@@ -95,7 +93,7 @@ const VoteModal = ({ open, onOpenChange, participation, profile, voterProfile, i
       } else {
         // Paid vote logic
         const voteCount =
-          selectedVoteType === "single" ? 5 : selectedVoteType === "pack5" ? 25 : selectedVoteType === "pack10" ? 50 : selectedVoteType === "custom" ? customVoteCount : 0;
+          selectedVoteType === "single" ? 1 : selectedVoteType === "pack5" ? 5 : selectedVoteType === "pack10" ? 10 : selectedVoteType === "custom" ? customVoteCount : 0;
 
         const voteData = {
           contestId: participation.contest.id,
@@ -131,19 +129,19 @@ const VoteModal = ({ open, onOpenChange, participation, profile, voterProfile, i
   }
 
   return (
-    <Modal 
-      open={open} 
-      onOpenChange={onOpenChange} 
-      backdrop="opaque" 
-      size="lg" 
-      classNames={{ content: "max-h-[95%] min-h-[95%] md:max-h-full md:min-h-auto notranslate" }}
+    <Modal
+      open={open}
+      onOpenChange={onOpenChange}
+      backdrop="opaque"
+      size="lg"
+      classNames={{ content: "max-h-[95%] min-h-[95%] md:max-h-full md:min-h-auto !max-w-2xl w-full notranslate" }}
     >
       <ModalContent className="md:overflow-y-auto notranslate">
         <ModalHeader>
-          <ModalTitle>Vote for {profile.user.name}</ModalTitle>
+          <ModalTitle>Show your support and help {profile.user.name} shine</ModalTitle>
           <ModalDescription>
             <span className="text-muted-foreground flex flex-wrap justify-between items-center gap-2">
-              <span>please select the number of votes you want to buy.</span>
+              <span>Get Swing Boudoir digital issues and include bonus support votes</span>
             </span>
           </ModalDescription>
         </ModalHeader>
@@ -153,28 +151,28 @@ const VoteModal = ({ open, onOpenChange, participation, profile, voterProfile, i
               const Icon = option.icon;
               const isDisabled = option.id === "free" && !option.available;
 
-               return (
-                 <div
-                   key={option.id}
-                   className={`relative border-2 rounded-xl p-4 cursor-pointer transition-all duration-300 ${
-                     selectedVoteType === option.id
-                       ? "border-blue-500 bg-blue-50"
-                       : isDisabled
-                         ? "border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed"
-                         : "border-gray-200 hover:border-blue-300 hover:bg-blue-25"
-                   }`}
-                   onClick={() => !isDisabled && setSelectedVoteType(option.id as "free" | "single" | "pack5" | "pack10" | "pack25" | "custom")}
-                   role="button"
-                   tabIndex={0}
-                   onKeyDown={(e) => {
-                     if (e.key === 'Enter' || e.key === ' ') {
-                       e.preventDefault();
-                       if (!isDisabled) {
-                         setSelectedVoteType(option.id as "free" | "single" | "pack5" | "pack10" | "pack25" | "custom");
-                       }
-                     }
-                   }}
-                 >
+              return (
+                <div
+                  key={option.id}
+                  className={`relative border-2 rounded-xl p-4 cursor-pointer transition-all duration-300 ${
+                    selectedVoteType === option.id
+                      ? "border-blue-500 bg-blue-50"
+                      : isDisabled
+                        ? "border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed"
+                        : "border-gray-200 hover:border-blue-300 hover:bg-blue-25"
+                  }`}
+                  onClick={() => !isDisabled && setSelectedVoteType(option.id as "free" | "single" | "pack5" | "pack10" | "pack25" | "custom")}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      if (!isDisabled) {
+                        setSelectedVoteType(option.id as "free" | "single" | "pack5" | "pack10" | "pack25" | "custom");
+                      }
+                    }
+                  }}
+                >
                   {option.popular && <Badge className="absolute -top-2 left-4 bg-orange-500 text-white">Most Popular</Badge>}
 
                   <div className="flex items-center justify-between">
@@ -187,24 +185,24 @@ const VoteModal = ({ open, onOpenChange, participation, profile, voterProfile, i
                         <h4 className="font-semibold text-lg">{option.title}</h4>
                         <p className="text-gray-600 text-sm">{option.description}</p>
                         {isDisabled && option.id === "free" && voterProfile?.lastFreeVoteAt && (
-                          <CountdownTimer 
-                            lastVoteAt={voterProfile.lastFreeVoteAt} 
-                            onAvailabilityChange={onAvailabilityChange || ((canVote: boolean) => {})} 
-                          />
+                          <CountdownTimer lastVoteAt={voterProfile.lastFreeVoteAt} onAvailabilityChange={onAvailabilityChange || ((canVote: boolean) => {})} />
                         )}
                         {isDisabled && option.id === "free" && !voterProfile?.lastFreeVoteAt && <p className="text-gray-500 text-sm">Free vote not available</p>}
                         {option.isCustom && selectedVoteType === "custom" && (
-                          <div className="mt-2">
+                          <div className="mt-2 space-y-2">
                             <input
                               type="number"
                               min="1"
                               max="1000"
                               value={customVoteCount}
                               onChange={(e) => setCustomVoteCount(Math.max(1, parseInt(e.target.value) || 1))}
-                              className="w-20 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="w-24 px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                               placeholder="1"
                             />
-                            <span className="text-xs text-gray-500 ml-2">votes</span>
+                            <p className="text-sm text-gray-600">
+                              {customVoteCount} Swing Boudoir issue{customVoteCount > 1 ? "s" : ""}, {profile.user.name} earns {customVoteCount} vote
+                              {customVoteCount > 1 ? "s" : ""}
+                            </p>
                           </div>
                         )}
                       </div>
@@ -216,9 +214,9 @@ const VoteModal = ({ open, onOpenChange, participation, profile, voterProfile, i
                         {option.votes} vote{option.votes > 1 ? "s" : ""}
                       </div>
                     </div>
-                   </div>
-                 </div>
-               );
+                  </div>
+                </div>
+              );
             })}
           </div>
           <ModalFooter className="flex flex-col gap-4">
@@ -242,7 +240,9 @@ const VoteModal = ({ open, onOpenChange, participation, profile, voterProfile, i
                 </Button>
               </div>
 
-              <p className="text-xs text-gray-500 text-center">By voting, you agree to our terms of service and privacy policy</p>
+              <p className="text-xs text-gray-500 text-center">
+                By Purchasing & Voting, you agree to our <Link to="/terms-of-services">terms of service</Link> and <Link to="/privacy">privacy policy</Link>
+              </p>
             </div>
           </ModalFooter>
         </ModalBody>
