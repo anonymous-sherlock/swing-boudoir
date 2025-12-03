@@ -31,7 +31,8 @@ export function OfficialRules(): JSX.Element {
             </p>
             <p>
               These Official Rules govern the Swing Boudoir Ultimate Cover Model Competition (the "Competition") and form a binding agreement between each Contestant, Voter and
-              Swing Boudoir Magazine ("Organizer", "we", "us"). By entering the Competition, using the voting system, or otherwise participating, you agree to these Rules.
+              BUNTECH LLC, doing business as Swing Boudoir Magazine ("Organizer", "we", "us"). By entering the Competition, using the voting system, or otherwise participating, you
+              agree to these Rules.
             </p>
           </section>
 
@@ -249,7 +250,9 @@ export function OfficialRules(): JSX.Element {
               <p>
                 <strong>Address</strong>
                 <br />
-                Swing Boudoir Magazine
+                BUNTECH LLC
+                <br />
+                DBA Swing Boudoir Magazine
                 <br />
                 30 N Gould St STE
                 <br />

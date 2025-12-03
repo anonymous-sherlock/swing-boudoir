@@ -20,8 +20,8 @@ export function PrivacyPolicy(): JSX.Element {
               <strong>Last Updated:</strong> December 2, 2025
             </p>
             <p>
-              Swing Boudoir ("we", "us", "our") operates the Ultimate Cover Model Competition platform (the "Service"), which includes our website, contestant portal, voting
-              system, checkout pages, and promotional channels. By using our Service, you agree to the practices described in this Privacy Policy.
+              BUNTECH LLC, doing business as Swing Boudoir ("we", "us", "our") operates the Ultimate Cover Model Competition platform (the "Service"), which includes our website,
+              contestant portal, voting system, checkout pages, and promotional channels. By using our Service, you agree to the practices described in this Privacy Policy.
             </p>
           </section>
 
@@ -166,7 +166,9 @@ export function PrivacyPolicy(): JSX.Element {
               <p>Email: submit@swingboudoirmag.com</p>
               <p>Competition Support: submit@swingboudoirmag.com</p>
               <p>
-                Swing Boudoir Magazine
+                BUNTECH LLC
+                <br />
+                DBA Swing Boudoir Magazine
                 <br />
                 30 N Gould St STE
                 <br />

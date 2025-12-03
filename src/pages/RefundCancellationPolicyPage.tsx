@@ -134,7 +134,9 @@ export function RefundCancellationPolicyPage(): JSX.Element {
               <p>Email: submit@swingboudoirmag.com</p>
               <p>Competition Support: submit@swingboudoirmag.com</p>
               <p>
-                Swing Boudoir Magazine
+                BUNTECH LLC
+                <br />
+                DBA Swing Boudoir Magazine
                 <br />
                 30 N Gould St STE
                 <br />

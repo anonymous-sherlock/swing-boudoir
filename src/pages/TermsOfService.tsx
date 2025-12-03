@@ -19,8 +19,8 @@ export function TermsOfService() {
           <section>
             <h3 className="text-lg font-semibold mb-3">1. Acceptance of Terms</h3>
             <p className="text-muted-foreground">
-              By accessing Swing Boudoir or participating in the Swing Boudoir Ultimate Cover Model Competition (“Competition”), you agree to be bound by these Terms of Service. If
-              you do not agree, please discontinue use of the platform immediately.
+              By accessing BUNTECH LLC, doing business as Swing Boudoir, or participating in the Swing Boudoir Ultimate Cover Model Competition ("Competition"), you agree to be
+              bound by these Terms of Service. If you do not agree, please discontinue use of the platform immediately.
             </p>
           </section>
 
@@ -118,7 +118,7 @@ export function TermsOfService() {
           <section>
             <h3 className="text-lg font-semibold mb-3">11. Limitation of Liability</h3>
             <p className="text-muted-foreground">
-              The platform and services are provided “as is” without warranties of any kind. Swing Boudoir is not liable for service interruptions, technical issues, lost data, or
+              The platform and services are provided "as is" without warranties of any kind. Swing Boudoir is not liable for service interruptions, technical issues, lost data, or
               damages resulting from use of the platform or third-party services.
             </p>
           </section>
