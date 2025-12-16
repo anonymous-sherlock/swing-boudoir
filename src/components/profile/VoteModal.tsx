@@ -26,7 +26,7 @@ type VoteModalProps = {
 const VoteModal = ({ open, onOpenChange, participation, profile, voterProfile, isFreeVoteAvailable, onAvailabilityChange, onFreeVoteRequest }: VoteModalProps) => {
   const { user } = useAuth();
   const [selectedVoteType, setSelectedVoteType] = useState<"free" | "single" | "pack5" | "pack10" | "pack25" | "custom" | null>(null);
-  const [customVoteCount, setCustomVoteCount] = useState<number>(1);
+  const [customVoteCount, setCustomVoteCount] = useState<number>(5);
   const [isProcessing, setIsProcessing] = useState(false);
   const { mutateAsync: castPaidVote, isPending: isPaidVoting } = useCastPaidVote();
   const { mutateAsync: castFreeVote, isPending: isFreeVoting } = useCastFreeVote();
@@ -34,7 +34,7 @@ const VoteModal = ({ open, onOpenChange, participation, profile, voterProfile, i
   const voteOptions = useMemo(() => {
     return [
       { id: "free", title: "Free Vote", description: "Daily free vote", votes: 1, price: 0, icon: Gift, available: isFreeVoteAvailable },
-      { id: "single", title: "1 Swing Boudoir Issue", description: "Digital magazine issue + 1 bonus vote", votes: 1, price: 1, icon: Star },
+      // { id: "single", title: "1 Swing Boudoir Issue", description: "Digital magazine issue + 1 bonus vote", votes: 1, price: 1, icon: Star },
       {
         id: "pack5",
         title: "5 Swing Boudoir Issues",
@@ -192,12 +192,12 @@ const VoteModal = ({ open, onOpenChange, participation, profile, voterProfile, i
                           <div className="mt-2 space-y-2">
                             <input
                               type="number"
-                              min="1"
+                              min="5"
                               max="1000"
                               value={customVoteCount}
-                              onChange={(e) => setCustomVoteCount(Math.max(1, parseInt(e.target.value) || 1))}
+                              onChange={(e) => setCustomVoteCount(Math.max(5, parseInt(e.target.value) || 5))}
                               className="w-24 px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              placeholder="1"
+                              placeholder="5"
                             />
                             <p className="text-sm text-gray-600">
                               {customVoteCount} Swing Boudoir issue{customVoteCount > 1 ? "s" : ""}, {profile.user.name} earns {customVoteCount} vote
@@ -209,7 +209,7 @@ const VoteModal = ({ open, onOpenChange, participation, profile, voterProfile, i
                     </div>
 
                     <div className="text-right">
-                      <div className="text-2xl font-bold">{option.price === 0 ? "FREE" : option.isCustom ? `$${option.price.toFixed(2)}` : `$${option.price}`}</div>
+                      <div className="text-2xl font-bold">{option.price === 0 ? "FREE" : option.isCustom ? `$${option.price}` : `$${option.price}`}</div>
                       <div className="text-sm text-gray-500">
                         {option.votes} vote{option.votes > 1 ? "s" : ""}
                       </div>
