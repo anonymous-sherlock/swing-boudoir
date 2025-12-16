@@ -57,7 +57,7 @@ const data = {
         },
         {
           title: "Votes Boost",
-          url: "/admin/votes/multiplier-boost", 
+          url: "/admin/votes/multiplier-boost",
         },
       ],
     },
@@ -149,7 +149,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent className="overflow-hidden">
+      <SidebarContent className="">
         <NavMain items={data.navMain} />
         <NavProjects projects={data.projects} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
