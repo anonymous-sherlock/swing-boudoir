@@ -27,6 +27,7 @@ export const CompetitionCard: React.FC<CompetitionCardProps> = ({ contest, showJ
                 getImageUrl(contest?.images?.[0]?.url ?? "", "medium", {
                   q: 75,
                   w: 500,
+                  h:"auto",
                   f: "webp",
                 }) || (defaultImage as unknown as string)
               }
@@ -48,7 +49,10 @@ export const CompetitionCard: React.FC<CompetitionCardProps> = ({ contest, showJ
           </div>
           <CardDescription className="text-sm text-muted-foreground">
             {contest.description.length > 80 ? `${contest.description.substring(0, 80)}... ` : contest.description}
-            {contest.description.length > 80 && <span className="text-[#d4af37] font-medium cursor-pointer hover:underline">read more</span>}
+            {contest.description.length > 80 &&
+                <Link to="/competitions/$slug" params={{ slug: contest.slug }} className="">
+              <span className="text-[#d4af37] font-medium cursor-pointer hover:underline">read more</span>}
+              </Link>
           </CardDescription>
         </CardHeader>
 
