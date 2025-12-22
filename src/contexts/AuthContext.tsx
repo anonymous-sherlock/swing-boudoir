@@ -174,7 +174,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     setError(null);
     try {
-      const response = await authApi.register({
+      const response = await authApi.register<{ token: string; user: User }>({
         name,
         email,
         password,
@@ -186,11 +186,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error(response.error || "Registration failed");
       }
 
-      if (!response.data?.user) {
+      if (!response.data?.user || !response.data?.token) {
         throw new Error("Invalid response from server");
       }
-      // For new registrations, always go to login
-      router.navigate({ to: "/auth/$id", params: { id: "sign-in" }, search: { callback: data.callbackURL || authPages.login }, replace: true });
+
+      // Store token and user data
+      localStorage.setItem(AUTH_TOKEN_KEY, response.data.token);
+      queryClient.invalidateQueries({ queryKey: ["session"] });
+
+      const redirectTo = data.callbackURL || DEFAULT_AFTER_LOGIN_REDIRECT;
+
+      setTimeout(() => {
+        router.navigate({ to: redirectTo, replace: true });
+      }, 100);
     } catch (error: unknown) {
       if (error instanceof Error) {
         setError(error.message || "Registration failed");
