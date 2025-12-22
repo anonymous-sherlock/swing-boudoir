@@ -60,12 +60,15 @@ function EditNewContestPage() {
       rules: "",
       startDate: undefined,
       endDate: undefined,
+      registrationDeadline: undefined,
+      resultAnnounceDate: undefined,
+      votingStartDate: undefined,
       prizePool: 0,
       awards: [],
       status: "DRAFT",
       visibility: "PRIVATE",
     },
-    shouldFocusError:true,
+    shouldFocusError: true,
   });
 
   const {
@@ -96,6 +99,9 @@ function EditNewContestPage() {
         rules: fetchContestResponse.rules ?? "",
         startDate: fetchContestResponse.startDate ? new Date(fetchContestResponse.startDate) : undefined,
         endDate: fetchContestResponse.endDate ? new Date(fetchContestResponse.endDate) : undefined,
+        registrationDeadline: fetchContestResponse.registrationDeadline ? new Date(fetchContestResponse.registrationDeadline) : undefined,
+        resultAnnounceDate: fetchContestResponse.resultAnnounceDate ? new Date(fetchContestResponse.resultAnnounceDate) : undefined,
+        votingStartDate: fetchContestResponse.votingStartDate ? new Date(fetchContestResponse.votingStartDate) : undefined,
         prizePool: fetchContestResponse.prizePool,
         awards: awardsData,
         status: fetchContestResponse.status,
@@ -131,6 +137,9 @@ function EditNewContestPage() {
           rules: values.rules,
           startDate: values.startDate?.toISOString(),
           endDate: values.endDate?.toISOString(),
+          registrationDeadline: values.registrationDeadline ? values.registrationDeadline.toISOString() : null,
+          resultAnnounceDate: values.resultAnnounceDate ? values.resultAnnounceDate.toISOString() : null,
+          votingStartDate: values.votingStartDate ? values.votingStartDate.toISOString() : null,
           prizePool: values.prizePool,
           awards: values.awards,
           visibility: values.visibility,
@@ -178,6 +187,9 @@ function EditNewContestPage() {
         rules: fetchContestResponse.rules ?? "",
         startDate: fetchContestResponse.startDate ? new Date(fetchContestResponse.startDate) : undefined,
         endDate: fetchContestResponse.endDate ? new Date(fetchContestResponse.endDate) : undefined,
+        registrationDeadline: fetchContestResponse.registrationDeadline ? new Date(fetchContestResponse.registrationDeadline) : undefined,
+        resultAnnounceDate: fetchContestResponse.resultAnnounceDate ? new Date(fetchContestResponse.resultAnnounceDate) : undefined,
+        votingStartDate: fetchContestResponse.votingStartDate ? new Date(fetchContestResponse.votingStartDate) : undefined,
         prizePool: fetchContestResponse.prizePool,
         awards: [],
         status: fetchContestResponse.status,
@@ -673,6 +685,72 @@ function EditNewContestPage() {
                       <FormControl>
                         <DateTimePicker name={name} dateTime={value} setDateTime={onChange} onBlur={onBlur} disabled={disabled} autoComplete="off" aria-describedby={"End Date"} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="registrationDeadline"
+                  render={({ field: { name, value, onChange, onBlur, disabled } }) => (
+                    <FormItem>
+                      <FormLabel>Registration Deadline (Optional)</FormLabel>
+                      <FormControl>
+                        <DateTimePicker
+                          name={name}
+                          dateTime={value ?? undefined}
+                          setDateTime={onChange}
+                          onBlur={onBlur}
+                          disabled={disabled}
+                          autoComplete="off"
+                          aria-describedby={"Registration Deadline"}
+                        />
+                      </FormControl>
+                      <p className="text-xs text-muted-foreground mt-1">Last date for models to register (must be on or after start date)</p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="resultAnnounceDate"
+                  render={({ field: { name, value, onChange, onBlur, disabled } }) => (
+                    <FormItem>
+                      <FormLabel>Result Announcement Date (Optional)</FormLabel>
+                      <FormControl>
+                        <DateTimePicker
+                          name={name}
+                          dateTime={value ?? undefined}
+                          setDateTime={onChange}
+                          onBlur={onBlur}
+                          disabled={disabled}
+                          autoComplete="off"
+                          aria-describedby={"Result Announcement Date"}
+                        />
+                      </FormControl>
+                      <p className="text-xs text-muted-foreground mt-1">Date when results will be announced (must be after end date)</p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="votingStartDate"
+                  render={({ field: { name, value, onChange, onBlur, disabled } }) => (
+                    <FormItem>
+                      <FormLabel>Voting Start Date (Optional)</FormLabel>
+                      <FormControl>
+                        <DateTimePicker
+                          name={name}
+                          dateTime={value ?? undefined}
+                          setDateTime={onChange}
+                          onBlur={onBlur}
+                          disabled={disabled}
+                          autoComplete="off"
+                          aria-describedby={"Voting Start Date"}
+                        />
+                      </FormControl>
+                      <p className="text-xs text-muted-foreground mt-1">Date when voting begins (must be on or after start date)</p>
                       <FormMessage />
                     </FormItem>
                   )}

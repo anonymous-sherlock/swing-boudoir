@@ -348,7 +348,9 @@ function ContestsPage() {
                     <TableCell className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <div className="flex-1">
-                          <div className="font-medium text-sm">{contest.name}</div>
+                          <Link to={`/admin/contests/$id/edit`} params={{ id: contest.id }}>
+                            <div className="font-medium text-sm">{contest.name}</div>
+                          </Link>
                           <div className="text-xs text-muted-foreground line-clamp-1 max-w-[200px]">{contest.description}</div>
                         </div>
                         <Button asChild size="icon" variant="ghost" className="h-6 w-6 bg-blue-100 hover:bg-blue-100">

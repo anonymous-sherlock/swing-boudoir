@@ -2,7 +2,7 @@ import { z } from "zod";
 
 /**
  * Zod schema for Payment entity with camelCase field names
- * 
+ *
  * This schema defines the structure of payment data for the admin panel:
  * - Includes payer information
  * - Payment details (amount, status, stripe session)
@@ -13,7 +13,9 @@ export const paymentSchema = z.object({
   id: z.string(),
   amount: z.number(),
   status: z.enum(["PENDING", "COMPLETED", "FAILED"]),
-  stripeSessionId: z.string(),
+  provider: z.enum(["STRIPE", "PAYPAL"]),
+  paypalOrderId: z.string().nullable(),
+  stripeSessionId: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
   payer: z.object({
@@ -32,11 +34,13 @@ export const paymentSchema = z.object({
       image: z.string().nullable(),
     }),
   }),
-  contest: z.object({
-    id: z.string(),
-    name: z.string(),
-    slug: z.string(),
-  }).nullable(),
+  contest: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+      slug: z.string(),
+    })
+    .nullable(),
   comment: z.string().nullable(),
   voteCount: z.number().nullable(),
 });

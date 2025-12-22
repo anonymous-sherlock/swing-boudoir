@@ -378,16 +378,51 @@ export function ContestsParticipationSection({ profile, participations, onVoteSu
 
                   {/* Voting Button Section */}
                   <div className="pt-3 mt-3 border-t border-gray-100">
-                    <div className="">
-                      <Button
-                        size="lg"
-                        className="w-full text-sm md:text-base bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white py-3 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-                        onClick={() => handleVoteButtonClick(participation)}
-                      >
-                        <Heart className="w-5 h-5 mr-2" />
-                        Vote for {profile.user?.name || "this model"}
-                      </Button>
-                    </div>
+                    {!participation.contest.isVotingEnabled ? (
+                      <div className="w-full bg-gray-50/50 rounded-lg border border-dashed border-gray-200 p-3 flex items-center justify-center gap-3 cursor-not-allowed hover:bg-gray-50 transition-colors">
+                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 shrink-0">
+                          <Heart className="w-4 h-4" />
+                        </div>
+                        <div className="text-left">
+                          <p className="text-xs font-bold text-gray-600">Voting Disabled</p>
+                          <p className="text-[10px] text-gray-500 leading-tight">Voting is currently inactive for this competition.</p>
+                        </div>
+                      </div>
+                    ) : participation.contest.votingStartDate && new Date(participation.contest.votingStartDate) > new Date() ? (
+                      <div className="flex flex-col items-center justify-center py-4 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="flex items-center gap-2 mb-3">
+                          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Voting Starts In</p>
+                        </div>
+                        <FlipClockCountdown
+                          to={new Date(participation.contest.votingStartDate)}
+                          labelStyle={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", color: "#6b7280" }}
+                          digitBlockStyle={{
+                            width: 30,
+                            height: 45,
+                            fontSize: 24,
+                            fontWeight: 700,
+                            backgroundColor: "white",
+                            color: "#1f2937",
+                            border: "1px solid #e5e7eb",
+                            borderRadius: "6px",
+                          }}
+                          dividerStyle={{ color: "#e5e7eb", height: 0 }}
+                          separatorStyle={{ color: "#9ca3af", size: "6px" }}
+                          duration={0.5}
+                        />
+                      </div>
+                    ) : (
+                      <div className="">
+                        <Button
+                          size="lg"
+                          className="w-full text-sm md:text-base bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white py-3 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                          onClick={() => handleVoteButtonClick(participation)}
+                        >
+                          <Heart className="w-5 h-5 mr-2" />
+                          Vote for {profile.user?.name || "this model"}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

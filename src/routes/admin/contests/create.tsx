@@ -41,7 +41,7 @@ export default function AddNewContestPage() {
   const navigate = useNavigate();
   const createContest = useCreateContest();
   const uploadContestImages = useUploadContestImages();
-  
+
   const isLoading = createContest.isPending || uploadContestImages.isPending;
 
   const form = useForm<ContestFormValues>({
@@ -53,6 +53,9 @@ export default function AddNewContestPage() {
       rules: "",
       startDate: undefined,
       endDate: undefined,
+      registrationDeadline: undefined,
+      resultAnnounceDate: undefined,
+      votingStartDate: undefined,
       awards: [{ name: "", icon: "🏆", position: 1 }],
       status: Contest_Status.DRAFT,
       visibility: Contest_Visibility.PUBLIC,
@@ -79,6 +82,9 @@ export default function AddNewContestPage() {
         rules: values.rules,
         startDate: values.startDate.toISOString(),
         endDate: values.endDate.toISOString(),
+        registrationDeadline: values.registrationDeadline ? values.registrationDeadline.toISOString() : null,
+        resultAnnounceDate: values.resultAnnounceDate ? values.resultAnnounceDate.toISOString() : null,
+        votingStartDate: values.votingStartDate ? values.votingStartDate.toISOString() : null,
         prizePool: values.prizePool,
         awards: values.awards,
         visibility: values.visibility,
@@ -221,7 +227,9 @@ export default function AddNewContestPage() {
                     <FormControl>
                       <div className="*:not-first:mt-2">
                         <div className="flex rounded-md shadow-xs">
-                          <span className="border-input bg-gray-200 text-black inline-flex items-center rounded-s-md border px-3 text-sm">{API_CONFIG.API_BASE_HOST}/competitions/</span>
+                          <span className="border-input bg-gray-200 text-black inline-flex items-center rounded-s-md border px-3 text-sm">
+                            {API_CONFIG.API_BASE_HOST}/competitions/
+                          </span>
                           <Input className="-ms-px rounded-s-none shadow-none" placeholder="big-weekend" type="text" {...field} />
                         </div>
                       </div>
@@ -539,6 +547,72 @@ export default function AddNewContestPage() {
                       <FormControl>
                         <DateTimePicker name={name} dateTime={value} setDateTime={onChange} onBlur={onBlur} disabled={disabled} autoComplete="off" aria-describedby={"End Date"} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="registrationDeadline"
+                  render={({ field: { name, value, onChange, onBlur, disabled } }) => (
+                    <FormItem>
+                      <FormLabel>Registration Deadline (Optional)</FormLabel>
+                      <FormControl>
+                        <DateTimePicker
+                          name={name}
+                          dateTime={value ?? undefined}
+                          setDateTime={onChange}
+                          onBlur={onBlur}
+                          disabled={disabled}
+                          autoComplete="off"
+                          aria-describedby={"Registration Deadline"}
+                        />
+                      </FormControl>
+                      <p className="text-xs text-muted-foreground mt-1">Last date for models to register (must be on or after start date)</p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="resultAnnounceDate"
+                  render={({ field: { name, value, onChange, onBlur, disabled } }) => (
+                    <FormItem>
+                      <FormLabel>Result Announcement Date (Optional)</FormLabel>
+                      <FormControl>
+                        <DateTimePicker
+                          name={name}
+                          dateTime={value ?? undefined}
+                          setDateTime={onChange}
+                          onBlur={onBlur}
+                          disabled={disabled}
+                          autoComplete="off"
+                          aria-describedby={"Result Announcement Date"}
+                        />
+                      </FormControl>
+                      <p className="text-xs text-muted-foreground mt-1">Date when results will be announced (must be after end date)</p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="votingStartDate"
+                  render={({ field: { name, value, onChange, onBlur, disabled } }) => (
+                    <FormItem>
+                      <FormLabel>Voting Start Date (Optional)</FormLabel>
+                      <FormControl>
+                        <DateTimePicker
+                          name={name}
+                          dateTime={value ?? undefined}
+                          setDateTime={onChange}
+                          onBlur={onBlur}
+                          disabled={disabled}
+                          autoComplete="off"
+                          aria-describedby={"Voting Start Date"}
+                        />
+                      </FormControl>
+                      <p className="text-xs text-muted-foreground mt-1">Date when voting begins (must be on or after start date)</p>
                       <FormMessage />
                     </FormItem>
                   )}

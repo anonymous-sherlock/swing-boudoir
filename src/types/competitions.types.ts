@@ -1,4 +1,4 @@
-import { Pagination } from './common.types';
+import { Pagination } from "./common.types";
 
 /**
  * Award interface for competitions
@@ -32,9 +32,10 @@ export interface Competition {
   endDate: string;
   registrationDeadline: string | null;
   resultAnnounceDate: string | null;
+  votingStartDate: string | null;
   slug: string;
-  status: 'DRAFT' | 'PUBLISHED' | 'ACTIVE' | 'VOTING' | 'JUDGING' | 'COMPLETED' | 'CANCELLED' | 'SUSPENDED';
-  visibility: 'PUBLIC' | 'PRIVATE' | 'INVITE_ONLY' | 'RESTRICTED';
+  status: "DRAFT" | "PUBLISHED" | "ACTIVE" | "VOTING" | "JUDGING" | "COMPLETED" | "CANCELLED" | "SUSPENDED";
+  visibility: "PUBLIC" | "PRIVATE" | "INVITE_ONLY" | "RESTRICTED";
   isFeatured: boolean;
   isVerified: boolean;
   isVotingEnabled: boolean;
@@ -55,7 +56,6 @@ export interface CompetitionsListResponse {
   pagination: Pagination;
 }
 
-
 export interface ContestParticipation {
   id: string;
   profileId: string;
@@ -71,38 +71,7 @@ export interface ContestParticipation {
   isParticipating: boolean | null;
   createdAt: string;
   updatedAt: string;
-  contest: {
-    id: string;
-    name: string;
-    description: string;
-    prizePool: number;
-    startDate: string;
-    endDate: string;
-    registrationDeadline: string | null;
-    resultAnnounceDate: string | null;
-    slug: string;
-    status: 'DRAFT' | 'PUBLISHED' | 'ACTIVE' | 'BOOKED' | 'VOTING' | 'JUDGING' | 'COMPLETED' | 'CANCELLED' | 'SUSPENDED';
-    visibility: 'PUBLIC' | 'PRIVATE' | 'INVITE_ONLY' | 'RESTRICTED';
-    isFeatured: boolean;
-    isVerified: boolean;
-    isVotingEnabled: boolean;
-    rules: string | null;
-    requirements: string | null;
-    winnerProfileId: string | null;
-    createdAt: string;
-    updatedAt: string;
+  contest: Competition & {
     totalParticipants: number;
-    awards: Array<{
-      id: string;
-      name: string;
-      icon: string;
-      contestId: string;
-    }>;
-    images: Array<{
-      id: string;
-      key: string;
-      caption: string | null;
-      url: string;
-    }> | null;
   };
 }

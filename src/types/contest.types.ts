@@ -1,46 +1,47 @@
-import { Contest_Status, Contest_Visibility } from "@/lib/validations/contest.schema"
+import { Contest_Status, Contest_Visibility } from "@/lib/validations/contest.schema";
 
 export interface Contest {
-    id: string
-    name: string
-    description: string
-    prizePool: number
-    startDate: string
-    endDate: string
-    registrationDeadline: string | null
-    resultAnnounceDate: string | null
-    slug: string
-    status: keyof typeof Contest_Status
-    visibility: keyof typeof Contest_Visibility
-    isFeatured: boolean
-    isVerified: boolean
-    isVotingEnabled: boolean
-    rules: string | null
-    requirements: string | null
-    winnerProfileId: string | null
-    createdAt: string
-    updatedAt: string
-    awards: Award[]
-    images?: ContestImage[] | null
+  id: string;
+  name: string;
+  description: string;
+  prizePool: number;
+  startDate: string;
+  endDate: string;
+  registrationDeadline: string | null;
+  resultAnnounceDate: string | null;
+  votingStartDate: string | null;
+  slug: string;
+  status: keyof typeof Contest_Status;
+  visibility: keyof typeof Contest_Visibility;
+  isFeatured: boolean;
+  isVerified: boolean;
+  isVotingEnabled: boolean;
+  rules: string | null;
+  requirements: string | null;
+  winnerProfileId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  awards: Award[];
+  images?: ContestImage[] | null;
 }
 
 export interface Award {
-    id: string
-    name: string
-    icon: string
-    contestId: string
+  id: string;
+  name: string;
+  icon: string;
+  contestId: string;
 }
 
 export interface ContestImage {
-    id: string
-    key: string
-    caption: string | null
-    url: string
+  id: string;
+  key: string;
+  caption: string | null;
+  url: string;
 }
 
-export type UpdateContestData = Partial<Omit<Contest, "id" | "createdAt" | "updatedAt" | "images"|"awards" >> & {
-  awards: Array<Pick<Award, "name" | "icon">> | undefined
-}
+export type UpdateContestData = Partial<Omit<Contest, "id" | "createdAt" | "updatedAt" | "images" | "awards">> & {
+  awards: Array<Pick<Award, "name" | "icon">> | undefined;
+};
 
 // Contest Participation Types
 export interface ContestParticipation {
@@ -92,47 +93,47 @@ export interface ContestParticipation {
 
 // Contest Participants Types
 export interface ContestParticipant {
-  id: string
+  id: string;
   coverImage: {
-    id: string
-    key: string
-    url: string
-    caption: string | null
-  } | null
-  isApproved: boolean
-  isParticipating: boolean | null
-  createdAt: string
-  updatedAt: string
+    id: string;
+    key: string;
+    url: string;
+    caption: string | null;
+  } | null;
+  isApproved: boolean;
+  isParticipating: boolean | null;
+  createdAt: string;
+  updatedAt: string;
   profile: {
-    id: string
-    bio: string | null
+    id: string;
+    bio: string | null;
     user: {
-      id: string
-      email: string
-      name: string
-      image: string | null
-      username: string | null
-    } | null
-  } | null
-  totalFreeVotes: number
-  totalPaidVotes: number
+      id: string;
+      email: string;
+      name: string;
+      image: string | null;
+      username: string | null;
+    } | null;
+  } | null;
+  totalFreeVotes: number;
+  totalPaidVotes: number;
 }
 
 export interface ContestParticipantsResponse {
-  data: ContestParticipant[]
+  data: ContestParticipant[];
   pagination: {
-    total: number
-    totalPages: number
-    hasNextPage: boolean
-    hasPreviousPage: boolean
-    nextPage: number | null
-    previousPage: number | null
-  }
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+    nextPage: number | null;
+    previousPage: number | null;
+  };
   contest: {
-    totalFreeVotes: number
-    totalPaidVotes: number
-    totalVotes: number
-  }
+    totalFreeVotes: number;
+    totalPaidVotes: number;
+    totalVotes: number;
+  };
 }
 
 // API Response types for approval toggles
