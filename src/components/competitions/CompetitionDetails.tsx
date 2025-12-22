@@ -308,28 +308,6 @@ export function CompetitionDetails() {
                   </div>
                 </div>
 
-                <div className="space-y-4 pt-4 border-t border-gray-100">
-                  <div className="flex items-center gap-3 group">
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100/50 flex items-center justify-center group-hover:scale-105 transition-transform">
-                      <Calendar className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-0.5">Starts On</p>
-                      <p className="font-bold text-gray-700 text-sm">{formatDate(competition.startDate)}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 group">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100/50 flex items-center justify-center group-hover:scale-105 transition-transform">
-                      <Clock className="h-4 w-4 text-indigo-600" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-0.5">Ends On</p>
-                      <p className="font-bold text-gray-700 text-sm">{formatDate(competition.endDate)}</p>
-                    </div>
-                  </div>
-                </div>
-
                 {competition.registrationDeadline && (
                   <div className="flex items-start gap-3 pt-4 border-t border-gray-100 group">
                     <div className="w-10 h-10 rounded-xl bg-orange-50 border border-orange-100/50 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
@@ -350,19 +328,50 @@ export function CompetitionDetails() {
                           <Badge className="text-[9px] h-5 bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200 px-1.5 font-bold uppercase rounded-md">Closed</Badge>
                         )}
                       </div>
-                      <p className="font-bold text-gray-700 text-sm">{formatDate(competition.registrationDeadline)}</p>
-                      {new Date(competition.registrationDeadline) > new Date() && (
-                        <p className="text-[10px] font-semibold text-orange-600 mt-1 flex items-center gap-1.5">
-                          <span className="relative flex h-1.5 w-1.5">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-orange-500"></span>
-                          </span>
-                          Ends in {Math.ceil((new Date(competition.registrationDeadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days
-                        </p>
-                      )}
+                      <p className="font-bold text-gray-700 text-sm">
+                        {formatDate(competition.startDate)} - {formatDate(competition.registrationDeadline)}
+                      </p>
+                      {(() => {
+                        const now = new Date();
+                        const start = new Date(competition.startDate);
+                        const deadline = new Date(competition.registrationDeadline);
+
+                        if (now < start) {
+                          const diffDays = Math.ceil((start.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                          return (
+                            <p className="text-[10px] font-semibold text-blue-600 mt-1">
+                              Starts in {diffDays} {diffDays === 1 ? "day" : "days"}
+                            </p>
+                          );
+                        } else if (now < deadline) {
+                          const diffDays = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                          return (
+                            <p className="text-[10px] font-semibold text-orange-600 mt-1 flex items-center gap-1.5">
+                              <span className="relative flex h-1.5 w-1.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-orange-500"></span>
+                              </span>
+                              Ends in {diffDays} {diffDays === 1 ? "day" : "days"}
+                            </p>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
                   </div>
                 )}
+
+                <div className="space-y-4 pt-4 border-t border-gray-100">
+                  <div className="flex items-center gap-3 group">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100/50 flex items-center justify-center group-hover:scale-105 transition-transform">
+                      <Clock className="h-4 w-4 text-indigo-600" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-0.5">Ends On</p>
+                      <p className="font-bold text-gray-700 text-sm">{formatDate(competition.endDate)}</p>
+                    </div>
+                  </div>
+                </div>
 
                 {competition.resultAnnounceDate && (
                   <div className="flex items-start gap-3 pt-4 border-t border-gray-100 group">

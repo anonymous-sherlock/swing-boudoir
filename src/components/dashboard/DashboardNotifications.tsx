@@ -1,207 +1,33 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo } from "react";
+import { formatDistanceToNow } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Bell, Check, Archive, Trash2, RefreshCw, Trophy, Heart, Settings, Lightbulb, Clock, Star, AlertCircle, Eye } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { formatDistanceToNow } from "date-fns";
-import { notificationService } from "@/lib/notificationService";
-import { useAuth } from "@/contexts/AuthContext";
-import { Notification, Notification_Type } from "@/types";
+import { useNotifications } from "@/contexts/NotificationContext";
 import { getNotificationIconByType, getNotificationBackgroundByType } from "@/utils/notification";
 
 export function DashboardNotifications() {
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const { notifications, unreadCount, isLoading, error, markAsRead, markAllAsRead, markAsArchived, markAsUnarchived, deleteNotification, refreshNotifications } =
+    useNotifications();
 
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [selectedFilter, setSelectedFilter] = useState<"all" | "unread" | "archived">("all");
 
-  // Fetch notifications from API
-  const fetchNotifications = async () => {
-    if (!user?.profileId) return;
-
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const response = await notificationService.getNotifications(user.profileId);
-
-      // Debug: Log what we're getting from the API
-      console.log("Fetched notifications:", response);
-      console.log("Type of response:", typeof response);
-      console.log("Is array:", Array.isArray(response?.notifications));
-
-      // Ensure we always have an array
-      const notificationsArray = response?.notifications ? response.notifications : [];
-
-      setNotifications(notificationsArray);
-
-      // Update unread count
-      const counts = await notificationService.getNotificationCounts(user.profileId);
-      setUnreadCount(counts?.unreadCount || 0);
-    } catch (err) {
-      setError("Failed to load notifications");
-      console.error("Error fetching notifications:", err);
-      // Set empty array on error to prevent filter issues
-      setNotifications([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Refresh notifications
-  const refreshNotifications = () => {
-    fetchNotifications();
-  };
-
-  // Mark single notification as read
-  const handleMarkAsRead = async (id: string) => {
-    try {
-      const success = await notificationService.markAsRead(id);
-      if (success) {
-        // Update local state
-        setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
-        setUnreadCount((prev) => Math.max(0, prev - 1));
-
-        toast({
-          title: "Marked as read",
-          description: "Notification marked as read successfully.",
-        });
+  // Filter notifications based on selected filter
+  const filteredNotifications = useMemo(() => {
+    if (!Array.isArray(notifications)) return [];
+    return notifications.filter((notification) => {
+      if (selectedFilter === "unread") {
+        return !notification.isRead && !notification.isArchived;
       }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to mark notification as read.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Mark all notifications as read
-  const handleMarkAllAsRead = async () => {
-    if (!user?.profileId) return;
-
-    try {
-      const success = await notificationService.markAllAsRead(user.profileId);
-      if (success) {
-        // Update local state
-        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-        setUnreadCount(0);
-
-        toast({
-          title: "All marked as read",
-          description: "All notifications marked as read successfully.",
-        });
+      if (selectedFilter === "archived") {
+        return notification.isArchived;
       }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to mark all notifications as read.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Archive notification
-  const handleMarkAsArchived = async (id: string) => {
-    try {
-      const success = await notificationService.markAsArchived(id);
-      if (success) {
-        // Update local state
-        setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isArchived: true } : n)));
-
-        toast({
-          title: "Archived",
-          description: "Notification archived successfully.",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to archive notification.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Unarchive notification
-  const handleMarkAsUnarchived = async (id: string) => {
-    try {
-      const success = await notificationService.markAsUnarchived(id);
-      if (success) {
-        // Update local state
-        setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isArchived: false } : n)));
-
-        toast({
-          title: "Unarchived",
-          description: "Notification unarchived successfully.",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to unarchive notification.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Delete notification
-  const handleDelete = async (id: string) => {
-    try {
-      const success = await notificationService.deleteNotification(id);
-      if (success) {
-        // Remove from local state
-        setNotifications((prev) => prev.filter((n) => n.id !== id));
-
-        // Update unread count if it was unread
-        const deletedNotification = notifications.find((n) => n.id === id);
-        if (deletedNotification && !deletedNotification.isRead) {
-          setUnreadCount((prev) => Math.max(0, prev - 1));
-        }
-
-        toast({
-          title: "Deleted",
-          description: "Notification deleted successfully.",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete notification.",
-        variant: "destructive",
-      });
-    }
-  };
+      return !notification.isArchived;
+    });
+  }, [notifications, selectedFilter]);
 
   // Get notification icon based on API icon
-
-  // Filter notifications based on selected filter
-  const filteredNotifications = Array.isArray(notifications)
-    ? notifications.filter((notification) => {
-        if (selectedFilter === "unread") {
-          // Show only unread notifications (not archived)
-          return !notification.isRead && !notification.isArchived;
-        }
-        if (selectedFilter === "archived") {
-          // Show only archived notifications (both read and unread)
-          return notification.isArchived;
-        }
-        // Show all notifications (both read and unread, not archived)
-        return !notification.isArchived;
-      })
-    : [];
-
-  // Fetch notifications on component mount and when user changes
-  useEffect(() => {
-    if (user?.profileId) {
-      fetchNotifications();
-    }
-  }, [user?.profileId]);
 
   if (error) {
     return (
@@ -239,13 +65,13 @@ export function DashboardNotifications() {
         </div>
 
         <div className="flex items-center space-x-2">
-          <Button onClick={refreshNotifications} variant="outline" size="sm" disabled={isLoading}>
+          <Button onClick={() => refreshNotifications()} variant="outline" size="sm" disabled={isLoading}>
             <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
 
           {unreadCount > 0 && (
-            <Button onClick={handleMarkAllAsRead} variant="outline" size="sm">
+            <Button onClick={() => markAllAsRead()} variant="outline" size="sm">
               <Check className="mr-2 h-4 w-4" />
               Mark All Read
             </Button>
@@ -305,7 +131,10 @@ export function DashboardNotifications() {
       ) : (
         <div className="space-y-4">
           {filteredNotifications.map((notification) => (
-            <Card key={notification.id} className={`transition-all duration-200 hover:shadow-md ${!notification.isRead ? `border-l-4 ${getNotificationBackgroundByType(notification.type)}` : ""}`}>
+            <Card
+              key={notification.id}
+              className={`transition-all duration-200 hover:shadow-md ${!notification.isRead ? `border-l-4 ${getNotificationBackgroundByType(notification.type)}` : ""}`}
+            >
               <CardContent className="p-4">
                 <div className="flex items-start space-x-3">
                   {/* Icon */}
@@ -331,7 +160,7 @@ export function DashboardNotifications() {
                   {/* Actions */}
                   <div className="flex items-center space-x-1">
                     {!notification.isRead && (
-                      <Button variant="ghost" size="sm" onClick={() => handleMarkAsRead(notification.id)} className="h-8 w-8 p-0" title="Mark as read">
+                      <Button variant="ghost" size="sm" onClick={() => markAsRead(notification.id)} className="h-8 w-8 p-0" title="Mark as read">
                         <Eye className="h-4 w-4" />
                       </Button>
                     )}
@@ -340,14 +169,14 @@ export function DashboardNotifications() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleMarkAsUnarchived(notification.id)}
+                        onClick={() => markAsUnarchived(notification.id)}
                         className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
                         title="Unarchive"
                       >
                         <Archive className="h-4 w-4" />
                       </Button>
                     ) : (
-                      <Button variant="ghost" size="sm" onClick={() => handleMarkAsArchived(notification.id)} className="h-8 w-8 p-0" title="Archive">
+                      <Button variant="ghost" size="sm" onClick={() => markAsArchived(notification.id)} className="h-8 w-8 p-0" title="Archive">
                         <Archive className="h-4 w-4" />
                       </Button>
                     )}
@@ -355,7 +184,7 @@ export function DashboardNotifications() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDelete(notification.id)}
+                      onClick={() => deleteNotification(notification.id)}
                       className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                       title="Delete"
                     >

@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Loader2, Lock, Mail, User, ArrowLeft, ArrowRight, Check, X } from "lucide-react";
 import { registerStep1Schema, registerStep2Schema, type RegisterStep1Data, type RegisterStep2Data } from "@/lib/validations/auth";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { authPages } from "@/routes";
 import { authApi, isApiSuccess } from "@/lib/api";
 import { Link, useSearch } from "@tanstack/react-router";
@@ -19,7 +19,7 @@ interface RegisterFormProps {
 
 export function RegisterForm({ callbackURL: propCallbackURL, onSuccess }: RegisterFormProps = {}) {
   const { handleRegister, isLoading } = useAuth();
-  const { toast } = useToast();
+
   const [currentStep, setCurrentStep] = useState(1);
   const [step1Data, setStep1Data] = useState<RegisterStep1Data | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -107,11 +107,10 @@ export function RegisterForm({ callbackURL: propCallbackURL, onSuccess }: Regist
         rememberMe: true,
         callbackURL: authPages.login,
       });
-      toast({
-        title: "Registration Successful!",
+      toast.success("Registration Successful!", {
         description: "Welcome to Swing Boudoir! Please sign in to continue.",
       });
-      
+
       onSuccess?.();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Please try again with different information.";
@@ -123,10 +122,8 @@ export function RegisterForm({ callbackURL: propCallbackURL, onSuccess }: Regist
         title = "Username Already Taken";
       }
 
-      toast({
-        title,
+      toast.error(title, {
         description: errorMessage,
-        variant: "destructive",
       });
     }
   };
@@ -229,7 +226,20 @@ export function RegisterForm({ callbackURL: propCallbackURL, onSuccess }: Regist
           <Label htmlFor="username">Username</Label>
           <div className="relative">
             <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <Input id="username" type="text" placeholder="Choose a username" className="pl-10" {...step2Form.register("username")} />
+            <Input
+              id="username"
+              type="text"
+              placeholder="Choose a username"
+              className="pl-10"
+              {...step2Form.register("username", {
+                onChange: (e) => {
+                  // Allow only letters, numbers, underscores, and dashes
+                  const value = e.target.value.replace(/[^a-zA-Z0-9\-_]/g, "");
+                  e.target.value = value;
+                  step2Form.setValue("username", value);
+                },
+              })}
+            />
           </div>
           {usernameStatus !== "idle" && (
             <div className="flex items-center gap-2 text-sm" aria-live="polite">

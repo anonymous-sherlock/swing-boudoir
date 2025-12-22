@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useAuth } from "./AuthContext";
 import { notificationService } from "@/lib/notificationService";
 import { Notification, NotificationCounts } from "@/types/notifications.types";
@@ -14,6 +14,7 @@ interface NotificationContextType {
   markAsRead: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   markAsArchived: (id: string) => Promise<void>;
+  markAsUnarchived: (id: string) => Promise<void>;
   deleteNotification: (id: string) => Promise<void>;
   refreshNotifications: () => Promise<void>;
 
@@ -35,7 +36,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [error, setError] = useState<string | null>(null);
 
   // Competition monitoring interval
-  const [monitoringInterval, setMonitoringInterval] = useState<NodeJS.Timeout | null>(null);
+  const monitoringIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const dailyMotivationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const dailyMotivationIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize notification service
   useEffect(() => {
@@ -117,6 +120,17 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, []);
 
+  // Mark notification as unarchived
+  const markAsUnarchived = useCallback(async (id: string) => {
+    try {
+      await notificationService.markAsUnarchived(id);
+      // Update local state
+      setNotifications((prev) => prev.map((notification) => (notification.id === id ? { ...notification, isArchived: false } : notification)));
+    } catch (error) {
+      console.error("Error marking notification as unarchived:", error);
+    }
+  }, []);
+
   // Delete notification
   const deleteNotification = useCallback(async (id: string) => {
     try {
@@ -135,7 +149,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // Start competition monitoring
   const startCompetitionMonitoring = useCallback(() => {
-    if (!user?.profileId || monitoringInterval) return;
+    if (!user?.profileId || monitoringIntervalRef.current) return;
 
     const interval = setInterval(
       async () => {
@@ -160,16 +174,16 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       5 * 60 * 1000
     ); // Check every 5 minutes
 
-    setMonitoringInterval(interval);
-  }, [user?.profileId, monitoringInterval]);
+    monitoringIntervalRef.current = interval;
+  }, [user?.profileId]);
 
   // Stop competition monitoring
   const stopCompetitionMonitoring = useCallback(() => {
-    if (monitoringInterval) {
-      clearInterval(monitoringInterval);
-      setMonitoringInterval(null);
+    if (monitoringIntervalRef.current) {
+      clearInterval(monitoringIntervalRef.current);
+      monitoringIntervalRef.current = null;
     }
-  }, [monitoringInterval]);
+  }, []);
 
   // Create daily motivations
   const createDailyMotivations = useCallback(async () => {
@@ -196,34 +210,52 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
       const timeUntilMidnight = tomorrow.getTime() - now.getTime();
 
-      const dailyMotivationTimer = setTimeout(() => {
+      dailyMotivationTimeoutRef.current = setTimeout(() => {
         createDailyMotivations();
         // Set up recurring daily timer
-        const dailyInterval = setInterval(createDailyMotivations, 24 * 60 * 60 * 1000);
-        return () => clearInterval(dailyInterval);
+        dailyMotivationIntervalRef.current = setInterval(createDailyMotivations, 24 * 60 * 60 * 1000);
       }, timeUntilMidnight);
 
       return () => {
-        clearTimeout(dailyMotivationTimer);
+        if (dailyMotivationTimeoutRef.current) clearTimeout(dailyMotivationTimeoutRef.current);
+        if (dailyMotivationIntervalRef.current) clearInterval(dailyMotivationIntervalRef.current);
         stopCompetitionMonitoring();
       };
     }
   }, [isAuthenticated, user?.profileId, startCompetitionMonitoring, stopCompetitionMonitoring, createDailyMotivations]);
 
-  const value: NotificationContextType = {
-    notifications,
-    unreadCount,
-    isLoading,
-    error,
-    markAsRead,
-    markAllAsRead,
-    markAsArchived,
-    deleteNotification,
-    refreshNotifications,
-    startCompetitionMonitoring,
-    stopCompetitionMonitoring,
-    createDailyMotivations,
-  };
+  const value = useMemo<NotificationContextType>(
+    () => ({
+      notifications,
+      unreadCount,
+      isLoading,
+      error,
+      markAsRead,
+      markAllAsRead,
+      markAsArchived,
+      markAsUnarchived,
+      deleteNotification,
+      refreshNotifications,
+      startCompetitionMonitoring,
+      stopCompetitionMonitoring,
+      createDailyMotivations,
+    }),
+    [
+      notifications,
+      unreadCount,
+      isLoading,
+      error,
+      markAsRead,
+      markAllAsRead,
+      markAsArchived,
+      markAsUnarchived,
+      deleteNotification,
+      refreshNotifications,
+      startCompetitionMonitoring,
+      stopCompetitionMonitoring,
+      createDailyMotivations,
+    ]
+  );
 
   return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;
 };

@@ -2,19 +2,21 @@
  * Authentication Context for Swing Boudoir Showcase
  *
  * This context provides:
- * - Global authentication state management
- * - Manual email/password authentication
+ * - Global authentication state management via React Query
+ * - Manual email/password and Username authentication
  * - User session management
  * - Protected route handling
  *
  * @author Swing Boudoir Development Team
- * @version 1.0.0
+ * @version 2.0.0
  */
 
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { authApi } from "@/lib/api";
-import { AUTH_TOKEN_KEY, authClient } from "@/lib/auth";
-import { authPages, DEFAULT_AFTER_LOGIN_REDIRECT, DEFAULT_AFTER_LOGOUT_REDIRECT } from "@/routes";
+import { AUTH_TOKEN_KEY } from "@/lib/auth";
+import { getCallbackUrl, getFullCallbackUrl } from "@/lib/config";
+
+import { DEFAULT_AFTER_LOGIN_REDIRECT, DEFAULT_AFTER_LOGOUT_REDIRECT } from "@/routes";
 import {
   GetSessionResponse,
   Session,
@@ -26,10 +28,9 @@ import {
   User,
   User_Type,
 } from "@/types/auth.types";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { getAuthUrl, getCallbackUrl, getOAuthCallbackUrl, getFullCallbackUrl } from "../lib/config";
+import React, { createContext, useContext, useCallback, useMemo } from "react";
 
 interface AuthContextType {
   user: User | null;
@@ -79,715 +80,353 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const queryClient = useQueryClient();
 
+  // --- Session Query ---
+  // We treat the token existence in localStorage + successful API call as the source of truth.
   const {
-    data: sessionUserData,
+    data: sessionData,
     isLoading: isSessionLoading,
-    error: sessionError,
+    error: sessionQueryError,
     refetch: refetchSession,
-    isSuccess,
   } = useQuery({
     queryKey: ["session"],
     queryFn: async () => {
       const token = localStorage.getItem(AUTH_TOKEN_KEY);
       if (!token) {
-        queryClient.removeQueries({ queryKey: ["session"] });
-        throw new Error("No authentication token");
+        return null;
       }
       const response = await authApi.getSession<GetSessionResponse>();
-      if (!response.success) throw new Error("Session fetch failed");
+      if (!response.success) {
+        // If the token is invalid, clear it
+        localStorage.removeItem(AUTH_TOKEN_KEY);
+        // We throw here so useQuery marks it as error/failure, or we could return null.
+        // Returning null is often cleaner for "not logged in" state than an error state.
+        // However, if the token was present but invalid, it's technically a failed auth attempt.
+        // Let's return null to gracefully handle "expired session" as "logged out".
+        return null;
+      }
       return response.data;
     },
-    enabled: !!localStorage.getItem(AUTH_TOKEN_KEY), // Only run query if token exists
     retry: false,
-    refetchOnWindowFocus: false, // Changed to false to prevent unnecessary refetches
-    staleTime: 1000 * 60 * 5, // Increased to 5 minutes
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: true, // Re-validate when window gets focus for security
   });
 
-  useEffect(() => {
-    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  // Derived State
+  const user = sessionData?.user ?? null;
+  const session = sessionData?.session ?? null;
+  const isAuthenticated = !!user;
 
-    if (!token) {
-      // No token means no session - immediately set auth state
-      queryClient.removeQueries({ queryKey: ["session"] });
-      setSession(null);
-      setUser(null);
-      setIsAuthenticated(false);
-      setIsLoading(false);
-      return;
-    }
+  // --- Mutations ---
 
-    // If we have a token but no session data yet, keep loading
-    if (!sessionUserData) {
-      return;
-    }
+  // Helper to handle navigation after login
+  const navigateAfterLogin = useCallback(
+    (callbackURL?: string | null) => {
+      const redirectTo = callbackURL || DEFAULT_AFTER_LOGIN_REDIRECT;
+      // Invalidate session to ensure fresh state, then navigate
+      queryClient.invalidateQueries({ queryKey: ["session"] }).then(() => {
+        router.navigate({ to: redirectTo, replace: true });
+      });
+    },
+    [queryClient, router]
+  );
 
-    // We have both token and session data
-    if (isSuccess && sessionUserData) {
-      setSession(sessionUserData.session);
-      setUser(sessionUserData.user);
-      setIsAuthenticated(true);
-      setIsLoading(false);
-    }
-  }, [isSuccess, sessionUserData]);
-
-  // Handle initial loading state
-  useEffect(() => {
-    const token = localStorage.getItem(AUTH_TOKEN_KEY);
-    if (!token) {
-      // No token means no auth needed - set loading to false immediately
-      queryClient.removeQueries({ queryKey: ["session"] });
-      setIsLoading(false);
-      return;
-    }
-
-    // We have a token, so we need to fetch the session
-    setIsLoading(true);
-    refetchSession().finally(() => {
-      setIsLoading(false);
+  const handleError = (error: unknown, title: string) => {
+    const message = error instanceof Error ? error.message : "An unexpected error occurred";
+    toast.error(title, {
+      description: message,
     });
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const revalidateSession = async () => {
-    const response = await authApi.getOAuthSession<GetSessionResponse>();
-    if (!response.success) throw new Error("Session fetch failed");
-    localStorage.setItem(AUTH_TOKEN_KEY, response.data.session.token);
-    setSession(response.data.session);
-    setUser(response.data.user);
-    setIsAuthenticated(true);
-    setIsLoading(false);
-    return response.data;
+    return message;
   };
 
-  // Register user
-  const handleRegister = async (data: SignUpWithEmailRequest) => {
-    const { name, email, password, username, type } = data;
-    setIsLoading(true);
-    setError(null);
-    try {
+  const registerMutation = useMutation({
+    mutationFn: async (data: SignUpWithEmailRequest) => {
       const response = await authApi.register<{ token: string; user: User }>({
-        name,
-        email,
-        password,
-        username,
-        type: type || "MODEL",
+        ...data,
+        type: data.type || "MODEL",
       });
+      if (!response.success) throw new Error(response.error || "Registration failed");
+      return response.data;
+    },
+    onSuccess: (data, variables) => {
+      localStorage.setItem(AUTH_TOKEN_KEY, data.token);
+      navigateAfterLogin(variables.callbackURL);
+    },
+    onError: (err) => handleError(err, "Registration Failed"),
+  });
 
-      if (!response.success) {
-        throw new Error(response.error || "Registration failed");
-      }
-
-      if (!response.data?.user || !response.data?.token) {
-        throw new Error("Invalid response from server");
-      }
-
-      // Store token and user data
-      localStorage.setItem(AUTH_TOKEN_KEY, response.data.token);
-      queryClient.invalidateQueries({ queryKey: ["session"] });
-
-      const redirectTo = data.callbackURL || DEFAULT_AFTER_LOGIN_REDIRECT;
-
-      setTimeout(() => {
-        router.navigate({ to: redirectTo, replace: true });
-      }, 100);
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        setError(error.message || "Registration failed");
-      } else {
-        setError("Registration failed");
-      }
-      // Ensure no data is stored on error
-      setUser(null);
-      throw error; // Re-throw to be handled by component
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Register as voter without automatic login
-  const handleRegisterAsVoter = async (data: { name: string; email: string; password: string; username: string; rememberMe?: boolean; callbackURL?: string }) => {
-    const { name, email, password, username, rememberMe, callbackURL } = data;
-    setIsLoading(true);
-    setError(null);
-
-    try {
+  const registerVoterMutation = useMutation({
+    mutationFn: async (data: { name: string; email: string; password: string; username: string; rememberMe?: boolean; callbackURL?: string }) => {
       const response = await authApi.register<{ token: string; user: User; session: Session }>({
-        name,
-        email,
-        password,
-        username,
+        ...data,
         type: "VOTER",
-        rememberMe,
       });
+      if (!response.success) throw new Error(response.error || "Voter registration failed");
+      return response.data;
+    },
+    onSuccess: (data, variables) => {
+      localStorage.setItem(AUTH_TOKEN_KEY, data.token);
+      navigateAfterLogin(variables.callbackURL);
+    },
+    onError: (err) => handleError(err, "Voter Registration Failed"),
+  });
 
-      if (!response.success) {
-        throw new Error(response.error || "Voter registration failed");
-      }
+  const loginEmailMutation = useMutation({
+    mutationFn: async (data: SignInWithEmailRequest) => {
+      const response = await authApi.login<SignInWithEmailResponse>(data);
+      if (!response.success) throw new Error(response.error || "Login failed");
+      return response.data;
+    },
+    onSuccess: (data, variables) => {
+      localStorage.setItem(AUTH_TOKEN_KEY, data.token);
+      navigateAfterLogin(variables.callbackURL);
+    },
+    onError: (err) => handleError(err, "Login Failed"),
+  });
 
-      if (!response.data?.user || !response.data?.token) {
-        throw new Error("Invalid response from server");
-      }
-
-      // Store token and user data
-      localStorage.setItem(AUTH_TOKEN_KEY, response.data.token);
-      queryClient.invalidateQueries({ queryKey: ["session"] });
-      const redirectTo = callbackURL || DEFAULT_AFTER_LOGIN_REDIRECT;
-      setTimeout(() => {
-        router.navigate({ to: redirectTo, replace: true });
-      }, 100);
-
-      return {
-        token: response.data.token,
-        user: response.data.user,
-        username: username,
-      };
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        setError(error.message || "Voter registration failed");
-      } else {
-        setError("Voter registration failed");
-      }
-      // Ensure no data is stored on error
-      setUser(null);
-      setSession(null);
-      setIsAuthenticated(false);
-      throw error; // Re-throw to be handled by component
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Login with email
-  const handleLoginWithEmail = async (data: SignInWithEmailRequest) => {
-    const { email, password, callbackURL } = data;
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await authApi.login<SignInWithEmailResponse>({
-        email,
-        password,
-      });
-
-      if (!response.success) {
-        throw new Error(response.error || "Login failed");
-      }
-
-      if (!response.data?.user || !response.data?.token) {
-        throw new Error("Invalid response from server");
-      }
-
-      // Store token first
-      localStorage.setItem(AUTH_TOKEN_KEY, response.data.token);
-      const redirectTo = callbackURL || DEFAULT_AFTER_LOGIN_REDIRECT;
-
-      // Use setTimeout to ensure navigation happens after state updates
-      setTimeout(() => {
-        router.navigate({ to: redirectTo, replace: true });
-      }, 100);
-
-      // Invalidate and refetch session data after navigation
-      queryClient.invalidateQueries({ queryKey: ["session"] });
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        setError(error.message || "Login failed");
-        toast({
-          title: "Login Failed",
-          description: error.message || "Login failed",
-          variant: "destructive",
-        });
-      } else {
-        setError("Login failed");
-        toast({
-          title: "Login Failed",
-          description: "Login failed",
-          variant: "destructive",
-        });
-      }
-      throw error; // Re-throw to be handled by component
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Login with username
-  const handleLoginWithUsername = async (data: SignInWithUsernameRequest) => {
-    const { username, password, rememberMe = true, callbackURL } = data;
-    setIsLoading(true);
-    setError(null);
-
-    try {
+  const loginUsernameMutation = useMutation({
+    mutationFn: async (data: SignInWithUsernameRequest) => {
       const response = await authApi.loginWithUsername<SignInWithEmailResponse>({
-        username,
-        password,
-        rememberMe,
-        callbackURL: callbackURL || getCallbackUrl("/login"),
+        ...data,
+        callbackURL: data.callbackURL || getCallbackUrl("/login"),
       });
+      if (!response.success) throw new Error(response.error || "Login failed");
+      return response.data;
+    },
+    onSuccess: (data, variables) => {
+      localStorage.setItem(AUTH_TOKEN_KEY, data.token);
+      navigateAfterLogin(variables.callbackURL);
+    },
+    onError: (err) => handleError(err, "Login Failed"),
+  });
 
-      if (!response.success) {
-        throw new Error(response.error || "Login failed");
-      }
-
-      if (!response.data?.user || !response.data?.token) {
-        throw new Error("Invalid response from server");
-      }
-
-      // Store token first
-      localStorage.setItem(AUTH_TOKEN_KEY, response.data.token);
-
-      // Redirect to callback URL if provided, otherwise go to dashboard
-      const redirectTo = callbackURL || DEFAULT_AFTER_LOGIN_REDIRECT;
-
-      // Use setTimeout to ensure navigation happens after state updates
-      setTimeout(() => {
-        router.navigate({ to: redirectTo, replace: true });
-      }, 100);
-
-      // Invalidate and refetch session data after navigation
-      queryClient.invalidateQueries({ queryKey: ["session"] });
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        setError(error.message || "Login failed");
-        toast({
-          title: "Login Failed",
-          description: error.message || "Login failed",
-          variant: "destructive",
-        });
-      } else {
-        setError("Login failed");
-        toast({
-          title: "Login Failed",
-          description: "Login failed",
-          variant: "destructive",
-        });
-      }
-      throw error; // Re-throw to be handled by component
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  // Login with Google OAuth
-  const handleLoginWithGoogle = async (callbackURL?: string, type?: User_Type) => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
+  const loginGoogleMutation = useMutation({
+    mutationFn: async ({ callbackURL, type }: { callbackURL?: string; type?: User_Type }) => {
       const finalRedirectUrl = callbackURL ?? DEFAULT_AFTER_LOGIN_REDIRECT;
-      // Build callback URL with redirectTo and userType so the callback page can update type
       const baseCallback = getFullCallbackUrl("/auth/callback");
       const searchParams = new URLSearchParams();
       if (finalRedirectUrl) searchParams.set("redirectTo", finalRedirectUrl);
       if (type) searchParams.set("userType", type);
       const oauthCallbackUrl = `${baseCallback}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
 
-      console.log("oauthCallbackUrl", oauthCallbackUrl);
       const response = await authApi.loginWithGoogle<SocialSignInResponse>({
         provider: "google",
         callbackURL: oauthCallbackUrl,
         type: type || "MODEL",
       });
 
-      if (!response.success) {
-        throw new Error(response.error || "Google login failed");
+      if (!response.success) throw new Error(response.error || "Google login failed");
+      return response.data;
+    },
+    onSuccess: (data) => {
+      if (data?.redirect && data.url) {
+        window.location.href = data.url;
       }
+    },
+    onError: (err) => handleError(err, "Google Login Failed"),
+  });
 
-      // Check if response has redirect URL (OAuth flow)
-      if (response.data?.redirect && response.data.url) {
-        // Redirect to OAuth provider
-        window.location.href = response.data.url;
-        return;
-      }
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        setError(error.message || "Google login failed");
-        toast({
-          title: "Google Login Failed",
-          description: error.message || "Google login failed",
-          variant: "destructive",
-        });
-      } else {
-        setError("Google login failed");
-        toast({
-          title: "Google Login Failed",
-          description: "Google login failed",
-          variant: "destructive",
-        });
-      }
-      throw error; // Re-throw to be handled by component
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const getSession = async () => {
-    const response = await refetchSession();
-    return response.data as GetSessionResponse;
-  };
-
-  // Logout
-  const handleLogout = async () => {
-    try {
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
       const token = localStorage.getItem(AUTH_TOKEN_KEY);
       if (token) {
         await authApi.logout<{ success: boolean }>();
       }
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      // Clear local state first
-      setUser(null);
-      setSession(null);
-      setIsAuthenticated(false);
-      setError(null);
-
-      // Remove token from localStorage
+    },
+    onSettled: () => {
       localStorage.removeItem(AUTH_TOKEN_KEY);
-
-      // Clear all session-related queries from React Query cache
       queryClient.removeQueries({ queryKey: ["session"] });
       queryClient.clear();
-
-      // Navigate to logout redirect
       router.navigate({ to: DEFAULT_AFTER_LOGOUT_REDIRECT, replace: true });
-    }
-  };
+    },
+  });
 
-  // Check if user needs onboarding
-  const checkUserNeedsOnboarding = (): boolean => {
-    // Only check onboarding if user is authenticated
+  // --- Other Methods (Keeping as simple async functions or wrapped in validation) ---
+
+  const updateUser = useCallback(
+    async (data: { name?: string; image?: string }) => {
+      const response = await authApi.updateUser(data);
+      if (!response.success) throw new Error(response.error || "Update failed");
+      queryClient.invalidateQueries({ queryKey: ["session"] });
+    },
+    [queryClient]
+  );
+
+  const changePassword = useCallback(async (current: string, newPass: string) => {
+    const response = await authApi.changePassword({ currentPassword: current, newPassword: newPass });
+    if (!response.success) throw new Error(response.error || "Password change failed");
+  }, []);
+
+  const deleteUser = useCallback(
+    async (password: string) => {
+      const response = await authApi.deleteUser({ password });
+      if (!response.success) throw new Error(response.error || "Account deletion failed");
+
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+      queryClient.removeQueries();
+      router.navigate({ to: "/" });
+    },
+    [queryClient, router]
+  );
+
+  // Public methods (no auth required usually, or just utility)
+  const requestPasswordReset = useCallback(async (email: string) => {
+    const response = await authApi.requestPasswordReset({ email, callbackURL: getCallbackUrl("/reset-password") });
+    if (!response.success) throw new Error(response.error || "Request failed");
+  }, []);
+
+  const resetPassword = useCallback(async (token: string, newPassword: string) => {
+    const response = await authApi.resetPassword({ token, newPassword });
+    if (!response.success) throw new Error(response.error || "Reset failed");
+  }, []);
+
+  const sendVerificationEmail = useCallback(async (email: string) => {
+    const response = await authApi.sendVerificationEmail({ email, callbackURL: getCallbackUrl("/verify-email") });
+    if (!response.success) throw new Error(response.error || "Send failed");
+  }, []);
+
+  const verifyEmail = useCallback(
+    async (token: string) => {
+      const response = await authApi.verifyEmail({ token });
+      if (!response.success) throw new Error(response.error || "Verification failed");
+      queryClient.invalidateQueries({ queryKey: ["session"] });
+    },
+    [queryClient]
+  );
+
+  // Session Management
+  const listSessions = useCallback(async () => {
+    const response = await authApi.listSessions<Session[]>();
+    if (!response.success) throw new Error(response.error || "Failed to list sessions");
+    return response.data;
+  }, []);
+
+  const revokeSession = useCallback(
+    async (token: string) => {
+      const response = await authApi.revokeSession({ token });
+      if (!response.success) throw new Error(response.error || "Failed to revoke session");
+      queryClient.invalidateQueries({ queryKey: ["session"] }); // potentially we revoked other session, but safe to sync
+    },
+    [queryClient]
+  );
+
+  const revokeAllSessions = useCallback(async () => {
+    const response = await authApi.revokeAllSessions();
+    if (!response.success) throw new Error(response.error || "Failed");
+    logoutMutation.mutate();
+  }, [logoutMutation]);
+
+  const revokeOtherSessions = useCallback(async () => {
+    const response = await authApi.revokeOtherSessions();
+    if (!response.success) throw new Error(response.error || "Failed");
+  }, []);
+
+  const checkUserNeedsOnboarding = useCallback((): boolean => {
     if (!isAuthenticated || !user || !session) return false;
+    return !user.profileId || !session.profileId;
+  }, [isAuthenticated, user, session]);
 
-    // Check if user has a profile
-    if (!user.profileId || !session.profileId) return true;
-    return false;
-  };
+  const revalidateSession = useCallback(async () => {
+    const response = await authApi.getOAuthSession<GetSessionResponse>();
+    if (!response.success) throw new Error("Revalidation failed");
+    localStorage.setItem(AUTH_TOKEN_KEY, response.data.session.token);
+    queryClient.setQueryData(["session"], response.data);
+    return response.data;
+  }, [queryClient]);
 
-  // Update user
-  const updateUser = async (data: { name?: string; image?: string }) => {
-    try {
-      const token = localStorage.getItem(AUTH_TOKEN_KEY);
-      if (!token) throw new Error("No authentication token");
+  // Aggregate loading and error states
+  // We can consider 'loading' if session is initial loading OR if any mutation is pending
+  const generalLoading =
+    isSessionLoading ||
+    registerMutation.isPending ||
+    registerVoterMutation.isPending ||
+    loginEmailMutation.isPending ||
+    loginUsernameMutation.isPending ||
+    loginGoogleMutation.isPending;
 
-      const response = await fetch(getAuthUrl("/update-user"), {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
+  const generalError = (sessionQueryError as Error)?.message || registerMutation.error?.message || loginEmailMutation.error?.message || null;
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Update failed");
-      }
+  // Memoize value to avoid context churn
+  const value = useMemo<AuthContextType>(
+    () => ({
+      user,
+      session,
+      isAuthenticated,
+      isLoading: generalLoading,
+      error: generalError,
 
-      const updatedUser = await response.json();
-      setUser(updatedUser);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Update failed");
-      throw error;
-    }
-  };
+      handleRegister: async (d) => {
+        await registerMutation.mutateAsync(d);
+      },
+      handleRegisterAsVoter: async (d) => {
+        const res = await registerVoterMutation.mutateAsync(d);
+        return { token: res.token, user: res.user, username: res.user.username };
+      },
+      handleLoginWithEmail: async (d) => {
+        await loginEmailMutation.mutateAsync(d);
+      },
+      handleLoginWithUsername: async (d) => {
+        await loginUsernameMutation.mutateAsync(d);
+      },
+      handleLoginWithGoogle: async (cb, t) => {
+        await loginGoogleMutation.mutateAsync({ callbackURL: cb, type: t });
+      },
+      handleLogout: async () => {
+        await logoutMutation.mutateAsync();
+      },
 
-  // Change password
-  const changePassword = async (currentPassword: string, newPassword: string) => {
-    try {
-      const token = localStorage.getItem(AUTH_TOKEN_KEY);
-      if (!token) throw new Error("No authentication token");
+      checkUserNeedsOnboarding,
+      getSession: async () => {
+        const res = await refetchSession();
+        if (res.data) return res.data;
+        throw new Error("No session");
+      },
+      updateUser,
+      changePassword,
+      deleteUser,
 
-      const response = await fetch(getAuthUrl("/change-password"), {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          currentPassword,
-          newPassword,
-        }),
-      });
+      requestPasswordReset,
+      resetPassword,
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Password change failed");
-      }
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Password change failed");
-      throw error;
-    }
-  };
+      sendVerificationEmail,
+      verifyEmail,
 
-  // Delete user
-  const deleteUser = async (password: string) => {
-    try {
-      const token = localStorage.getItem(AUTH_TOKEN_KEY);
-      if (!token) throw new Error("No authentication token");
-
-      const response = await fetch(getAuthUrl("/delete-user"), {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ password }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Account deletion failed");
-      }
-
-      localStorage.removeItem(AUTH_TOKEN_KEY);
-      setUser(null);
-      setSession(null);
-      setIsAuthenticated(false);
-      router.navigate({ to: "/" });
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Account deletion failed");
-      throw error;
-    }
-  };
-
-  // Request password reset
-  const requestPasswordReset = async (email: string) => {
-    try {
-      const response = await fetch(getAuthUrl("/request-password-reset"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          callbackURL: getCallbackUrl("/reset-password"),
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Password reset request failed");
-      }
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Password reset request failed");
-      throw error;
-    }
-  };
-
-  // Reset password
-  const resetPassword = async (token: string, newPassword: string) => {
-    try {
-      const response = await fetch(getAuthUrl("/reset-password"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          token,
-          newPassword,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Password reset failed");
-      }
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Password reset failed");
-      throw error;
-    }
-  };
-
-  // Send verification email
-  const sendVerificationEmail = async (email: string) => {
-    try {
-      const response = await fetch(getAuthUrl("/send-verification-email"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          callbackURL: getCallbackUrl("/verify-email"),
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Verification email send failed");
-      }
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Verification email send failed");
-      throw error;
-    }
-  };
-
-  // Verify email
-  const verifyEmail = async (token: string) => {
-    try {
-      const response = await fetch(getAuthUrl(`/verify-email?token=${token}`), {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Email verification failed");
-      }
-
-      // Update user's email verification status
-      if (user) {
-        setUser({ ...user, emailVerified: true });
-      }
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Email verification failed");
-      throw error;
-    }
-  };
-
-  // List sessions
-  const listSessions = async (): Promise<Session[]> => {
-    try {
-      const token = localStorage.getItem(AUTH_TOKEN_KEY);
-      if (!token) throw new Error("No authentication token");
-
-      const response = await fetch(getAuthUrl("/list-sessions"), {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to list sessions");
-      }
-
-      return await response.json();
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Failed to list sessions");
-      throw error;
-    }
-  };
-
-  // Revoke session
-  const revokeSession = async (token: string) => {
-    try {
-      const authToken = localStorage.getItem(AUTH_TOKEN_KEY);
-      if (!authToken) throw new Error("No authentication token");
-
-      const response = await fetch(getAuthUrl("/revoke-session"), {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ token }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to revoke session");
-      }
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Failed to revoke session");
-      throw error;
-    }
-  };
-
-  // Revoke all sessions
-  const revokeAllSessions = async () => {
-    try {
-      const token = localStorage.getItem(AUTH_TOKEN_KEY);
-      if (!token) throw new Error("No authentication token");
-
-      const response = await fetch(getAuthUrl("/revoke-sessions"), {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to revoke all sessions");
-      }
-
-      // Logout current session
-      localStorage.removeItem(AUTH_TOKEN_KEY);
-      setUser(null);
-      setSession(null);
-      setIsAuthenticated(false);
-      router.navigate({ to: "/" });
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Failed to revoke all sessions");
-      throw error;
-    }
-  };
-
-  // Revoke other sessions
-  const revokeOtherSessions = async () => {
-    try {
-      const token = localStorage.getItem(AUTH_TOKEN_KEY);
-      if (!token) throw new Error("No authentication token");
-
-      const response = await fetch(getAuthUrl("/revoke-other-sessions"), {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to revoke other sessions");
-      }
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Failed to revoke other sessions");
-      throw error;
-    }
-  };
-
-  const value: AuthContextType = {
-    user,
-    session,
-    isAuthenticated,
-    isLoading,
-    error,
-    handleRegister,
-    handleRegisterAsVoter,
-    handleLoginWithEmail,
-    handleLoginWithUsername,
-    handleLoginWithGoogle,
-    handleLogout,
-    checkUserNeedsOnboarding,
-    getSession,
-    updateUser,
-    changePassword,
-    deleteUser,
-    requestPasswordReset,
-    resetPassword,
-    sendVerificationEmail,
-    verifyEmail,
-    listSessions,
-    revokeSession,
-    revokeAllSessions,
-    revokeOtherSessions,
-    revalidateSession,
-  };
+      listSessions,
+      revokeSession,
+      revokeAllSessions,
+      revokeOtherSessions,
+      revalidateSession,
+    }),
+    [
+      user,
+      session,
+      isAuthenticated,
+      generalLoading,
+      generalError,
+      registerMutation,
+      registerVoterMutation,
+      loginEmailMutation,
+      loginUsernameMutation,
+      loginGoogleMutation,
+      logoutMutation,
+      checkUserNeedsOnboarding,
+      refetchSession,
+      updateUser,
+      changePassword,
+      deleteUser,
+      requestPasswordReset,
+      resetPassword,
+      sendVerificationEmail,
+      verifyEmail,
+      listSessions,
+      revokeSession,
+      revokeAllSessions,
+      revokeOtherSessions,
+      revalidateSession,
+    ]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
