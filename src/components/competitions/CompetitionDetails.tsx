@@ -7,7 +7,15 @@ import { Contest } from "@/types/contest.types";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
 import { format } from "date-fns";
-import { Calendar, Clock, DollarSign, Share2, Trophy, Users, User } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  DollarSign,
+  Share2,
+  Trophy,
+  Users,
+  User,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -20,7 +28,12 @@ const formatDate = (date: string | Date) => {
 };
 
 function CountdownTimer({ targetDate }: { targetDate: string | Date }) {
-  const [timeLeft, setTimeLeft] = useState<{ d: number; h: number; m: number; s: number } | null>(null);
+  const [timeLeft, setTimeLeft] = useState<{
+    d: number;
+    h: number;
+    m: number;
+    s: number;
+  } | null>(null);
 
   useEffect(() => {
     const calculate = () => {
@@ -50,11 +63,18 @@ function CountdownTimer({ targetDate }: { targetDate: string | Date }) {
         { label: "Mins", value: timeLeft.m },
         { label: "Secs", value: timeLeft.s },
       ].map((item) => (
-        <div key={item.label} className="flex flex-col items-center min-w-[55px]">
+        <div
+          key={item.label}
+          className="flex flex-col items-center min-w-[55px]"
+        >
           <div className="w-12 h-12 flex items-center justify-center bg-gray-50 border border-gray-200 rounded-lg shadow-sm mb-1.5">
-            <span className="text-xl font-bold text-gray-900 tabular-nums">{item.value.toString().padStart(2, "0")}</span>
+            <span className="text-xl font-bold text-gray-900 tabular-nums">
+              {item.value.toString().padStart(2, "0")}
+            </span>
           </div>
-          <span className="text-[9px] uppercase font-bold text-gray-500 tracking-wider">{item.label}</span>
+          <span className="text-[9px] uppercase font-bold text-gray-500 tracking-wider">
+            {item.label}
+          </span>
         </div>
       ))}
     </div>
@@ -99,8 +119,13 @@ export function CompetitionDetails() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Competition Not Found</h1>
-          <p className="text-gray-600">The competition you're looking for doesn't exist or has been removed.</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">
+            Competition Not Found
+          </h1>
+          <p className="text-gray-600">
+            The competition you're looking for doesn't exist or has been
+            removed.
+          </p>
         </div>
       </div>
     );
@@ -174,10 +199,16 @@ export function CompetitionDetails() {
         {/* Hero Section with Image and Title */}
         <div className="relative">
           <div className="w-full relative h-[520px] rounded-2xl overflow-hidden mb-6">
-            <img src={getImageUrl(competition?.images ?? [])} alt={competition.name} className="w-full h-full object-cover" />
+            <img
+              src={getImageUrl(competition?.images ?? [])}
+              alt={competition.name}
+              className="w-full h-full object-cover"
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
             <div className="absolute top-0 right-0 py-6 px-8">
-              <div className="flex items-center space-x-3 mb-4">{getStatusBadge(competition.status)}</div>
+              <div className="flex items-center space-x-3 mb-4">
+                {getStatusBadge(competition.status)}
+              </div>
             </div>
             <div className="absolute bottom-0 right-0 p-4 md:p-8">
               <div className="flex items-center space-x-3 md:mb-4">
@@ -204,8 +235,10 @@ export function CompetitionDetails() {
               </div>
             </div>
             <div className="absolute md:bottom-0 bottom-10 left-0 p-4 pb-6 md:pb-8 md:p-8 md:pr-40">
-              <h1 className="text-3xl capitalize font-bold text-white mb-2">{competition.name}</h1>
-              <p className="text-white/90 text-sm sentence-case max-w-3xl hidden md:block">{competition.description}</p>
+              <h1 className="text-3xl capitalize font-bold text-white mb-2">
+                {competition.name}
+              </h1>
+              {/*<p className="text-white/90 text-sm sentence-case max-w-3xl hidden md:block">{competition.description}</p>*/}
             </div>
           </div>
         </div>
@@ -224,7 +257,9 @@ export function CompetitionDetails() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
-                <p className="text-gray-600 leading-relaxed text-[15px]">{competition.description}</p>
+                <pre className="text-gray-600 leading-relaxed text-[15px]">
+                  {competition.description}
+                </pre>
               </CardContent>
             </Card>
 
@@ -241,7 +276,9 @@ export function CompetitionDetails() {
                 </CardHeader>
                 <CardContent className="pt-6">
                   <div className="prose max-w-none">
-                    <p className="text-gray-600 whitespace-pre-wrap text-[15px]">{competition.rules}</p>
+                    <p className="text-gray-600 whitespace-pre-wrap text-[15px]">
+                      {competition.rules}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -259,7 +296,9 @@ export function CompetitionDetails() {
                 </CardHeader>
                 <CardContent className="pt-6">
                   <div className="prose max-w-none">
-                    <p className="text-gray-600 whitespace-pre-wrap text-[15px]">{competition.requirements}</p>
+                    <p className="text-gray-600 whitespace-pre-wrap text-[15px]">
+                      {competition.requirements}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -279,7 +318,10 @@ export function CompetitionDetails() {
                 <CardContent className="pt-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {competition.awards.map((award) => (
-                      <div key={award.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div
+                        key={award.id}
+                        className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                      >
                         <span className="text-2xl">{award.icon}</span>
                         <span className="font-medium">{award.name}</span>
                       </div>
@@ -295,7 +337,9 @@ export function CompetitionDetails() {
             {/* Quick Info */}
             <Card className="border border-gray-200 shadow-sm overflow-hidden bg-white">
               <CardHeader className="border-b border-gray-100 bg-gray-50 py-6 px-5">
-                <CardTitle className="text-sm font-bold uppercase tracking-widest">Competition Details</CardTitle>
+                <CardTitle className="text-sm font-bold uppercase tracking-widest">
+                  Competition Details
+                </CardTitle>
               </CardHeader>
               <CardContent className="p-5 space-y-4">
                 <div className="flex items-center gap-3 group">
@@ -303,8 +347,12 @@ export function CompetitionDetails() {
                     <DollarSign className="h-5 w-5 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-0.5">Prize Pool</p>
-                    <p className="text-lg font-black text-gray-900 tracking-tight">${competition.prizePool?.toLocaleString()}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-0.5">
+                      Prize Pool
+                    </p>
+                    <p className="text-lg font-black text-gray-900 tracking-tight">
+                      ${competition.prizePool?.toLocaleString()}
+                    </p>
                   </div>
                 </div>
 
@@ -315,43 +363,59 @@ export function CompetitionDetails() {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Registration</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                          Registration
+                        </p>
                         {new Date() < new Date(competition.startDate) ? (
                           <Badge className="text-[9px] h-5 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-100 px-1.5 font-bold uppercase rounded-md shadow-sm">
                             Upcoming
                           </Badge>
-                        ) : new Date(competition.registrationDeadline) > new Date() ? (
+                        ) : new Date(competition.registrationDeadline) >
+                          new Date() ? (
                           <Badge className="text-[9px] h-5 bg-green-50 text-green-700 hover:bg-green-100 border border-green-100 px-1.5 font-bold uppercase rounded-md shadow-sm">
                             Open
                           </Badge>
                         ) : (
-                          <Badge className="text-[9px] h-5 bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200 px-1.5 font-bold uppercase rounded-md">Closed</Badge>
+                          <Badge className="text-[9px] h-5 bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200 px-1.5 font-bold uppercase rounded-md">
+                            Closed
+                          </Badge>
                         )}
                       </div>
                       <p className="font-bold text-gray-700 text-sm">
-                        {formatDate(competition.startDate)} - {formatDate(competition.registrationDeadline)}
+                        {formatDate(competition.startDate)} -{" "}
+                        {formatDate(competition.registrationDeadline)}
                       </p>
                       {(() => {
                         const now = new Date();
                         const start = new Date(competition.startDate);
-                        const deadline = new Date(competition.registrationDeadline);
+                        const deadline = new Date(
+                          competition.registrationDeadline,
+                        );
 
                         if (now < start) {
-                          const diffDays = Math.ceil((start.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                          const diffDays = Math.ceil(
+                            (start.getTime() - now.getTime()) /
+                              (1000 * 60 * 60 * 24),
+                          );
                           return (
                             <p className="text-[10px] font-semibold text-blue-600 mt-1">
-                              Starts in {diffDays} {diffDays === 1 ? "day" : "days"}
+                              Starts in {diffDays}{" "}
+                              {diffDays === 1 ? "day" : "days"}
                             </p>
                           );
                         } else if (now < deadline) {
-                          const diffDays = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                          const diffDays = Math.ceil(
+                            (deadline.getTime() - now.getTime()) /
+                              (1000 * 60 * 60 * 24),
+                          );
                           return (
                             <p className="text-[10px] font-semibold text-orange-600 mt-1 flex items-center gap-1.5">
                               <span className="relative flex h-1.5 w-1.5">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-orange-500"></span>
                               </span>
-                              Ends in {diffDays} {diffDays === 1 ? "day" : "days"}
+                              Ends in {diffDays}{" "}
+                              {diffDays === 1 ? "day" : "days"}
                             </p>
                           );
                         }
@@ -367,8 +431,12 @@ export function CompetitionDetails() {
                       <Clock className="h-4 w-4 text-indigo-600" />
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-0.5">Ends On</p>
-                      <p className="font-bold text-gray-700 text-sm">{formatDate(competition.endDate)}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-0.5">
+                        Ends On
+                      </p>
+                      <p className="font-bold text-gray-700 text-sm">
+                        {formatDate(competition.endDate)}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -380,8 +448,11 @@ export function CompetitionDetails() {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Results</p>
-                        {new Date(competition.resultAnnounceDate) > new Date() ? (
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                          Results
+                        </p>
+                        {new Date(competition.resultAnnounceDate) >
+                        new Date() ? (
                           <Badge className="text-[9px] h-5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-100 px-1.5 font-bold uppercase rounded-md shadow-sm">
                             Scheduled
                           </Badge>
@@ -391,7 +462,9 @@ export function CompetitionDetails() {
                           </Badge>
                         )}
                       </div>
-                      <p className="font-bold text-gray-700 text-sm">{formatDate(competition.resultAnnounceDate)}</p>
+                      <p className="font-bold text-gray-700 text-sm">
+                        {formatDate(competition.resultAnnounceDate)}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -403,28 +476,48 @@ export function CompetitionDetails() {
               <div className="relative z-10">
                 {new Date(competition.startDate) > new Date() ? (
                   <div className="bg-gray-50 p-6 text-center border-b border-gray-100">
-                    <p className="text-[10px] font-bold uppercase tracking-widest mb-4 text-gray-500">Starts In</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest mb-4 text-gray-500">
+                      Starts In
+                    </p>
                     <div className="flex justify-center mb-6">
                       <CountdownTimer targetDate={competition.startDate} />
                     </div>
-                    <Button disabled className="w-full bg-white border border-gray-200 text-gray-400 font-bold h-12 rounded-xl cursor-not-allowed text-sm" size="lg">
+                    <Button
+                      disabled
+                      className="w-full bg-white border border-gray-200 text-gray-400 font-bold h-12 rounded-xl cursor-not-allowed text-sm"
+                      size="lg"
+                    >
                       Join Contest (Opens Soon)
                     </Button>
                   </div>
                 ) : new Date(competition.endDate) > new Date() ? (
                   <div className="bg-gray-50 p-6 text-center border-b border-gray-100">
-                    <p className="text-[10px] font-bold uppercase tracking-widest mb-4 text-gray-500">Competition Ends In</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest mb-4 text-gray-500">
+                      Competition Ends In
+                    </p>
                     <div className="flex justify-center mb-6">
                       <CountdownTimer targetDate={competition.endDate} />
                     </div>
-                    <ContestJoinButton contest={competition} className="w-full h-12 rounded-xl text-sm font-bold shadow-sm transition-all" size="lg" showAuthModal={true} />
+                    <ContestJoinButton
+                      contest={competition}
+                      className="w-full h-12 rounded-xl text-sm font-bold shadow-sm transition-all"
+                      size="lg"
+                      showAuthModal={true}
+                    />
                   </div>
                 ) : (
                   <div className="p-6 bg-white border-b border-gray-100">
                     <div className="text-center mb-4">
-                      <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Competition Ended</p>
+                      <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">
+                        Competition Ended
+                      </p>
                     </div>
-                    <ContestJoinButton contest={competition} className="w-full h-12 rounded-xl text-sm font-bold shadow-sm transition-all" size="lg" showAuthModal={true} />
+                    <ContestJoinButton
+                      contest={competition}
+                      className="w-full h-12 rounded-xl text-sm font-bold shadow-sm transition-all"
+                      size="lg"
+                      showAuthModal={true}
+                    />
                   </div>
                 )}
 
@@ -435,7 +528,10 @@ export function CompetitionDetails() {
                     size="lg"
                     asChild
                   >
-                    <Link to={`/competitions/$slug/participants`} params={{ slug: competition.slug }}>
+                    <Link
+                      to={`/competitions/$slug/participants`}
+                      params={{ slug: competition.slug }}
+                    >
                       View Participants
                     </Link>
                   </Button>
