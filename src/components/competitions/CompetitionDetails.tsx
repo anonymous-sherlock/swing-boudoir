@@ -257,9 +257,9 @@ export function CompetitionDetails() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
-                <pre className="text-gray-600 leading-relaxed text-[15px]">
+                <p className="text-gray-600 leading-relaxed text-[15px] whitespace-pre-wrap">
                   {competition.description}
-                </pre>
+                </p>
               </CardContent>
             </Card>
 
