@@ -19,7 +19,7 @@ export function TermsOfService() {
           <section>
             <h3 className="text-lg font-semibold mb-3">1. Acceptance of Terms</h3>
             <p className="text-muted-foreground">
-              By accessing BUNTECH LLC, doing business as Swing Boudoir, or participating in the Swing Boudoir Ultimate Cover Model Competition ("Competition"), you agree to be
+              By accessing WI Thinkers, doing business as Swing Boudoir, or participating in the Swing Boudoir Ultimate Cover Model Competition ("Competition"), you agree to be
               bound by these Terms of Service. If you do not agree, please discontinue use of the platform immediately.
             </p>
           </section>

@@ -61,11 +61,11 @@ const Footer = () => {
 
             {/* Address */}
             <div className="text-white/60 text-sm mb-6 max-w-md">
-              <p className="font-semibold text-white/80 mb-2">BUNTECH LLC</p>
+              <p className="font-semibold text-white/80 mb-2">WI Thinkers</p>
               <p>DBA Swing Boudoir Magazine</p>
-              <p>30 N Gould St STE</p>
-              <p>Sheridan, WY 82801</p>
-              <p>United States</p>
+              <p>4th Floor, Plot 605, Sector 42</p>
+              <p>Gurugram, Haryana 122009</p>
+              <p>India</p>
             </div>
 
             {/* Social Links */}
@@ -105,7 +105,7 @@ const Footer = () => {
       <div className="border-t border-white/10">
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="text-white/60 text-sm mb-4 md:mb-0">© 2025 BUNTECH LLC DBA Swing Boudoir. All rights reserved.</div>
+            <div className="text-white/60 text-sm mb-4 md:mb-0">© 2025 WI Thinkers DBA Swing Boudoir. All rights reserved.</div>
             <div className="flex space-x-6 text-sm">
               <a href="/terms-of-services" className="text-white/60 hover:text-accent transition-smooth">
                 Terms of Service

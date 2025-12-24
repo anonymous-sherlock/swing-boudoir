@@ -134,15 +134,15 @@ export function RefundCancellationPolicyPage(): JSX.Element {
               <p>Email: submit@swingboudoirmag.com</p>
               <p>Competition Support: submit@swingboudoirmag.com</p>
               <p>
-                BUNTECH LLC
+                WI Thinkers
                 <br />
                 DBA Swing Boudoir Magazine
                 <br />
-                30 N Gould St STE
+                4th Floor, Plot 605, Sector 42
                 <br />
-                Sheridan, WY 82801
+                Gurugram, Haryana 122009
                 <br />
-                United States
+                India
               </p>
             </div>
           </section>
