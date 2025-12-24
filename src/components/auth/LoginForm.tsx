@@ -55,7 +55,7 @@ export function LoginForm({ callbackURL: propCallbackURL, onSuccess }: LoginForm
 
       toast({
         title: "Login Successful!",
-        description: "Welcome back! Redirecting to your dashboard...",
+        description: "Welcome back! You are now signed in.",
       });
 
       onSuccess?.();

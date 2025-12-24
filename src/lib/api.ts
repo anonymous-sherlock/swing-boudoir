@@ -12,6 +12,7 @@
 
 import { SignInWithEmailRequest, SignInWithUsernameRequest, SignUpWithEmailRequest, User_Type } from "@/types";
 import { getApiUrl, getAuthUrl } from "./config";
+import { AUTH_TOKEN_KEY } from "./auth";
 
 // Common API response types
 export interface ApiSuccessResponse<T = any> {
@@ -100,6 +101,14 @@ const apiRequest = async <T = any>(endpoint: string, options: ApiRequestOptions 
       requestConfig.body = body;
     } else {
       requestConfig.body = JSON.stringify(body);
+    }
+  }
+
+  // Add Authorization header if required
+  if (requireAuth) {
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    if (token) {
+      (headers as any)["Authorization"] = `Bearer ${token}`;
     }
   }
 

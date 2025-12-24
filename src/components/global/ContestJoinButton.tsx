@@ -158,7 +158,7 @@ export const ContestJoinButton: React.FC<ContestJoinButtonProps> = ({
 
   const handleAuthSuccess = () => {
     setIsAuthModalOpen(false);
-    window.location.reload();
+    // The AuthContext will refetch the session and update the UI
   };
 
   // Check if competition has ended

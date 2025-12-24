@@ -88,6 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const {
     data: sessionData,
     isLoading: isSessionLoading,
+    isFetching: isSessionFetching,
     error: sessionQueryError,
     refetch: refetchSession,
   } = useQuery({
@@ -125,9 +126,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const navigateAfterLogin = useCallback(
     (callbackURL?: string | null) => {
       const redirectTo = callbackURL || DEFAULT_AFTER_LOGIN_REDIRECT;
-      // Invalidate session to ensure fresh state, then navigate
-      queryClient.invalidateQueries({ queryKey: ["session"] }).then(() => {
-        router.navigate({ to: redirectTo, replace: true });
+      const currentPath = window.location.pathname;
+
+      // Invalidate and refetch session to ensure fresh state
+      queryClient.refetchQueries({ queryKey: ["session"] }).then(() => {
+        // Only navigate if we're not already on the target path
+        if (currentPath !== redirectTo) {
+          router.navigate({ to: redirectTo, replace: true });
+        }
       });
     },
     [queryClient, router]
@@ -340,6 +346,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // We can consider 'loading' if session is initial loading OR if any mutation is pending
   const generalLoading =
     isSessionLoading ||
+    (isSessionFetching && !isAuthenticated) ||
     registerMutation.isPending ||
     registerVoterMutation.isPending ||
     loginEmailMutation.isPending ||
