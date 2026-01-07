@@ -397,20 +397,20 @@ const IdentityScene: React.FC<IdentitySceneProps> = ({ formData, updateFormData,
                               }}
                               onKeyDown={(e) => {
                                 // Allow: backspace, delete, tab, escape, enter, and navigation keys
-                                if (
-                                  [8, 9, 27, 13, 46, 37, 38, 39, 40].includes(e.keyCode) ||
-                                  // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
-                                  (e.keyCode === 65 && e.ctrlKey === true) ||
-                                  (e.keyCode === 67 && e.ctrlKey === true) ||
-                                  (e.keyCode === 86 && e.ctrlKey === true) ||
-                                  (e.keyCode === 88 && e.ctrlKey === true)
-                                ) {
-                                  return;
-                                }
-                                // Ensure that it is a number and stop the keypress if not
-                                if ((e.shiftKey || e.keyCode < 48 || e.keyCode > 57) && (e.keyCode < 96 || e.keyCode > 105)) {
-                                  e.preventDefault();
-                                }
+                                // if (
+                                //   [8, 9, 27, 13, 46, 37, 38, 39, 40].includes(e.keyCode) ||
+                                //   // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                                //   (e.keyCode === 65 && e.ctrlKey === true) ||
+                                //   (e.keyCode === 67 && e.ctrlKey === true) ||
+                                //   (e.keyCode === 86 && e.ctrlKey === true) ||
+                                //   (e.keyCode === 88 && e.ctrlKey === true)
+                                // ) {
+                                //   return;
+                                // }
+                                // // Ensure that it is a number and stop the keypress if not
+                                // if ((e.shiftKey || e.keyCode < 48 || e.keyCode > 57) && (e.keyCode < 96 || e.keyCode > 105)) {
+                                //   e.preventDefault();
+                                // }
                               }}
                             />
                           </FormControl>
