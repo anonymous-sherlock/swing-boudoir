@@ -2,7 +2,14 @@ import identityImage from "@/assets/onboarding-identity.jpg";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { CalendarIcon, ChevronRight, MapPin, Phone, User, User2 } from "lucide-react";
+import {
+  CalendarIcon,
+  ChevronRight,
+  MapPin,
+  Phone,
+  User,
+  User2,
+} from "lucide-react";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -10,11 +17,24 @@ import z from "zod";
 import { Button } from "../ui/button";
 import { Calendar } from "../ui/calendar";
 import { CountryDropdown } from "../ui/country-dropdown";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "../ui/form";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 import { FormData } from "./index";
 import { PhoneInput } from "../ui/phone-input";
 
@@ -37,7 +57,10 @@ const FormSchema = z.object({
       const age = today.getFullYear() - birthDate.getFullYear();
       const monthDiff = today.getMonth() - birthDate.getMonth();
 
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      if (
+        monthDiff < 0 ||
+        (monthDiff === 0 && today.getDate() < birthDate.getDate())
+      ) {
         return age - 1 >= 18;
       }
       return age >= 18;
@@ -67,7 +90,10 @@ const FormSchema = z.object({
       required_error: "Zipcode is required",
     })
     .min(3, "Zipcode must be at least 3 characters"),
-  hobbiesAndPassions: z.string().max(300, "Hobbies and passions must be at most 300 characters").optional(),
+  hobbiesAndPassions: z
+    .string()
+    .max(300, "Hobbies and passions must be at most 300 characters")
+    .optional(),
   experienceLevel: z
     .string({
       required_error: "Experience level is required",
@@ -80,7 +106,11 @@ const FormSchema = z.object({
     .min(1, "Phone number is required"),
 });
 
-const IdentityScene: React.FC<IdentitySceneProps> = ({ formData, updateFormData, onNext }) => {
+const IdentityScene: React.FC<IdentitySceneProps> = ({
+  formData,
+  updateFormData,
+  onNext,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [date, setDate] = useState<Date | null>(null);
 
@@ -129,7 +159,10 @@ const IdentityScene: React.FC<IdentitySceneProps> = ({ formData, updateFormData,
       {/* <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/30 to-black/90" /> */}
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-6">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="w-full space-y-6"
+        >
           <div className="scene-content !pt-28">
             <div className="w-full p-0 md:max-w-2xl mx-auto animate-fade-in-up rounded-2xl !bg-black/30 !backdrop-blur-xl md:p-4">
               <div className="glass-card-dark">
@@ -151,15 +184,26 @@ const IdentityScene: React.FC<IdentitySceneProps> = ({ formData, updateFormData,
                           Experience Level
                         </FormLabel>
                         <FormControl>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
                             <SelectTrigger className="w-full bg-black/50 border border-gray-800 text-white/80 placeholder:text-muted-foreground focus:ring-[#D4AF37] focus:ring-1 focus:ring-offset-1 focus:ring-offset-transparent focus-visible:ring-[#D4AF37] focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent">
                               <SelectValue placeholder="Select experience level" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="beginner">Beginner (0-1 years)</SelectItem>
-                              <SelectItem value="intermediate">Intermediate (2-4 years)</SelectItem>
-                              <SelectItem value="experienced">Experienced (5-9 years)</SelectItem>
-                              <SelectItem value="professional">Professional (10+ years)</SelectItem>
+                              <SelectItem value="beginner">
+                                Beginner (0-1 years)
+                              </SelectItem>
+                              <SelectItem value="intermediate">
+                                Intermediate (2-4 years)
+                              </SelectItem>
+                              <SelectItem value="experienced">
+                                Experienced (5-9 years)
+                              </SelectItem>
+                              <SelectItem value="professional">
+                                Professional (10+ years)
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         </FormControl>
@@ -178,13 +222,15 @@ const IdentityScene: React.FC<IdentitySceneProps> = ({ formData, updateFormData,
                           Phone Number
                         </FormLabel>
                         <FormControl>
-                          <PhoneInput 
-                          defaultCountry="US"
-                          classNames={{
-                            triggerStyle: "bg-black/50 border border-gray-800 text-white/80 placeholder:text-muted-foreground focus:!ring-[#D4AF37] focus:ring-1 focus:ring-offset-1 focus:ring-offset-transparent focus-visible:!ring-[#D4AF37] focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent focus-visible:outline-none",
-                            inputStyle: "bg-black/50 border border-gray-800 text-white/80 placeholder:text-muted-foreground focus:!ring-[#D4AF37] focus:ring-1 focus:ring-offset-1 focus:ring-offset-transparent focus-visible:!ring-[#D4AF37] focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent focus-visible:outline-none"
-                          }}
-                          {...field}
+                          <PhoneInput
+                            defaultCountry="US"
+                            classNames={{
+                              triggerStyle:
+                                "bg-black/50 border border-gray-800 text-white/80 placeholder:text-muted-foreground focus:!ring-[#D4AF37] focus:ring-1 focus:ring-offset-1 focus:ring-offset-transparent focus-visible:!ring-[#D4AF37] focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent focus-visible:outline-none",
+                              inputStyle:
+                                "bg-black/50 border border-gray-800 text-white/80 placeholder:text-muted-foreground focus:!ring-[#D4AF37] focus:ring-1 focus:ring-offset-1 focus:ring-offset-transparent focus-visible:!ring-[#D4AF37] focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent focus-visible:outline-none",
+                            }}
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -211,28 +257,52 @@ const IdentityScene: React.FC<IdentitySceneProps> = ({ formData, updateFormData,
                                   variant={"competition"}
                                   className={cn(
                                     "w-full font-normal bg-black/50 !mt-0 focus:!ring-[#D4AF37] focus:ring-1 focus:ring-offset-1 focus:ring-offset-transparent focus-visible:!ring-[#D4AF37] focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent focus-visible:outline-none border !border-gray-800",
-                                    field.value ? "text-white/80" : "text-muted-foreground"
+                                    field.value
+                                      ? "text-white/80"
+                                      : "text-muted-foreground",
                                   )}
                                 >
-                                  {field.value ? `${format(field.value, "PPP")}` : <span>Pick a date</span>}
+                                  {field.value ? (
+                                    `${format(field.value, "PPP")}`
+                                  ) : (
+                                    <span>Pick a date</span>
+                                  )}
                                   <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                 </Button>
                               </FormControl>
                             </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
+                            <PopoverContent
+                              className="w-auto p-0"
+                              align="start"
+                            >
                               <Calendar
                                 mode="single"
                                 captionLayout="dropdown"
-                                selected={date || (field.value ? new Date(field.value) : undefined)}
+                                selected={
+                                  date ||
+                                  (field.value
+                                    ? new Date(field.value)
+                                    : undefined)
+                                }
                                 onSelect={(selectedDate) => {
                                   if (selectedDate) {
                                     setDate(selectedDate);
-                                    field.onChange(selectedDate.toISOString().split("T")[0]);
-                                    updateFormData({ dateOfBirth: selectedDate.toISOString().split("T")[0] });
+                                    field.onChange(
+                                      selectedDate.toISOString().split("T")[0],
+                                    );
+                                    updateFormData({
+                                      dateOfBirth: selectedDate
+                                        .toISOString()
+                                        .split("T")[0],
+                                    });
                                   }
                                 }}
                                 onDayClick={() => setIsOpen(false)}
-                                defaultMonth={field.value ? new Date(field.value) : undefined}
+                                defaultMonth={
+                                  field.value
+                                    ? new Date(field.value)
+                                    : undefined
+                                }
                               />
                             </PopoverContent>
                           </Popover>
@@ -261,7 +331,9 @@ const IdentityScene: React.FC<IdentitySceneProps> = ({ formData, updateFormData,
                               <SelectTrigger
                                 className={cn(
                                   "shadow-glow bg-black/50 hover:opacity-90 outline-none border border-gray-800 focus:!ring-[#D4AF37] focus:ring-1 focus:ring-offset-1 focus:ring-offset-transparent focus-visible:!ring-[#D4AF37] focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent",
-                                  field.value ? "text-white/80" : "text-muted-foreground"
+                                  field.value
+                                    ? "text-white/80"
+                                    : "text-muted-foreground",
                                 )}
                               >
                                 <SelectValue placeholder="Select gender" />
@@ -271,7 +343,9 @@ const IdentityScene: React.FC<IdentitySceneProps> = ({ formData, updateFormData,
                               <SelectItem value="male">Male</SelectItem>
                               <SelectItem value="female">Female</SelectItem>
                               <SelectItem value="other">Other</SelectItem>
-                              <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                              <SelectItem value="prefer-not-to-say">
+                                Prefer not to say
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -296,7 +370,9 @@ const IdentityScene: React.FC<IdentitySceneProps> = ({ formData, updateFormData,
                               classNames={{
                                 popupTrigger: cn(
                                   "w-full font-normal bg-black/50 !mt-0 focus:!ring-[#D4AF37] focus:ring-1 focus:ring-offset-1 focus:ring-offset-transparent focus-visible:!ring-[#D4AF37] focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent focus-visible:outline-none border-gray-800 shadow-glow",
-                                  field.value ? "text-white/80" : "text-muted-foreground"
+                                  field.value
+                                    ? "text-white/80"
+                                    : "text-muted-foreground",
                                 ),
                               }}
                               defaultValue={field.value}
@@ -325,7 +401,9 @@ const IdentityScene: React.FC<IdentitySceneProps> = ({ formData, updateFormData,
                               type="text"
                               className={cn(
                                 "shadow-glow bg-black/50 border border-gray-800 outline-none placeholder:text-muted-foreground focus:!ring-[#D4AF37] focus:ring-1 focus:ring-offset-1 focus:ring-offset-transparent focus-visible:!ring-[#D4AF37] focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent",
-                                field.value ? "text-white/80" : "text-muted-foreground"
+                                field.value
+                                  ? "text-white/80"
+                                  : "text-muted-foreground",
                               )}
                               placeholder="New York"
                               {...field}
@@ -356,7 +434,9 @@ const IdentityScene: React.FC<IdentitySceneProps> = ({ formData, updateFormData,
                               type="text"
                               className={cn(
                                 "shadow-glow bg-black/50 border border-gray-800 outline-none placeholder:text-muted-foreground focus:!ring-[#D4AF37] focus:ring-1 focus:ring-offset-1 focus:ring-offset-transparent focus-visible:!ring-[#D4AF37] focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent",
-                                field.value ? "text-white/80" : "text-muted-foreground"
+                                field.value
+                                  ? "text-white/80"
+                                  : "text-muted-foreground",
                               )}
                               placeholder="123 Main Street"
                               {...field}
@@ -385,15 +465,17 @@ const IdentityScene: React.FC<IdentitySceneProps> = ({ formData, updateFormData,
                               type="text"
                               className={cn(
                                 "shadow-glow bg-black/50 border border-gray-800 outline-none placeholder:text-muted-foreground focus:!ring-[#D4AF37] focus:ring-1 focus:ring-offset-1 focus:ring-offset-transparent focus-visible:!ring-[#D4AF37] focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent",
-                                field.value ? "text-white/80" : "text-muted-foreground"
+                                field.value
+                                  ? "text-white/80"
+                                  : "text-muted-foreground",
                               )}
                               placeholder="10001"
                               {...field}
                               onChange={(e) => {
                                 // Only allow numbers
-                                const numericValue = e.target.value.replace(/\D/g, "");
-                                field.onChange(numericValue);
-                                updateFormData({ zipcode: numericValue });
+                                // const numericValue = e.target.value.replace(/\D/g, "");
+                                field.onChange(e.target.value);
+                                updateFormData({ zipcode: e.target.value });
                               }}
                               onKeyDown={(e) => {
                                 // Allow: backspace, delete, tab, escape, enter, and navigation keys
@@ -439,11 +521,15 @@ const IdentityScene: React.FC<IdentitySceneProps> = ({ formData, updateFormData,
                             {...field}
                             onChange={(e) => {
                               field.onChange(e);
-                              updateFormData({ hobbiesAndPassions: e.target.value });
+                              updateFormData({
+                                hobbiesAndPassions: e.target.value,
+                              });
                             }}
                             maxLength={300}
                           />
-                          <div className="absolute bottom-3 right-3 text-xs text-gray-400">{field.value?.length || 0}/300</div>
+                          <div className="absolute bottom-3 right-3 text-xs text-gray-400">
+                            {field.value?.length || 0}/300
+                          </div>
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -452,7 +538,10 @@ const IdentityScene: React.FC<IdentitySceneProps> = ({ formData, updateFormData,
                 />
 
                 <div className="flex justify-center mt-8">
-                  <Button type="submit" className="btn-primary flash-effect group">
+                  <Button
+                    type="submit"
+                    className="btn-primary flash-effect group"
+                  >
                     Continue Journey
                     <ChevronRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
                   </Button>
