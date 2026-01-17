@@ -14,7 +14,7 @@
 import { toast } from "sonner";
 import { authApi } from "@/lib/api";
 import { AUTH_TOKEN_KEY } from "@/lib/auth";
-import { getCallbackUrl, getFullCallbackUrl } from "@/lib/config";
+import { getFullCallbackUrl } from "@/lib/config";
 
 import { DEFAULT_AFTER_LOGIN_REDIRECT, DEFAULT_AFTER_LOGOUT_REDIRECT } from "@/routes";
 import {
@@ -152,6 +152,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await authApi.register<{ token: string; user: User }>({
         ...data,
         type: data.type || "MODEL",
+        callbackURL: data.callbackURL ? getFullCallbackUrl(data.callbackURL) : undefined,
       });
       if (!response.success) throw new Error(response.error || "Registration failed");
       return response.data;
@@ -168,6 +169,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await authApi.register<{ token: string; user: User; session: Session }>({
         ...data,
         type: "VOTER",
+        callbackURL: data.callbackURL ? getFullCallbackUrl(data.callbackURL) : undefined,
       });
       if (!response.success) throw new Error(response.error || "Voter registration failed");
       return response.data;
@@ -181,7 +183,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginEmailMutation = useMutation({
     mutationFn: async (data: SignInWithEmailRequest) => {
-      const response = await authApi.login<SignInWithEmailResponse>(data);
+      const response = await authApi.login<SignInWithEmailResponse>({
+        ...data,
+        callbackURL: data.callbackURL ? getFullCallbackUrl(data.callbackURL) : undefined,
+      });
       if (!response.success) throw new Error(response.error || "Login failed");
       return response.data;
     },
@@ -196,7 +201,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     mutationFn: async (data: SignInWithUsernameRequest) => {
       const response = await authApi.loginWithUsername<SignInWithEmailResponse>({
         ...data,
-        callbackURL: data.callbackURL || getCallbackUrl("/login"),
+        callbackURL: getFullCallbackUrl(data.callbackURL || "/login"),
       });
       if (!response.success) throw new Error(response.error || "Login failed");
       return response.data;
@@ -279,7 +284,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Public methods (no auth required usually, or just utility)
   const requestPasswordReset = useCallback(async (email: string) => {
-    const response = await authApi.requestPasswordReset({ email, callbackURL: getCallbackUrl("/reset-password") });
+    const response = await authApi.requestPasswordReset({ email, callbackURL: getFullCallbackUrl("/reset-password") });
     if (!response.success) throw new Error(response.error || "Request failed");
   }, []);
 
@@ -289,7 +294,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const sendVerificationEmail = useCallback(async (email: string) => {
-    const response = await authApi.sendVerificationEmail({ email, callbackURL: getCallbackUrl("/verify-email") });
+    const response = await authApi.sendVerificationEmail({ email, callbackURL: getFullCallbackUrl("/verify-email") });
     if (!response.success) throw new Error(response.error || "Send failed");
   }, []);
 
